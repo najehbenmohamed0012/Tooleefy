@@ -4,13 +4,20 @@ import { createServer as createViteServer } from "vite";
 import { fileURLToPath } from "url";
 import compression from "compression";
 import fs from "fs";
+import dotenv from "dotenv";
+
+// Load environment variables early from .env or Hostinger platform variables
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  
+  const rawPort = process.env.PORT;
+  const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
+  const PORT = isSocket ? rawPort : (Number(rawPort) || 3000);
 
   // Modern compression middleware to shrink assets payload sizes and raise PageSpeed scores
   app.use(compression());
@@ -490,9 +497,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Tooleefy server running at http://0.0.0.0:${PORT}`);
-  });
+  if (isSocket) {
+    app.listen(PORT, () => {
+      console.log(`Tooleefy server running on Hostinger socket path: ${PORT}`);
+    });
+  } else {
+    app.listen(Number(PORT), "0.0.0.0", () => {
+      console.log(`Tooleefy server running at http://0.0.0.0:${PORT}`);
+    });
+  }
 }
 
 startServer().catch((err) => {
