@@ -15,6 +15,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
 import { ConverterFAQ } from "./ConverterFAQ";
+import { toast } from "sonner";
+import { logActivity } from "@/supabase/db";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIES: { id: UnitType; label: string; icon: any }[] = [
   { id: 'length', label: 'Length', icon: Ruler },
@@ -150,6 +153,17 @@ export function UnitsConverter() {
   const swapUnits = () => {
     setFromUnit(toUnit);
     setToUnit(fromUnit);
+  };
+
+  const copyToClipboard = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result);
+    toast.success("Result copied to clipboard!");
+    logActivity({
+      tool_type: 'converter',
+      name: `${value || '0'} ${fromUnit.toUpperCase()} to ${toUnit.toUpperCase()} (${result})`,
+      status: 'Converted'
+    });
   };
 
   const renderUnitDisplay = (uValue: string) => {
@@ -307,8 +321,21 @@ export function UnitsConverter() {
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-2">Conversion Result</Label>
-                <div className="h-14 flex items-center px-6 text-2xl font-black rounded-2xl bg-primary/5 text-primary border border-primary/10 overflow-hidden truncate">
-                   {result || "0.00"}
+                <div className="relative group/res">
+                  <div className="h-14 flex items-center px-6 pr-24 text-2xl font-black rounded-2xl bg-primary/5 text-primary border border-primary/10 overflow-hidden truncate">
+                     {result || "0.00"}
+                  </div>
+                  <div className="absolute right-2 top-2">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={copyToClipboard}
+                      className="h-10 rounded-xl px-3 hover:bg-primary/10 text-primary font-bold text-xs"
+                      id="btn-copy-conv"
+                    >
+                       Copy
+                    </Button>
+                  </div>
                 </div>
               </div>
 

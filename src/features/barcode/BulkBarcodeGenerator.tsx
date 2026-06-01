@@ -17,6 +17,7 @@ import Papa from "papaparse";
 import JSZip from "jszip";
 import { useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
+import { logActivity } from "@/supabase/db";
 import { motion, AnimatePresence } from "motion/react";
 
 const barcodeFormats = [
@@ -610,6 +611,11 @@ export function BulkBarcodeGenerator() {
       document.body.removeChild(downloadLink);
       toast.success(`Successfully packaged & downloaded ${items.length} SVG Vector barcodes!`);
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'barcode',
+        name: `Bulk Barcode Pack (${items.length} codes)`,
+        status: 'Bulk Export (SVG)'
+      });
     } catch {
       toast.error("Error packing bulk SVG packages.");
     } finally {
@@ -668,6 +674,11 @@ export function BulkBarcodeGenerator() {
       document.body.removeChild(downloadLink);
       toast.success(`Successfully packaged & downloaded ${items.length} PNG Image barcodes!`);
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'barcode',
+        name: `Bulk Barcode Pack (${items.length} codes)`,
+        status: 'Bulk Export (PNG)'
+      });
     } catch {
       toast.error("Error packing bulk PNG packages.");
     } finally {

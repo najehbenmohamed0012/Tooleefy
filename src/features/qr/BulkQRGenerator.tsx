@@ -22,6 +22,7 @@ import JSZip from "jszip";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Logo } from "@/components/Logo";
+import { logActivity } from "@/supabase/db";
 
 export interface QRItem {
   content: string;
@@ -538,6 +539,11 @@ export function BulkQRGenerator() {
       document.body.removeChild(downloadLink);
       toast.success(`Successfully packaged & exported ${items.length} SVG stickers!`, { id: toastId });
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'qr',
+        name: `Bulk QR Pack (${items.length} codes)`,
+        status: 'Bulk Export (SVG)'
+      });
     } catch {
       toast.error("Error packaging vector SVG structures.", { id: toastId });
     } finally {
@@ -601,6 +607,11 @@ export function BulkQRGenerator() {
       document.body.removeChild(downloadLink);
       toast.success(`Successfully packaged & downloaded ${items.length} PNG images!`, { id: toastId });
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'qr',
+        name: `Bulk QR Pack (${items.length} codes)`,
+        status: 'Bulk Export (PNG)'
+      });
     } catch {
       toast.error("Error packaging high-res PNG images.", { id: toastId });
     } finally {

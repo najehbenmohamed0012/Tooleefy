@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { trackPageView } from "@/utils/analytics";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Home } from "@/app/Home";
@@ -14,15 +16,31 @@ import { Blog, Legal } from "@/app/Articles";
 import { Auth } from "@/app/Auth";
 import { UserDashboard } from "@/app/UserDashboard";
 import { AdminDashboard } from "@/app/AdminDashboard";
+import { SettingsPage } from "@/app/SettingsPage";
 import { ValueTools } from "@/app/ValueTools";
 import { ThemeProvider } from "@/components/ThemeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
+
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    try {
+      trackPageView(location.pathname);
+    } catch (e) {
+      console.warn("Analytics error", e);
+    }
+  }, [location.pathname]);
+
+  return null;
+}
 
 export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-      <ScrollToTop />
+        <AnalyticsTracker />
+        <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-grow">
@@ -44,6 +62,10 @@ export default function App() {
             {/* Dashboards */}
             <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            
+            {/* Settings */}
+            <Route path="/settings/account" element={<SettingsPage defaultTab="account" />} />
+            <Route path="/settings/preferences" element={<SettingsPage defaultTab="preferences" />} />
             
             {/* Legal */}
             <Route path="/privacy" element={<Legal type="privacy" />} />

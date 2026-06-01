@@ -10,6 +10,7 @@ import { BarcodeStyleSettings } from "./BarcodeStyleSettings";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { Logo } from "@/components/Logo";
+import { logActivity } from "@/supabase/db";
 
 const barcodeFormats = [
   { value: "CODE128", label: "CODE 128", placeholder: "e.g. TOOLEEFY-789", desc: "Standard high-density linear barcode (supports alphanumeric characters)." },
@@ -210,6 +211,11 @@ export function SingleBarcodeGenerator() {
     document.body.removeChild(downloadLink);
     toast.success("Vector SVG downloaded (fully contains label headers / borders!)");
     setShowCongrats(true);
+    logActivity({
+      tool_type: 'barcode',
+      name: `Barcode ${value} (${format})`,
+      status: 'Downloaded SVG'
+    });
   };
 
   const copySVGToClipboard = () => {
@@ -315,6 +321,11 @@ export function SingleBarcodeGenerator() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
         setShowCongrats(true);
+        logActivity({
+          tool_type: 'barcode',
+          name: `Barcode ${value} (${format})`,
+          status: 'Downloaded PNG'
+        });
       }
       URL.revokeObjectURL(url);
     };

@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import QRCodeStyling from "qr-code-styling";
 import { Logo } from "@/components/Logo";
+import { logActivity } from "@/supabase/db";
 
 export function SingleQRGenerator() {
   const navigate = useNavigate();
@@ -309,10 +310,20 @@ export function SingleQRGenerator() {
       a.click();
       toast.success("Vector Framed SVG downloaded");
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'qr',
+        name: 'Framed QR Code',
+        status: 'Downloaded SVG'
+      });
     } else if (qrInstanceRef.current) {
       qrInstanceRef.current.download({ name: `qr-${Date.now()}`, extension: "svg" });
       toast.success("Vector SVG downloaded");
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'qr',
+        name: 'Single QR Code',
+        status: 'Downloaded SVG'
+      });
     }
   };
 
@@ -346,6 +357,11 @@ export function SingleQRGenerator() {
           a.click();
           toast.success("Retina Framed PNG downloaded");
           setShowCongrats(true);
+          logActivity({
+            tool_type: 'qr',
+            name: 'Framed QR Code',
+            status: 'Downloaded PNG'
+          });
         }
       };
       img.src = url;
@@ -353,6 +369,11 @@ export function SingleQRGenerator() {
       qrInstanceRef.current.download({ name: `qr-${Date.now()}`, extension: "png" });
       toast.success("High-res PNG downloaded");
       setShowCongrats(true);
+      logActivity({
+        tool_type: 'qr',
+        name: 'Single QR Code',
+        status: 'Downloaded PNG'
+      });
     }
   };
 

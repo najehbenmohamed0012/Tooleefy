@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut, Settings, User, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,26 +9,90 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLinkItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/supabase/client";
 
 export function Navbar() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    // 1. Initial Local Check
     const storedUser = localStorage.getItem("user");
+    let isSimulated = false;
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        if (parsed?.simulation) {
+          isSimulated = true;
+        }
+      } catch (err) {
+        // ignore
+      }
     }
+
+    // 2. Fetch current Supabase user session for accuracy, wrapped in a 1.5s timeout.
+    Promise.race([
+      supabase.auth.getSession(),
+      new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500))
+    ]).then(({ data }) => {
+      const session = data?.session;
+      if (session?.user) {
+        const uName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "User";
+        const profileUser = {
+          id: session.user.id,
+          name: uName,
+          email: session.user.email,
+          avatar: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(uName)}&backgroundColor=0284c7,3b82f6,0ea5e9,10b981,6366f1,7c3aed`,
+          role: (session.user.email?.toLowerCase().includes("admin") || session.user.email?.toLowerCase() === "najehbenmohamed0012@gmail.com") ? "admin" : "user"
+        };
+        setUser(profileUser);
+        localStorage.setItem("user", JSON.stringify(profileUser));
+      } else if (!isSimulated) {
+        setUser(null);
+        localStorage.removeItem("user");
+      }
+    }).catch(() => {
+      // Supabase is paused or unreachable. Preserve workspace local/simulated session to prevent auto sign-out.
+      console.log("Supabase connection timed out. Working in high-integrity local mode.");
+    });
+
+    // 3. Keep standard listener active for real-time authentication state updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const uName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "User";
+        const profileUser = {
+          id: session.user.id,
+          name: uName,
+          email: session.user.email,
+          avatar: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(uName)}&backgroundColor=0284c7,3b82f6,0ea5e9,10b981,6366f1,7c3aed`,
+          role: (session.user.email?.toLowerCase().includes("admin") || session.user.email?.toLowerCase() === "najehbenmohamed0012@gmail.com") ? "admin" : "user"
+        };
+        setUser(profileUser);
+        localStorage.setItem("user", JSON.stringify(profileUser));
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        localStorage.removeItem("user");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("user");
     setUser(null);
-    window.location.reload();
+    window.location.assign("/");
   };
 
   return (
@@ -51,45 +115,84 @@ export function Navbar() {
             <ThemeToggle />
             
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<button className="relative group focus:outline-none" />}>
-                    <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-all p-0.5">
-                      <img src={user.avatar} alt="Profile" className="w-full h-full object-cover rounded-[0.6rem]" />
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="relative group focus:outline-none w-10 h-10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary transition-all p-0.5 cursor-pointer flex items-center justify-center bg-card"
+                >
+                    <img src={user.avatar} alt="Profile" className="w-full h-full object-cover rounded-[0.6rem]" />
+                </button>
+                {/* Connected Mark Animation */}
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 pointer-events-none">
+                  <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75"></span>
+                </span>
+
+                {isProfileOpen && (
+                  <>
+                    {/* Backdrop/Overlay to dismiss */}
+                    <div 
+                      className="fixed inset-0 z-40 bg-transparent cursor-default" 
+                      onClick={() => setIsProfileOpen(false)} 
+                    />
+                    
+                    {/* Dropdown Menu Container */}
+                    <div className="absolute right-0 mt-3 w-64 rounded-2xl p-2 border border-slate-200 dark:border-white/10 shadow-2xl bg-white dark:bg-slate-900 z-50 flex flex-col gap-1 origin-top-right">
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-black leading-none text-slate-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs font-bold leading-none text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          navigate(user.role === 'admin' ? "/admin" : "/dashboard");
+                        }} 
+                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group focus:outline-none text-slate-800 dark:text-slate-200"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="font-bold text-sm">{user.role === 'admin' ? "Admin Console" : "My Dashboard"}</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          navigate("/settings/account");
+                        }} 
+                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group focus:outline-none text-slate-800 dark:text-slate-200"
+                      >
+                        <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="font-bold text-sm">Account Settings</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          navigate("/settings/preferences");
+                        }} 
+                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group focus:outline-none text-slate-800 dark:text-slate-200"
+                      >
+                        <Settings className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="font-bold text-sm">Preferences</span>
+                      </button>
+
+                      <div className="h-px bg-slate-100 dark:bg-white/5 my-1" />
+
+                      <button 
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          handleLogout();
+                        }} 
+                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer text-left hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 transition-colors group focus:outline-none"
+                      >
+                        <LogOut className="w-4 h-4 text-red-500" />
+                        <span className="font-bold text-sm">Sign Out</span>
+                      </button>
                     </div>
-                    {/* Connected Mark Animation */}
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 group-hover:scale-110 transition-transform">
-                      <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75"></span>
-                    </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 border-border shadow-2xl mt-2 bg-card">
-                  <DropdownMenuLabel className="px-4 py-3">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-black leading-none text-foreground">{user.name}</p>
-                      <p className="text-xs font-bold leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <Link to={user.role === 'admin' ? "/admin" : "/dashboard"}>
-                    <DropdownMenuItem className="p-3 rounded-xl gap-3 cursor-pointer group">
-                      <LayoutDashboard className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                      <span className="font-bold text-sm">{user.role === 'admin' ? "Admin Console" : "My Dashboard"}</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuItem className="p-3 rounded-xl gap-3 cursor-pointer group">
-                    <User className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                    <span className="font-bold text-sm">Account Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="p-3 rounded-xl gap-3 cursor-pointer group">
-                    <Settings className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                    <span className="font-bold text-sm">Preferences</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem onClick={handleLogout} className="p-3 rounded-xl gap-3 cursor-pointer group text-red-500 hover:bg-red-50 focus:bg-red-50 focus:text-red-600 transition-colors">
-                    <LogOut className="w-4 h-4" />
-                    <span className="font-bold text-sm">Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </>
+                )}
+              </div>
             ) : (
               <Link to="/login" className="text-sm font-black uppercase tracking-widest text-primary hover:text-secondary transition-colors">Sign In</Link>
             )}
@@ -100,14 +203,14 @@ export function Navbar() {
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           {user && (
-            <div className="relative mr-2">
+            <Link to={user.role === 'admin' ? "/admin" : "/dashboard"} className="relative mr-2 cursor-pointer block">
               <div className="w-8 h-8 rounded-xl overflow-hidden border-2 border-primary/20">
                 <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
               </div>
               <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900">
                  <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75"></span>
               </span>
-            </div>
+            </Link>
           )}
           <button className="p-2 text-dark dark:text-white" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

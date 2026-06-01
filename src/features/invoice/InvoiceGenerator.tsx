@@ -27,6 +27,7 @@ import { FAQSection } from "./FAQSection";
 import { ValueBanner } from "@/components/ValueBanner";
 import { Logo } from "@/components/Logo";
 import { Star, Trophy } from "lucide-react";
+import { logActivity } from "@/supabase/db";
 
 interface InvoiceItem {
   id: string;
@@ -606,6 +607,11 @@ export function InvoiceGenerator() {
     }
 
     doc.save(`${invoiceNumber.toLowerCase()}.pdf`);
+    logActivity({
+      tool_type: 'invoice',
+      name: `${invoiceNumber.toUpperCase()}`,
+      status: 'Downloaded'
+    });
     setShowCongrats(true);
   };
 
