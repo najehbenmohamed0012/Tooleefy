@@ -163,7 +163,7 @@ export function Contact() {
                     </div>
                     <div>
                       <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Email Support</div>
-                      <div className="text-lg font-black text-foreground">hello@tooleefy.com</div>
+                      <div className="text-lg font-black text-foreground">contact@tooleefy.com</div>
                     </div>
                   </div>
                   <div className="flex gap-6 items-start">
