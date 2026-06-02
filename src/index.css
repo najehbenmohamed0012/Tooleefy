@@ -27,8 +27,8 @@
 }
 
 @layer base {
-  body {
-    @apply font-sans antialiased bg-background text-foreground transition-colors duration-300;
+  html, body {
+    @apply w-full max-w-full overflow-x-hidden font-sans antialiased bg-background text-foreground transition-colors duration-300;
   }
   
   h1, h2, h3, h4 {
