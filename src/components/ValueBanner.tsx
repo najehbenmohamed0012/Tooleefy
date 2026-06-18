@@ -48,23 +48,27 @@ export function ValueBanner() {
             <Link 
               to="/value-our-tools" 
               className={cn(
-                "group/btn relative w-full lg:w-[320px] h-16 bg-indigo-600 dark:bg-indigo-600 text-white dark:text-white rounded-[1.5rem] font-black uppercase text-sm tracking-[0.3em] transition-all flex items-center justify-center gap-3",
+                "group/btn relative w-full lg:w-[320px] h-16 bg-indigo-600 dark:bg-indigo-600 text-white dark:text-white rounded-[1.5rem] font-black uppercase text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.3em] pl-[0.15em] sm:pl-[0.3em] transition-all flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap",
                 "border-b-[4px] border-indigo-800 dark:border-indigo-800 hover:brightness-105 active:border-b-[1px] active:translate-y-[3px]"
               )}
             >
-              <Heart className="w-5 h-5 fill-current" />
-              Become a Supporter
+              <Heart className="w-5 h-5 fill-current shrink-0" />
+              <span>Become a Supporter</span>
             </Link>
 
-            <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2.5 opacity-65 group-hover:opacity-100 transition-opacity">
               <div className="flex -space-x-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-6 h-6 rounded-full border-2 border-background bg-muted flex items-center justify-center">
-                    <div className="w-3 h-3 bg-primary/20 rounded-full" />
+                {[
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&h=60&q=80",
+                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&h=60&q=80",
+                  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&h=60&q=80"
+                ].map((url, i) => (
+                  <div key={i} className="w-6 h-6 rounded-full border-2 border-background overflow-hidden bg-muted">
+                    <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 ))}
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground italic">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-emerald-900/80 italic">
                 Trusted by 1K+ supporters
               </span>
             </div>

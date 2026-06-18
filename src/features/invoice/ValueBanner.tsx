@@ -27,13 +27,31 @@ export const ValueBanner: React.FC = () => {
           <div className="flex flex-col items-center gap-4 shrink-0">
             <Link 
               to="/value-our-tools"
-              className="group/btn relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-black uppercase tracking-widest text-sm rounded-2xl shadow-[0_8px_0_0_#065f46] hover:shadow-[0_4px_0_0_#065f46] hover:translate-y-[4px] active:translate-y-[8px] active:shadow-none transition-all border border-emerald-400/20 active:scale-[0.98]"
+              className="group/btn relative w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-10 py-4 sm:py-5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-black uppercase tracking-[0.15em] sm:tracking-widest text-xs sm:text-sm rounded-2xl shadow-[0_8px_0_0_#065f46] hover:shadow-[0_4px_0_0_#065f46] hover:translate-y-[4px] active:translate-y-[8px] active:shadow-none transition-all border border-emerald-400/20 active:scale-[0.98] pl-[0.15em] sm:pl-[0.2em] whitespace-nowrap"
             >
-              <Heart className="w-5 h-5 fill-white group-hover/btn:scale-110 transition-transform" />
+              <Heart className="w-5 h-5 fill-white group-hover/btn:scale-110 transition-transform shrink-0" />
               <span>Value Our Tool</span>
-              <Zap className="w-4 h-4 ml-1 opacity-50" />
             </Link>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">One-click appreciation</p>
+            
+            <div className="flex flex-col items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className="flex -space-x-1.5">
+                  {[
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&h=60&q=80",
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&h=60&q=80",
+                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&h=60&q=80"
+                  ].map((url, i) => (
+                    <div key={i} className="w-5 h-5 rounded-full border border-slate-700 overflow-hidden bg-slate-800">
+                      <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                  ))}
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">
+                  Trusted by 1K+
+                </span>
+              </div>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">One-click appreciation</p>
+            </div>
           </div>
         </div>
 

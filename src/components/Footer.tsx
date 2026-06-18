@@ -12,7 +12,7 @@ export function Footer() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-12">
           <div className="lg:col-span-6 max-w-xl">
-            <Link to="/" className="flex items-center gap-3 mb-8 group">
+            <Link to="/" aria-label="Tooleefy Home" className="flex items-center gap-3 mb-8 group">
               <Logo className="w-10 h-10 group-hover:rotate-[15deg]" />
               <span className="text-2xl font-black tracking-tight text-primary dark:text-white transition-colors duration-500">Tooleefy</span>
             </Link>

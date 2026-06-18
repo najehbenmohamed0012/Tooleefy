@@ -54,7 +54,26 @@ const CURRENCY_TO_COUNTRY: Record<string, string> = {
   chf: "ch", cny: "cn", sek: "se", nzd: "nz", mxn: "mx", sgd: "sg", 
   hkd: "hk", nok: "no", krw: "kr", "try": "tr", rub: "ru", inr: "in", 
   brl: "br", zar: "za", thb: "th", idr: "id", myr: "my", php: "ph",
-  dkk: "dk", huf: "hu", pln: "pl", ron: "ro"
+  dkk: "dk", huf: "hu", pln: "pl", ron: "ro", uah: "ua", ars: "ar",
+  cop: "co", clp: "cl", pen: "pe", egp: "eg", ngn: "ng", kes: "ke",
+  mad: "ma", dzd: "dz", tnd: "tn", qar: "qa", kwd: "kw", bhd: "bh",
+  omr: "om", jod: "jo", iqd: "iq", lbp: "lb", kzt: "kz", pkr: "pk",
+  bdt: "bd", lkr: "lk", npr: "np", czk: "cz", bgn: "bg", isk: "is",
+  crc: "cr", dop: "do", gtq: "gt", hnl: "hn", nio: "ni", pab: "pa",
+  uyu: "uy", pyg: "py", bob: "bo", ves: "ve", jmd: "jm", ttd: "tt",
+  xcd: "ag", ghs: "gh", etb: "et", aoa: "ao", tzs: "tz", ugx: "ug",
+  gel: "ge", amd: "am", azn: "az", uzs: "uz", mnt: "mn", khr: "kh",
+  lak: "la", mmk: "mm", bnd: "bn", mop: "mo", mvr: "mv", mur: "mu",
+  scr: "sc", mga: "mg", zmw: "zm", cup: "cu", rsd: "rs", bam: "ba",
+  all: "al", mkd: "mk", pgk: "pg", fjd: "fj", sbd: "sb", vuv: "vu",
+  wst: "ws", top: "to", lyd: "ly", sdg: "sd", ssp: "ss", syp: "sy",
+  yer: "ye", mru: "mr", sos: "so", djf: "dj", ern: "er", bif: "bi",
+  rwf: "rw", mwk: "mw", mzn: "mz", bwp: "bw", nad: "na", lsl: "ls",
+  szl: "sz", gnf: "gn", sle: "sl", lrd: "lr", gmd: "gm", cve: "cv",
+  stn: "st", afn: "af", tjs: "tj", kgs: "kg", tmt: "tm", byn: "by",
+  mdl: "md", gip: "gi", fkp: "fk", shp: "sh", bmd: "bm", kyd: "ky",
+  bsd: "bs", bbd: "bb", bzd: "bz", gyd: "gy", srd: "sr", ang: "cw",
+  awg: "aw", htg: "ht", irr: "ir"
 };
 
 export function UnitsConverter() {
@@ -91,13 +110,16 @@ export function UnitsConverter() {
 
   const currentUnitsMap = {
     ...unitsMap,
-    currency: dynamicRates?.currency 
-      ? Object.keys(dynamicRates.currency).map(code => ({
-          label: code.toUpperCase(),
-          value: code.toLowerCase(),
-          factor: dynamicRates.currency[code]
-        })).concat([{ label: 'USD', value: 'usd', factor: 1 }]) // Frankfurter is relative to base, I'll normalize below
-      : unitsMap.currency,
+    currency: unitsMap.currency
+      .filter(u => u.value !== "ils")
+      .map(u => {
+        const codeUpper = u.value.toUpperCase();
+        const apiRate = dynamicRates?.currency?.[codeUpper];
+        return {
+          ...u,
+          factor: apiRate !== undefined ? apiRate : u.factor
+        };
+      }),
     crypto: dynamicRates?.crypto
       ? dynamicRates.crypto.map((c: any) => ({
           label: c.name,
@@ -226,7 +248,7 @@ export function UnitsConverter() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start relative">
         {/* Mobile/Tablet categories (top horizontal scroll) */}
-        <div className="lg:hidden col-span-1 flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="lg:hidden col-span-1 flex gap-2 overflow-x-auto pt-3 pb-4 px-1.5 scrollbar-hide">
           {CATEGORIES.map((cat) => (
             <motion.button
               key={cat.id}

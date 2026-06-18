@@ -98,7 +98,7 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 h-20 w-full glass-nav">
       <div className="w-full max-w-none px-6 md:px-12 h-full flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" aria-label="Tooleefy Home" className="flex items-center gap-3 group">
           <Logo className="w-10 h-10 group-hover:rotate-[15deg] group-hover:scale-110" />
           <span className="text-2xl font-black tracking-tight text-primary dark:text-white transition-colors duration-500">Tooleefy</span>
         </Link>
@@ -118,6 +118,7 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  aria-label="User profile menu"
                   className="relative group focus:outline-none w-10 h-10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary transition-all p-0.5 cursor-pointer flex items-center justify-center bg-card"
                 >
                     <img src={user.avatar} alt="Profile" className="w-full h-full object-cover rounded-[0.6rem]" />
@@ -203,7 +204,7 @@ export function Navbar() {
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           {user && (
-            <Link to={user.role === 'admin' ? "/admin" : "/dashboard"} className="relative mr-2 cursor-pointer block">
+            <Link to={user.role === 'admin' ? "/admin" : "/dashboard"} aria-label="My Dashboard" className="relative mr-2 cursor-pointer block">
               <div className="w-8 h-8 rounded-xl overflow-hidden border-2 border-primary/20">
                 <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
               </div>
@@ -212,7 +213,7 @@ export function Navbar() {
               </span>
             </Link>
           )}
-          <button className="p-2 text-dark dark:text-white" onClick={() => setIsOpen(!isOpen)}>
+          <button className="p-2 text-dark dark:text-white" aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"} onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>

@@ -1056,6 +1056,7 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
                             type="checkbox"
                             checked={logoHighRes}
                             onChange={(e) => setLogoHighRes(e.target.checked)}
+                            aria-label="Retina High Resolution"
                             className="w-4.5 h-4.5 accent-primary rounded-lg shrink-0 cursor-pointer"
                           />
                         </div>

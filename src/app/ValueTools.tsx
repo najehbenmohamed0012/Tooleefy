@@ -182,9 +182,15 @@ export function ValueTools() {
         >
           <div className="flex flex-col items-center space-y-6">
             <div className="flex -space-x-4 overflow-hidden py-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="inline-block h-10 w-10 rounded-full ring-4 ring-background bg-muted flex items-center justify-center">
-                  <Logo className="w-6 h-6 grayscale opacity-30" />
+              {[
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80",
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80",
+                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80",
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80",
+                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&h=100&q=80"
+              ].map((url, i) => (
+                <div key={i} className="inline-block h-10 w-10 rounded-full ring-4 ring-background overflow-hidden bg-muted">
+                  <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
               ))}
               <div className="flex items-center justify-center h-10 w-10 rounded-full ring-4 ring-background bg-primary text-white text-[10px] font-black">

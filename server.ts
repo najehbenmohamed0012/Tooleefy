@@ -209,6 +209,10 @@ async function startServer() {
     try {
       // Fetch Fiat with 2-second strict timeout limit
       const fiatData = await fetchWithTimeout("https://api.frankfurter.app/latest?from=USD", 2000, { rates: DEFAULT_FIAT_RATES });
+      if (fiatData && fiatData.rates) {
+        delete fiatData.rates.ILS;
+        delete fiatData.rates.ils;
+      }
       
       // Fetch Crypto market rates with 2-second strict timeout limit
       const cryptoData = await fetchWithTimeout(
