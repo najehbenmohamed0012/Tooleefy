@@ -11,7 +11,7 @@ export function ValueTools() {
   const [isCustom, setIsCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");
 
-  const presets = [2, 3, 4, 10];
+  const presets = [2, 3, 4];
 
   const handleCustomChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -75,33 +75,40 @@ export function ValueTools() {
             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.3em]">Direct contribution in USD</p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-5 relative z-10">
-            {presets.map((p) => (
-              <button
-                key={p}
-                onMouseDown={() => {
-                  setAmount(p);
-                  setIsCustom(false);
-                }}
-                className={`w-24 h-24 rounded-3xl flex flex-col items-center justify-center transition-all duration-300 ${
-                  amount === p && !isCustom
-                    ? "bg-primary text-white shadow-2xl shadow-primary/30 scale-110 -translate-y-2"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:scale-105"
-                }`}
-              >
-                <span className="text-sm font-black uppercase tracking-widest opacity-40 mb-1">USD</span>
-                <span className="text-3xl font-black">${p}</span>
-              </button>
-            ))}
+          <div className="flex flex-wrap justify-center gap-5 relative z-10 pb-4">
+            {presets.map((p) => {
+              const isSelected = amount === p && !isCustom;
+              return (
+                <button
+                  key={p}
+                  onMouseDown={() => {
+                    setAmount(p);
+                    setIsCustom(false);
+                  }}
+                  className={cn(
+                    "w-24 h-24 rounded-3xl flex flex-col items-center justify-center transition-all duration-100 relative select-none cursor-pointer",
+                    "border-t border-x border-t-white/10 dark:border-t-white/10 border-x-white/5",
+                    isSelected
+                      ? "bg-primary text-white border-b-[6px] border-black/35 shadow-lg shadow-primary/20 hover:scale-[1.02] active:translate-y-[4px] active:border-b-[2px] active:shadow-sm"
+                      : "bg-muted/60 text-muted-foreground border-b-[6px] border-neutral-300 dark:border-neutral-800 hover:bg-muted hover:scale-[1.02] active:translate-y-[4px] active:border-b-[2px]"
+                  )}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">USD</span>
+                  <span className="text-3xl font-black">${p}</span>
+                </button>
+              );
+            })}
             <button
               onMouseDown={() => setIsCustom(true)}
-              className={`w-24 h-24 rounded-3xl flex items-center justify-center transition-all duration-300 ${
+              className={cn(
+                "w-24 h-24 rounded-3xl flex items-center justify-center transition-all duration-100 relative select-none cursor-pointer",
+                "border-t border-x border-t-white/10 dark:border-t-white/10 border-x-white/5",
                 isCustom
-                  ? "bg-primary text-white shadow-2xl shadow-primary/30 scale-110 -translate-y-2"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:scale-105"
-              }`}
+                  ? "bg-primary text-white border-b-[6px] border-black/35 shadow-lg shadow-primary/20 hover:scale-[1.02] active:translate-y-[4px] active:border-b-[2px] active:shadow-sm"
+                  : "bg-muted/60 text-muted-foreground border-b-[6px] border-neutral-300 dark:border-neutral-800 hover:bg-muted hover:scale-[1.02] active:translate-y-[4px] active:border-b-[2px]"
+              )}
             >
-              <Plus className={`w-10 h-10 ${isCustom ? "text-white" : "text-muted-foreground"}`} />
+              <Plus className={cn("w-10 h-10 transition-transform", isCustom ? "text-white rotate-90" : "text-muted-foreground")} />
             </button>
           </div>
 
@@ -138,15 +145,15 @@ export function ValueTools() {
               target="_blank" 
               rel="noopener noreferrer" 
               className={cn(
-                buttonVariants({ variant: "default" }),
-                "w-full max-w-md h-20 rounded-[2rem] text-xl font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-[0.97] flex items-center justify-center gap-4 shadow-2xl shadow-primary/30 mx-auto group/pay",
-                isDisabled && "opacity-50 pointer-events-none cursor-not-allowed grayscale"
+                "w-full max-w-md h-24 rounded-[2rem] flex flex-col items-center justify-center gap-1 mx-auto select-none transition-all duration-100 relative cursor-pointer",
+                "border-t border-x border-t-white/10 dark:border-t-white/10 border-x-white/5",
+                isDisabled
+                  ? "opacity-50 pointer-events-none cursor-not-allowed grayscale bg-muted/40 text-muted-foreground border-b-[6px] border-neutral-300 dark:border-neutral-800"
+                  : "bg-primary text-white border-b-[8px] border-black/35 shadow-2xl shadow-primary/30 hover:scale-[1.02] hover:shadow-primary/40 active:translate-y-[5px] active:border-b-[3px] active:shadow-md"
               )}
             >
-              <span>Contribute ${amount || 0}</span>
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover/pay:rotate-12 transition-transform">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">Contribute</span>
+              <span className="text-2xl font-black text-white">${amount || 0}</span>
             </a>
             <div className="mt-4 flex items-center justify-center gap-2 opacity-50">
                <CreditCard className="w-4 h-4 text-primary" />
