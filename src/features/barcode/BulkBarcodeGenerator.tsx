@@ -1102,7 +1102,7 @@ export function BulkBarcodeGenerator() {
                 value={bulkInput}
                 onChange={(e) => setBulkInput(e.target.value)}
                 placeholder="Enter contents (one per line)..."
-                className="flex-1 min-h-[300px] overflow-y-auto rounded-3xl border-none bg-muted/30 p-8 text-lg font-medium focus-visible:ring-primary/20 font-mono scrollbar-thin [field-sizing:fixed]"
+                className="flex-1 min-h-[300px] overflow-y-auto rounded-3xl border border-slate-200 dark:border-zinc-800/80 bg-slate-100/50 dark:bg-zinc-950 p-8 text-lg font-medium text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary/20 font-mono scrollbar-thin [field-sizing:fixed] shadow-inner"
                 style={{ fieldSizing: "fixed" } as React.CSSProperties}
               />
 
@@ -1250,10 +1250,10 @@ export function BulkBarcodeGenerator() {
         ))}
       </div>
 
-      <Card className="p-10 border-none shadow-premium rounded-[3rem] bg-card mb-10 overflow-hidden relative">
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <Card className="p-5 sm:p-10 border-none shadow-premium rounded-[2rem] sm:rounded-[3rem] bg-card mb-10 overflow-hidden relative">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
               <Layers className="w-5 h-5 text-primary" />
             </div>
             <h2 className="text-xl font-black tracking-tight uppercase italic">Global Sync Workspace</h2>
@@ -1263,9 +1263,9 @@ export function BulkBarcodeGenerator() {
             onClick={() => {
               toast.success("Synchronized successfully: margins, layouts, alignments, typography, colors, and dimensions are fully synced across the list queue!");
             }}
-            className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold uppercase text-[10px] tracking-wider px-5 py-2 transition-all active:scale-95 cursor-pointer flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold uppercase text-[9.5px] min-[370px]:text-[10px] tracking-wider px-4 py-2.5 sm:px-5 sm:py-2 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shadow-sm shrink-0 whitespace-nowrap min-h-[40px]"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Synchronize Workspace Modifications
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" /> Synchronize Workspace Modifications
           </Button>
         </div>
         
@@ -1802,13 +1802,13 @@ export function BulkBarcodeGenerator() {
       )}
 
       {/* Industrial Engine Status - Positioned Full Width Under the Workspace / Active Queue */}
-      <Card className="p-10 border-none shadow-premium rounded-[3rem] bg-card">
+      <Card className="p-5 sm:p-10 border-none shadow-premium rounded-[2rem] sm:rounded-[3rem] bg-card">
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Info & Stats column */}
             <div className="lg:col-span-6 space-y-6">
                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center animate-pulse">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center animate-pulse shrink-0">
                      <Settings2 className="w-6 h-6 text-primary" />
                   </div>
                   <div>
@@ -1841,33 +1841,33 @@ export function BulkBarcodeGenerator() {
             </div>
 
             {/* Trigger elements column / Actions */}
-            <div className="lg:col-span-6 bg-muted/10 p-6 rounded-3xl border border-dashed border-border/60 flex flex-col justify-center h-full space-y-4">
+            <div className="lg:col-span-6 bg-muted/10 p-4 sm:p-6 rounded-3xl border border-dashed border-border/60 flex flex-col justify-center h-full space-y-4">
                <div className="text-xs font-black text-[#006241] uppercase tracking-wider ml-1">Export Controls</div>
                
                <Button 
                   onClick={() => setIsPrintModalOpen(true)} 
                   disabled={items.length === 0} 
-                  className="w-full h-14 rounded-2xl font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-2 border-amber-600 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-2 flex items-center justify-center select-none shadow-[0_4px_0_0_rgba(245,158,11,0.15)] disabled:opacity-40 disabled:pointer-events-none cursor-pointer text-white text-xs"
+                  className="w-full h-14 rounded-2xl font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 border-2 border-amber-600 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-2 flex items-center justify-center select-none shadow-[0_4px_0_0_rgba(245,158,11,0.15)] disabled:opacity-40 disabled:pointer-events-none cursor-pointer text-white text-[11px] sm:text-xs px-2 shrink-0"
                >
-                  <Printer className="w-4 h-4 mr-1" /> Print Barcode Labels
+                  <Printer className="w-4 h-4 shrink-0" /> <span className="truncate min-[360px]:whitespace-normal">Print Barcode Labels</span>
                </Button>
 
-               <div className="grid grid-cols-2 gap-3">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                  <Button 
                    onClick={executeBulkSVGExport} 
                    disabled={processing || items.length === 0} 
-                   className="h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-700 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-1 flex flex-col justify-center items-center select-none shadow-[0_4px_0_0_rgba(16,185,129,0.15)] disabled:opacity-40 disabled:pointer-events-none text-[9.5px]"
+                   className="h-14 rounded-2xl font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-700 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-1.5 flex flex-row sm:flex-col justify-center items-center select-none shadow-[0_4px_0_0_rgba(16,185,129,0.15)] disabled:opacity-40 disabled:pointer-events-none text-[10px] sm:text-[9.5px] px-2"
                  >
-                    <Archive className="w-4 h-4" /> 
-                    <span>{processing ? "Zipping..." : "Zip SVG (Vector)"}</span>
+                    <Archive className="w-4 h-4 shrink-0" /> 
+                    <span className="truncate min-[360px]:whitespace-normal">{processing ? "Zipping..." : "Zip SVG (Vector)"}</span>
                  </Button>
                  <Button 
                    onClick={executeBulkPNGExport} 
                    disabled={processing || items.length === 0} 
-                   className="h-14 rounded-2xl font-black uppercase tracking-widest bg-teal-600 hover:bg-teal-700 text-white border-2 border-teal-700 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-1 flex flex-col justify-center items-center select-none shadow-[0_4px_0_0_rgba(13,148,136,0.15)] disabled:opacity-40 disabled:pointer-events-none text-[9.5px]"
+                   className="h-14 rounded-2xl font-black uppercase tracking-wider bg-teal-600 hover:bg-teal-700 text-white border-2 border-teal-700 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-1.5 flex flex-row sm:flex-col justify-center items-center select-none shadow-[0_4px_0_0_rgba(13,148,136,0.15)] disabled:opacity-40 disabled:pointer-events-none text-[10px] sm:text-[9.5px] px-2"
                  >
-                    <Palette className="w-4 h-4" /> 
-                    <span>{processing ? "Zipping..." : "Zip PNG (Images)"}</span>
+                    <Palette className="w-4 h-4 shrink-0" /> 
+                    <span className="truncate min-[360px]:whitespace-normal">{processing ? "Zipping..." : "Zip PNG (Images)"}</span>
                  </Button>
                </div>
 

@@ -841,10 +841,10 @@ export function BulkQRGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Layout Span: Input feed, File uploaders & mapper mapping panel */}
         <div className="lg:col-span-8 flex flex-col space-y-6">
-          <Card className="p-8 border-none shadow-premium rounded-[2.5rem]">
+          <Card className="p-5 sm:p-8 border-none shadow-premium rounded-[2rem] sm:rounded-[2.5rem]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
                   <Plus className="w-5 h-5 text-primary" />
                 </div>
                 <div>
@@ -852,20 +852,20 @@ export function BulkQRGenerator() {
                   <p className="text-[10px] text-muted-foreground uppercase font-semibold">Feed raw scanner sequences or product dataset spreadsheets</p>
                 </div>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end shrink-0">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => {
                       setShowSeqGenerator(!showSeqGenerator);
                     }} 
-                    className={`h-9 rounded-xl text-[10px] uppercase font-black transition-all ${
+                    className={`h-9 rounded-xl text-[10px] uppercase font-black transition-all flex-1 sm:flex-none ${
                       showSeqGenerator ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-primary/10"
                     }`}
                   >
                       <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Sequence Generator
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="h-9 rounded-xl text-[10px] uppercase font-black hover:bg-primary/10 border border-border/40 bg-zinc-50 dark:bg-zinc-900/10">
+                  <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="h-9 rounded-xl text-[10px] uppercase font-black hover:bg-primary/10 border border-border/40 bg-zinc-50 dark:bg-zinc-900/10 flex-1 sm:flex-none">
                       <FileUp className="w-3.5 h-3.5 mr-1.5" /> Import CSV/TXT
                   </Button>
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.txt,.json" className="hidden" />
@@ -1046,7 +1046,7 @@ export function BulkQRGenerator() {
 
         {/* Right Layout Span: Engine system status card & direct exports settings */}
         <div className="lg:col-span-4 flex flex-col space-y-6">
-          <Card className="p-8 border-none shadow-premium bg-card flex flex-col justify-between">
+          <Card className="p-5 sm:p-8 border-none shadow-premium bg-card flex flex-col justify-between rounded-[2rem] sm:rounded-[2.5rem]">
              <div className="space-y-6">
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
@@ -1061,11 +1061,11 @@ export function BulkQRGenerator() {
                 <div className="grid grid-cols-2 gap-4">
                    <div className="p-4 bg-muted/20 rounded-2xl border border-border/50">
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Queue Size</p>
-                      <p className="text-2xl font-black">{items.length}</p>
+                      <p className="text-xl sm:text-2xl font-black">{items.length}</p>
                    </div>
                    <div className="p-4 bg-muted/20 rounded-2xl border border-border/50">
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Export Mode</p>
-                      <p className="text-xl font-black italic uppercase text-primary">ZIP Vectors</p>
+                      <p className="text-xs min-[340px]:text-sm sm:text-lg md:text-xl font-black italic uppercase text-primary whitespace-nowrap">ZIP Vectors</p>
                    </div>
                 </div>
 
@@ -1101,38 +1101,38 @@ export function BulkQRGenerator() {
 
              <div className="space-y-3 pt-8">
                 {/* Advanced Multi-mode Export controls */}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <Button 
                     onClick={executeBulkSVGExport} 
                     disabled={items.length === 0 || processing}
-                    className="h-14 rounded-xl font-black uppercase tracking-widest text-[9.5px] bg-[#0c4a6e] hover:bg-[#075985] text-white border-b-[5px] border-b-[#0369a1] active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-1.5"
+                    className="h-14 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-[9.5px] bg-[#0c4a6e] hover:bg-[#075985] text-white border-b-[5px] border-b-[#0369a1] active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-1.5"
                   >
-                    <Download className="w-4 h-4" /> SVG Labels Pack
+                    <Download className="w-4 h-4 shrink-0" /> SVG Labels Pack
                   </Button>
                   <Button 
                     onClick={executeBulkPNGExport} 
                     disabled={items.length === 0 || processing}
-                    className="h-14 rounded-xl font-black uppercase tracking-widest text-[9.5px] bg-[#1e1b4b] hover:bg-[#312e81] text-white border-b-[5px] border-b-[#3730a3] active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-1.5"
+                    className="h-14 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-[9.5px] bg-[#1e1b4b] hover:bg-[#312e81] text-white border-b-[5px] border-b-[#3730a3] active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-1.5"
                   >
-                    <Download className="w-4 h-4" /> PNG Labels Pack
+                    <Download className="w-4 h-4 shrink-0" /> PNG Labels Pack
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <Button 
                     onClick={() => setIsPrintModalOpen(true)}
                     disabled={items.length === 0 || processing}
                     className="h-12 rounded-xl text-[10.5px] font-black uppercase tracking-wider text-amber-950 bg-amber-400 hover:bg-amber-500 border-b-[4px] border-b-amber-700 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-1 w-full shrink-0"
                   >
-                    <Printer className="w-4 h-4" /> Print Setup
+                    <Printer className="w-4 h-4 shrink-0" /> Print Setup
                   </Button>
                   <Button 
                     variant="ghost" 
                     onClick={handleResetAll} 
                     disabled={items.length === 0} 
-                    className="h-12 rounded-xl text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-extrabold bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 border-2 border-red-200 dark:border-red-900/50 border-b-[4px] border-b-red-300 dark:border-b-red-800 hover:border-b-[3px] active:border-b-0 active:translate-y-[4px] transition-all flex items-center justify-center select-none shadow-sm disabled:opacity-40 disabled:pointer-events-none"
+                    className="h-12 rounded-xl text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-extrabold bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 border-2 border-red-200 dark:border-red-900/50 border-b-[4px] border-b-red-300 dark:border-b-red-800 hover:border-b-[3px] active:border-b-0 active:translate-y-[4px] transition-all flex items-center justify-center select-none shadow-sm disabled:opacity-40 disabled:pointer-events-none gap-1 shrink-0"
                   >
-                     <Trash2 className="w-4 h-4 mr-1.5" /> Reset Panel
+                     <Trash2 className="w-4 h-4 mr-1.5 shrink-0" /> Reset Panel
                   </Button>
                 </div>
              </div>

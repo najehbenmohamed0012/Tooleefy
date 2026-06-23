@@ -626,18 +626,18 @@ export function InvoiceGenerator() {
           <h1 className="text-4xl font-black text-foreground tracking-tighter">Enterprise Invoice Generator.</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-4 xl:gap-6 items-start">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-4 xl:gap-6 items-start">
           {/* Main Content Area */}
           <div className="lg:col-span-7 space-y-4 xl:space-y-6">
             <Card className="p-6 md:p-8 xl:p-10 border-none shadow-premium rounded-[2.5rem] bg-card">
               <Tabs defaultValue="company" className="w-full">
-                <div className="flex justify-center mb-8">
-                  <TabsList className="bg-primary dark:bg-slate-900/80 p-1.5 rounded-[1.5rem] flex h-auto overflow-x-auto scrollbar-hide shadow-lg shadow-primary/20 dark:shadow-black/20 border dark:border-white/5">
+                <div className="w-full overflow-x-auto scrollbar-hide mb-8 pb-1.5 flex justify-start md:justify-center">
+                  <TabsList className="bg-primary dark:bg-slate-900/80 p-1.5 rounded-[1.5rem] flex h-auto shadow-lg shadow-primary/20 dark:shadow-black/20 border dark:border-white/5 shrink-0 flex-nowrap">
                     {['company', 'client', 'items', 'payment', 'advanced'].map(t => (
                       <TabsTrigger 
                         key={t} 
                         value={t} 
-                        className="rounded-xl px-5 py-2.5 capitalize font-black text-[10px] tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary data-[state=active]:text-primary dark:data-[state=active]:text-white text-white/70 dark:text-white/40 hover:text-white dark:hover:text-white transition-all"
+                        className="rounded-xl px-5 py-2.5 capitalize font-black text-[10px] tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary data-[state=active]:text-primary dark:data-[state=active]:text-white text-white/70 dark:text-white/40 hover:text-white dark:hover:text-white transition-all shrink-0"
                       >
                         {t}
                       </TabsTrigger>
@@ -861,7 +861,7 @@ export function InvoiceGenerator() {
           </div>
 
           {/* Right Sidebar - Preview & Export */}
-          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24 mt-8 lg:mt-0 pt-6 lg:pt-0 border-t border-dashed border-border/40 lg:border-t-0">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-primary" />

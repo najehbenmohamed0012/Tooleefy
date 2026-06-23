@@ -508,25 +508,25 @@ export function AdminBlogManager() {
           >
             {/* Main Form Fields Container (Left 2 columns) */}
             <div className="lg:col-span-2 space-y-8">
-              <Card className="p-8 md:p-11 border-none shadow-premium bg-card rounded-[2.5rem]">
-                <div className="flex items-center justify-between border-b border-border/40 pb-6 mb-8">
-                  <div className="flex gap-4">
+              <Card className="p-4 sm:p-8 md:p-11 border-none shadow-premium bg-card rounded-[1.5rem] sm:rounded-[2.5rem]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/40 pb-6 mb-8 gap-4">
+                  <div className="flex flex-col min-[420px]:flex-row gap-3 w-full sm:w-auto">
                     <Button 
                       variant={previewTab === "write" ? "default" : "ghost"}
                       onClick={() => setPreviewTab("write")}
-                      className="rounded-xl h-11 font-black text-xs px-6 uppercase tracking-wider"
+                      className="w-full min-[420px]:w-auto rounded-xl h-11 font-black text-xs px-4 sm:px-6 uppercase tracking-wider shrink-0"
                     >
-                      <FileEdit className="w-4 h-4 mr-1.5" /> Editor Studio
+                      <FileEdit className="w-4 h-4 mr-1.5 shrink-0" /> Editor Studio
                     </Button>
                     <Button 
                       variant={previewTab === "preview" ? "default" : "ghost"}
                       onClick={() => setPreviewTab("preview")}
-                      className="rounded-xl h-11 font-black text-xs px-6 uppercase tracking-wider bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20"
+                      className="w-full min-[420px]:w-auto rounded-xl h-11 font-black text-xs px-4 sm:px-6 uppercase tracking-wider bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 shrink-0"
                     >
-                      <Sparkles className="w-4 h-4 mr-1.5 text-indigo-500" /> Dynamic Live Preview
+                      <Sparkles className="w-4 h-4 mr-1.5 text-indigo-500 shrink-0" /> Dynamic Live Preview
                     </Button>
                   </div>
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest hidden sm:block">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest hidden lg:block">
                     {editorMode === "new" ? "Interactive Formulation State" : "Content Alteration Mode"}
                   </span>
                 </div>
@@ -798,20 +798,20 @@ Tooleefy clients read this prose dynamically inside real browser isolated enviro
                     </div>
 
                     {/* Submit layout buttons */}
-                    <div className="flex justify-end gap-3 pt-6 border-t border-border/40">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-border/40">
                       <Button 
                         type="button" 
                         onClick={() => setEditorMode("list")}
                         variant="outline"
-                        className="h-14 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider"
+                        className="w-full sm:w-auto h-14 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider"
                       >
                         Cancel change
                       </Button>
                       <Button 
                         type="submit" 
-                        className="h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-secondary transition-colors"
+                        className="w-full sm:w-auto h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-secondary transition-colors"
                       >
-                        <Save className="w-4 h-4" /> Save Post Output
+                        <Save className="w-4 h-4 shrink-0" /> Save Post Output
                       </Button>
                     </div>
                   </form>
