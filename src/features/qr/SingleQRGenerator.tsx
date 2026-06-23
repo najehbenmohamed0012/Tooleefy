@@ -390,19 +390,21 @@ export function SingleQRGenerator() {
                 <h2 className="text-xl font-black tracking-tight uppercase">Content Data</h2>
               </div>
 
-              <Tabs value={type} onValueChange={setType} className="space-y-8">
-                <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 bg-muted/20 p-2 rounded-[2rem] !h-auto group-data-horizontal/tabs:!h-auto w-full border border-border/50">
-                  {categories.map(t => (
-                    <TabsTrigger 
-                      key={t.id} 
-                      value={t.id} 
-                      className="flex items-center justify-start rounded-xl px-3.5 py-3 font-bold text-xs gap-2.5 transition-all duration-100 text-muted-foreground hover:text-foreground hover:bg-slate-50/50 dark:hover:bg-slate-800/60 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 border-b-4 hover:border-b-4 active:border-b-2 active:translate-y-[2px] w-full !h-auto select-none data-[state=active]:bg-emerald-50/70 dark:data-[state=active]:bg-emerald-950/25 data-[state=active]:text-emerald-950 dark:data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-600/50 data-[state=active]:border-b-[5px] data-[state=active]:shadow-sm"
-                    >
-                      <t.icon className="w-4 h-4 shrink-0 text-muted-foreground group-data-[state=active]:text-primary" />
-                      <span className="truncate">{t.label}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+              <Tabs value={type} onValueChange={setType} className="space-y-6 flex flex-col w-full">
+                <div className="w-full overflow-x-auto scrollbar-hide pb-1">
+                  <TabsList className="bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-1.5 rounded-2xl flex flex-row items-center h-auto shadow-sm w-max min-w-full shrink-0 flex-nowrap justify-start">
+                    {categories.map(t => (
+                      <TabsTrigger 
+                        key={t.id} 
+                        value={t.id} 
+                        className="flex items-center justify-start rounded-xl px-4 py-2.5 font-bold text-xs gap-2 transition-all duration-100 text-muted-foreground hover:text-foreground hover:bg-slate-50/50 dark:hover:bg-slate-800/60 bg-transparent shrink-0 w-auto !h-auto select-none data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm border-none"
+                      >
+                        <t.icon className="w-4 h-4 shrink-0 text-muted-foreground data-[state=active]:text-emerald-500" />
+                        <span>{t.label}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
                 <div className="pt-2">
                   <TabsContent value="url" className="mt-0">
@@ -420,7 +422,7 @@ export function SingleQRGenerator() {
                   </TabsContent>
 
                   <TabsContent value="mail" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Recipient Email</Label>
                         <Input placeholder="hello@example.com" value={email.to} onChange={e => setEmail({...email, to: e.target.value})} className="h-12 rounded-xl" />
@@ -465,7 +467,7 @@ export function SingleQRGenerator() {
                      </div>
                   </TabsContent>
 
-                  <TabsContent value="wifi" className="mt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TabsContent value="wifi" className="mt-0 grid grid-cols-1 gap-4">
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Network SSID</Label>
                       <Input value={wifi.ssid} onChange={e => setWifi({...wifi, ssid: e.target.value})} className="h-12 rounded-xl" />
@@ -481,19 +483,17 @@ export function SingleQRGenerator() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="md:col-span-2 space-y-2">
+                    <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Password</Label>
                       <Input type="password" value={wifi.password} onChange={e => setWifi({...wifi, password: e.target.value})} className="h-12 rounded-xl" />
                     </div>
                   </TabsContent>
 
-                  {/* ... other TabsContent ... */}
-                  <TabsContent value="vcard" className="mt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TabsContent value="vcard" className="mt-0 grid grid-cols-1 gap-4">
                      <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Full Name</Label>
                         <Input value={vcard.name} onChange={e => setVcard({...vcard, name: e.target.value})} className="h-12 rounded-xl" />
                      </div>
-                     {/* Simplified for brevity while refactoring */}
                      <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Organization</Label>
                         <Input value={vcard.org} onChange={e => setVcard({...vcard, org: e.target.value})} className="h-12 rounded-xl" />
@@ -508,13 +508,13 @@ export function SingleQRGenerator() {
                      </div>
                   </TabsContent>
                   
-                  <TabsContent value="location" className="mt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TabsContent value="location" className="mt-0 grid grid-cols-1 gap-4">
                      <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Latitude</Label><Input placeholder="40.7128" value={location.lat} onChange={e => setLocation({...location, lat: e.target.value})} className="h-12 rounded-xl" /></div>
                      <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Longitude</Label><Input placeholder="-74.0060" value={location.lng} onChange={e => setLocation({...location, lng: e.target.value})} className="h-12 rounded-xl" /></div>
                   </TabsContent>
 
                   <TabsContent value="crypto" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Asset</Label><Select value={crypto.coin} onValueChange={v => setCrypto({...crypto, coin: v})}><SelectTrigger className="h-12 rounded-xl font-bold border-2 border-slate-200 dark:border-slate-800 border-b-4 hover:border-b-4 active:border-b-2 active:translate-y-[2px] transition-all bg-white dark:bg-slate-900 shadow-sm text-left"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="bitcoin">Bitcoin</SelectItem><SelectItem value="ethereum">Ethereum</SelectItem></SelectContent></Select></div>
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Amount</Label><Input type="number" step="0.0001" placeholder="0.0" value={crypto.amount} onChange={e => setCrypto({...crypto, amount: e.target.value})} className="h-12 rounded-xl" /></div>
                     </div>
@@ -522,21 +522,21 @@ export function SingleQRGenerator() {
                   </TabsContent>
 
                   <TabsContent value="social" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Platform</Label><Select value={social.platform} onValueChange={v => setSocial({...social, platform: v})}><SelectTrigger className="h-12 rounded-xl font-bold border-2 border-slate-200 dark:border-slate-800 border-b-4 hover:border-b-4 active:border-b-2 active:translate-y-[2px] transition-all bg-white dark:bg-slate-900 shadow-sm text-left"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="instagram">Instagram</SelectItem><SelectItem value="twitter">Twitter</SelectItem></SelectContent></Select></div>
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Handle</Label><Input placeholder="@username" value={social.username} onChange={e => setSocial({...social, username: e.target.value})} className="h-12 rounded-xl" /></div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="meeting" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Platform</Label><Select value={meeting.platform} onValueChange={v => setMeeting({...meeting, platform: v})}><SelectTrigger className="h-12 rounded-xl font-bold border-2 border-slate-200 dark:border-slate-800 border-b-4 hover:border-b-4 active:border-b-2 active:translate-y-[2px] transition-all bg-white dark:bg-slate-900 shadow-sm text-left"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="zoom">Zoom</SelectItem><SelectItem value="teams">Teams</SelectItem></SelectContent></Select></div>
                       <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">ID</Label><Input value={meeting.id} onChange={e => setMeeting({...meeting, id: e.target.value})} className="h-12 rounded-xl" /></div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="payment" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Platform</Label>
                         <Select value={payment.platform} onValueChange={v => setPayment({...payment, platform: v})}>
@@ -552,7 +552,7 @@ export function SingleQRGenerator() {
                         <Input placeholder={payment.platform === "paypal" ? "paypal@example.com" : "username"} value={payment.identifier} onChange={e => setPayment({...payment, identifier: e.target.value})} className="h-12 rounded-xl" />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Amount</Label>
                         <Input type="number" placeholder="0.00" value={payment.amount} onChange={e => setPayment({...payment, amount: e.target.value})} className="h-12 rounded-xl" />
@@ -572,7 +572,7 @@ export function SingleQRGenerator() {
                   </TabsContent>
 
                   <TabsContent value="review" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Platform</Label>
                         <Select value={review.platform} onValueChange={v => setReview({...review, platform: v})}>
@@ -597,7 +597,7 @@ export function SingleQRGenerator() {
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Event Title</Label>
                       <Input placeholder="Product Launch Presentation" value={event.title} onChange={e => setEvent({...event, title: e.target.value})} className="h-12 rounded-xl" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Start Date & Time</Label>
                         <Input type="datetime-local" value={event.start} onChange={e => setEvent({...event, start: e.target.value})} className="h-12 rounded-xl" />
@@ -618,7 +618,7 @@ export function SingleQRGenerator() {
                   </TabsContent>
 
                   <TabsContent value="appstore" className="mt-0 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Apple App Store URL</Label>
                         <Input placeholder="https://apps.apple.com/..." value={appStore.apple} onChange={e => setAppStore({...appStore, apple: e.target.value})} className="h-12 rounded-xl" />

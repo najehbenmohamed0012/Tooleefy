@@ -629,15 +629,15 @@ export function InvoiceGenerator() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-4 xl:gap-6 items-start">
           {/* Main Content Area */}
           <div className="lg:col-span-7 space-y-4 xl:space-y-6">
-            <Card className="p-6 md:p-8 xl:p-10 border-none shadow-premium rounded-[2.5rem] bg-card">
-              <Tabs defaultValue="company" className="w-full">
-                <div className="w-full overflow-x-auto scrollbar-hide mb-8 pb-1.5 flex justify-start md:justify-center">
-                  <TabsList className="bg-primary dark:bg-slate-900/80 p-1.5 rounded-[1.5rem] flex h-auto shadow-lg shadow-primary/20 dark:shadow-black/20 border dark:border-white/5 shrink-0 flex-nowrap">
+            <Card className="p-4 xs:p-6 md:p-8 xl:p-10 border border-border/10 shadow-premium rounded-3xl md:rounded-[2.5rem] bg-card">
+              <Tabs defaultValue="company" className="w-full flex flex-col">
+                <div className="w-full mb-6">
+                  <TabsList className="w-full md:w-auto bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-1.5 rounded-2xl flex flex-row items-center h-auto shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide flex-nowrap justify-start md:justify-center">
                     {['company', 'client', 'items', 'payment', 'advanced'].map(t => (
                       <TabsTrigger 
                         key={t} 
                         value={t} 
-                        className="rounded-xl px-5 py-2.5 capitalize font-black text-[10px] tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary data-[state=active]:text-primary dark:data-[state=active]:text-white text-white/70 dark:text-white/40 hover:text-white dark:hover:text-white transition-all shrink-0"
+                        className="rounded-xl px-5 py-2.5 capitalize font-bold text-xs tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary dark:data-[state=active]:text-white text-muted-foreground hover:text-foreground dark:text-zinc-400 dark:hover:text-zinc-200 transition-all shrink-0 data-[state=active]:shadow-sm border-none"
                       >
                         {t}
                       </TabsTrigger>
@@ -650,102 +650,136 @@ export function InvoiceGenerator() {
                     <div className="space-y-4">
                       <div 
                         onClick={() => logoInputRef.current?.click()}
-                        className={`w-32 h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden ${logo ? 'border-none' : 'border-border hover:border-primary/50 bg-muted/30'}`}
+                        className={`w-32 h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden ${logo ? 'border-none' : 'border-border hover:border-primary/50 bg-background'}`}
                       >
-                        {logo ? <img src={logo} className="w-full h-full object-cover" /> : <><ImageIcon className="w-6 h-6 mb-1" /><span className="text-[9px] font-black uppercase">Logo</span></>}
+                        {logo ? <img src={logo} className="w-full h-full object-cover" /> : <><ImageIcon className="w-6 h-6 mb-1 text-muted-foreground" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Logo</span></>}
                       </div>
                       <input type="file" ref={logoInputRef} onChange={e => handleImageUpload(e, setLogo)} className="hidden" accept="image/*" />
                     </div>
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest">Business Name</Label>
-                        <Input value={businessName} onChange={e => setBusinessName(e.target.value)} className="h-10 text-lg font-black bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                        <Label className="text-xs font-semibold text-muted-foreground ml-1">Business Name</Label>
+                        <Input value={businessName} onChange={e => setBusinessName(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase tracking-widest">Tax ID</Label>
-                        <Input value={businessTaxId} onChange={e => setBusinessTaxId(e.target.value)} className="h-10 text-xs font-bold bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                        <Label className="text-xs font-semibold text-muted-foreground ml-1">Tax ID</Label>
+                        <Input value={businessTaxId} onChange={e => setBusinessTaxId(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Email</Label>
-                      <Input value={businessEmail} onChange={e => setBusinessEmail(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Email</Label>
+                      <Input value={businessEmail} onChange={e => setBusinessEmail(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Phone</Label>
-                      <Input value={businessPhone} onChange={e => setBusinessPhone(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Phone</Label>
+                      <Input value={businessPhone} onChange={e => setBusinessPhone(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest">Address</Label>
-                    <textarea value={businessAddress} onChange={e => setBusinessAddress(e.target.value)} className="w-full h-20 p-4 text-xs rounded-xl bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all outline-none resize-none" />
+                    <Label className="text-xs font-semibold text-muted-foreground ml-1">Address</Label>
+                    <textarea value={businessAddress} onChange={e => setBusinessAddress(e.target.value)} className="w-full h-24 p-3.5 text-sm font-medium rounded-xl bg-background border border-border focus:border-primary/50 transition-all outline-none resize-none shadow-sm" />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="client" className="space-y-6 mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Client Name</Label>
-                      <Input value={clientName} onChange={e => setClientName(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Client Name</Label>
+                      <Input value={clientName} onChange={e => setClientName(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Client Tax ID</Label>
-                      <Input value={clientTaxId} onChange={e => setClientTaxId(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" />
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Client Tax ID</Label>
+                      <Input value={clientTaxId} onChange={e => setClientTaxId(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest">Billing Address</Label>
-                    <textarea value={clientAddress} onChange={e => setClientAddress(e.target.value)} className="w-full h-20 p-4 text-xs rounded-xl bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all outline-none resize-none" />
+                    <Label className="text-xs font-semibold text-muted-foreground ml-1">Billing Address</Label>
+                    <textarea value={clientAddress} onChange={e => setClientAddress(e.target.value)} className="w-full h-24 p-3.5 text-sm font-medium rounded-xl bg-background border border-border focus:border-primary/50 transition-all outline-none resize-none shadow-sm" />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 py-1">
                     <Switch checked={showShipping} onCheckedChange={setShowShipping} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Different Shipping Address</span>
+                    <span className="text-xs font-semibold text-muted-foreground">Different Shipping Address</span>
                   </div>
                   {showShipping && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                      <textarea value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} className="w-full h-20 p-4 text-xs rounded-xl bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all outline-none resize-none mt-2" placeholder="Shipping destination..." />
+                      <textarea value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} className="w-full h-24 p-3.5 text-sm font-medium rounded-xl bg-background border border-border focus:border-primary/50 transition-all outline-none resize-none mt-2 shadow-sm" placeholder="Shipping destination..." />
                     </motion.div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="items" className="space-y-4 mt-0">
-                  <div className="grid grid-cols-12 gap-4 pb-2 border-b text-[10px] font-black uppercase tracking-widest opacity-50">
-                    <div className="col-span-6">Description</div>
-                    <div className="col-span-2 text-center">Qty</div>
-                    <div className="col-span-3 text-right">Rate</div>
-                    <div className="col-span-1"></div>
+                  <div className="grid grid-cols-12 gap-4 pb-2 border-b text-xs font-semibold text-muted-foreground opacity-70">
+                    <div className="col-span-12 md:col-span-6">Description</div>
+                    <div className="hidden md:block md:col-span-2 text-center">Qty</div>
+                    <div className="hidden md:block md:col-span-3 text-right">Rate</div>
+                    <div className="hidden md:block md:col-span-1"></div>
                   </div>
                   <AnimatePresence mode="popLayout">
                     {items.map(item => (
-                      <motion.div layout key={item.id} className="grid grid-cols-12 gap-2 md:gap-4 items-center">
-                        <div className="col-span-12 md:col-span-6"><Input placeholder="Item description" value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
-                        <div className="col-span-5 md:col-span-2"><Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value))} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all text-center" /></div>
-                        <div className="col-span-5 md:col-span-3"><Input type="number" placeholder="Rate" value={item.rate} onChange={e => updateItem(item.id, 'rate', parseFloat(e.target.value))} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all text-right" /></div>
-                        <div className="col-span-2 md:col-span-1 flex justify-end"><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="h-8 w-8 text-muted-foreground hover:text-error"><Trash2 className="h-4 w-4" /></Button></div>
+                      <motion.div layout key={item.id} className="grid grid-cols-12 gap-3 items-center">
+                        <div className="col-span-12 md:col-span-6">
+                          <Label className="text-[10px] font-semibold text-muted-foreground md:hidden ml-1 mb-1 block">Description</Label>
+                          <Input placeholder="Item description" value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                        </div>
+                        <div className="col-span-5 md:col-span-2">
+                          <Label className="text-[10px] font-semibold text-muted-foreground md:hidden ml-1 mb-1 block">Qty</Label>
+                          <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value))} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all text-center shadow-sm" />
+                        </div>
+                        <div className="col-span-5 md:col-span-3">
+                          <Label className="text-[10px] font-semibold text-muted-foreground md:hidden ml-1 mb-1 block">Rate</Label>
+                          <Input type="number" placeholder="Rate" value={item.rate} onChange={e => updateItem(item.id, 'rate', parseFloat(e.target.value))} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all text-right shadow-sm" />
+                        </div>
+                        <div className="col-span-2 md:col-span-1 flex justify-end">
+                          <div className="md:hidden h-11 flex items-end pb-1.5">
+                            <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="h-9 w-9 text-muted-foreground hover:text-error hover:bg-rose-50 dark:hover:bg-rose-950/20"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                          <div className="hidden md:block">
+                            <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="h-9 w-9 text-muted-foreground hover:text-error hover:bg-rose-50 dark:hover:bg-rose-950/20"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
-                  <Button onClick={addItem} variant="outline" className="w-full h-10 border-dashed text-[10px] font-black uppercase tracking-widest"><Plus className="h-3 w-3 mr-2" /> Add Item</Button>
+                  <Button onClick={addItem} variant="outline" className="w-full h-11 border-dashed text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-muted transition-colors"><Plus className="h-4 w-4 mr-2" /> Add Item</Button>
                 </TabsContent>
 
                 <TabsContent value="payment" className="space-y-4 mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">Bank Name</Label><Input value={bankName} onChange={e => setBankName(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">Account Holder</Label><Input value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">Account Number</Label><Input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">Payment Link (Stripe/PayPal)</Label><Input value={paymentLink} onChange={e => setPaymentLink(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" placeholder="https://..." /></div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Bank Name</Label>
+                      <Input value={bankName} onChange={e => setBankName(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Account Holder</Label>
+                      <Input value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Account Number</Label>
+                      <Input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Payment Link (Stripe/PayPal)</Label>
+                      <Input value={paymentLink} onChange={e => setPaymentLink(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" placeholder="https://..." />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">IBAN</Label><Input value={iban} onChange={e => setIban(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest">SWIFT / BIC</Label><Input value={swift} onChange={e => setSwift(e.target.value)} className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all" /></div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">IBAN</Label>
+                      <Input value={iban} onChange={e => setIban(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">SWIFT / BIC</Label>
+                      <Input value={swift} onChange={e => setSwift(e.target.value)} className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5" />
+                    </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="advanced" className="space-y-6 mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest block">Invoice Brand Color</Label>
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1 block">Invoice Brand Color</Label>
                       <div className="flex flex-wrap gap-2">
                         {['#000000', '#2563eb', '#16a34a', '#dc2626', '#7c3aed', '#ea580c'].map(c => (
                           <button 
@@ -767,11 +801,11 @@ export function InvoiceGenerator() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Custom Tax Label</Label>
+                      <Label className="text-xs font-semibold text-muted-foreground ml-1">Custom Tax Label</Label>
                       <Input 
                         value={taxLabel} 
                         onChange={e => setTaxLabel(e.target.value)} 
-                        className="h-10 text-xs bg-muted/30 border border-border/50 focus:border-primary/50 focus:bg-background transition-all"
+                        className="h-11 text-sm font-medium bg-background border border-border focus:border-primary/50 rounded-xl transition-all shadow-sm px-3.5"
                         placeholder="e.g. VAT, GST, Sales Tax"
                       />
                     </div>
@@ -781,22 +815,22 @@ export function InvoiceGenerator() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-4 flex flex-col items-center">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">QR Code</Label>
-                      <div onClick={() => qrInputRef.current?.click()} className={`w-24 h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${qrCode ? 'border-none' : 'border-border hover:border-primary/50 bg-muted/30 group'}`}>
+                      <Label className="text-xs font-semibold text-muted-foreground">QR Code</Label>
+                      <div onClick={() => qrInputRef.current?.click()} className={`w-24 h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${qrCode ? 'border-none' : 'border-border hover:border-primary/50 bg-background group'}`}>
                         {qrCode ? <img src={qrCode} className="w-full h-full object-contain" /> : <QrCode className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />}
                       </div>
                       <input type="file" ref={qrInputRef} onChange={e => handleImageUpload(e, setQrCode)} className="hidden" accept="image/*" />
                     </div>
                     <div className="space-y-4 flex flex-col items-center">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Barcode</Label>
-                      <div onClick={() => barcodeInputRef.current?.click()} className={`w-36 h-20 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${barcode ? 'border-none' : 'border-border hover:border-primary/50 bg-muted/30 group'}`}>
+                      <Label className="text-xs font-semibold text-muted-foreground">Barcode</Label>
+                      <div onClick={() => barcodeInputRef.current?.click()} className={`w-36 h-20 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${barcode ? 'border-none' : 'border-border hover:border-primary/50 bg-background group'}`}>
                         {barcode ? <img src={barcode} className="w-full h-full object-contain" /> : <Barcode className="h-8 w-16 text-muted-foreground group-hover:text-primary transition-colors" />}
                       </div>
                       <input type="file" ref={barcodeInputRef} onChange={e => handleImageUpload(e, setBarcode)} className="hidden" accept="image/*" />
                     </div>
                     <div className="space-y-4 flex flex-col items-center">
-                      <Label className="text-[10px] font-black uppercase tracking-widest">Signature</Label>
-                      <div onClick={() => signatureInputRef.current?.click()} className={`w-24 h-16 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${signature ? 'border-none' : 'bg-muted/30'}`}>
+                      <Label className="text-xs font-semibold text-muted-foreground">Signature</Label>
+                      <div onClick={() => signatureInputRef.current?.click()} className={`w-24 h-16 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${signature ? 'border-none' : 'bg-background'}`}>
                         {signature ? <img src={signature} className="w-full h-full object-contain" /> : <Signature className="h-6 w-6 text-muted-foreground" />}
                       </div>
                       <input type="file" ref={signatureInputRef} onChange={e => handleImageUpload(e, setSignature)} className="hidden" accept="image/*" />

@@ -19,8 +19,11 @@ async function startServer() {
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
   const PORT = isSocket ? rawPort : (Number(rawPort) || 3000);
 
-  // Modern compression middleware to shrink assets payload sizes and raise PageSpeed scores
-  app.use(compression());
+  // Modern compression middleware to shrink assets payload sizes and raise PageSpeed scores (Level 9 compression, threshold of 1024 bytes)
+  app.use(compression({
+    level: 9,
+    threshold: 1024
+  }));
   app.use(express.json());
 
   // API Routes
