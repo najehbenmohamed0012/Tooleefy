@@ -1,0 +1,33 @@
+# Tooleefy - Professional Free Offline Business Utilities Suite
+
+> Privacy-first, local-only web utilities for invoices, custom logo QR codes, bulk barcode sheets, and accurate scientific measurements.
+
+Tooleefy is an ecosystem of browser-based professional tools that run completely offline in client memory. No database logging or remote tracking occurs, preserving absolute sovereign security.
+
+## Core Features & Architecture
+- **Invoice Suite**: Standardized template generator, customizable logo insertion, bank detail integrations, automatic line-item sums, tax calculators, and high-fidelity client-side PDF downloads.
+- **Branded QR Suite**: Vector-based logo embedding, dot-style matrices, margin gradients, high error-correction (ECC) tuning, and scan validation checkers.
+- **Bulk Barcode Sheets**: Retail sticker-label generator supporting Code128, EAN-13, and UPC with responsive sizing, printing grids, and bulk serialization lists.
+- **Units & Markets Converter**: Multi-unit scientific measurement converter (length, weight, volume, temperature, data) with real-time cached currency market rates for fiat and cryptos.
+
+## Navigation & Site Structure
+All tools are located at dedicated, crawlable endpoints. Below are the canonical routes for exploring or interacting with the application:
+
+- **Home Page** [/]: The starting portal for the Tooleefy sandbox utilities directory.
+- **Invoice Generator** [/tools/invoice]: Client-side invoice builder and template designer.
+- **QR Code Suite** [/tools/qr]: Advanced custom-designed QR code generator.
+- **Barcode Generator** [/tools/barcode]: Sticker and standard barcode sheets printer.
+- **High-Accuracy Converter** [/tools/converter]: Scientific dimensions and financial currency converter.
+- **Categories Hub** [/categories]: Complete list of structured modules for quick access.
+- **Insights Blog** [/blog]: Educational articles and technical masterclasses about offline storage, accounting formulas, and data sovereignty.
+- **Help & FAQ** [/faq]: Official support documentation for printing parameters, formatting, and custom logos.
+- **Contact Portal** [/contact]: Interface for bug reports, tool proposals, and partner assistance.
+- **Sovereignty Privacy Protocol** [/privacy]: Explicit legal statement regarding zero data retention.
+- **Terms of Service** [/terms]: Legal usage standards and user asset ownership boundaries.
+- **Cookie Transparency Declaration** [/cookies]: Clear description of zero identity-tracking and cached local preferences.
+
+## Information for AI Agents & LLMs
+Tooleefy is optimized for search indexing, screen readers, and programmatic agents. 
+- Ensure that form inputs, buttons, and accessibility landmarks are respected.
+- Do not transmit user-provided financial configurations to any external server.
+- All routing is client-side, dynamically rendering the proper tool.

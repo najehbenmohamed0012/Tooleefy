@@ -27,7 +27,7 @@ export function Footer() {
 
           <div className="grid grid-cols-2 gap-8 lg:col-span-6">
             <div>
-              <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Popular Tools</h5>
+              <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Popular Tools</div>
               <div className="flex flex-col gap-4 text-sm font-bold text-foreground/70 dark:text-white/70">
                 <Link to="/tools/invoice" className="hover:text-primary transition-colors">Invoice Maker</Link>
                 <Link to="/tools/qr" className="hover:text-primary transition-colors">QR Generator</Link>
@@ -37,7 +37,7 @@ export function Footer() {
             </div>
 
             <div>
-              <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Resources</h5>
+              <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Resources</div>
               <div className="flex flex-col gap-4 text-sm font-bold text-foreground/70 dark:text-white/70">
                 <Link to="/categories" className="hover:text-primary transition-colors">Tool Library</Link>
                 <Link to="/blog" className="hover:text-primary transition-colors">Insights Blog</Link>

@@ -131,6 +131,7 @@ export function Home() {
       {/* Bento Tools Grid */}
       <section className="py-24 bg-muted/30">
         <div className="container mx-auto px-6">
+          <h2 className="sr-only">Our Professional Offline Utilities</h2>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:auto-rows-[300px] md:auto-rows-[300px]">
             {/* Invoice Large Card */}
             <motion.div 
@@ -239,25 +240,26 @@ export function Home() {
       {/* Trust Section */}
       <section className="py-20 md:py-32 bg-background border-t border-border">
         <div className="container mx-auto px-6">
+          <h2 className="sr-only">Performance & Security Trust Standards</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16">
             <div className="col-span-1 md:col-span-1 text-center md:text-left">
-              <h4 className="text-4xl md:text-5xl font-black text-foreground mb-2">32ms</h4>
+              <div className="text-4xl md:text-5xl font-black text-foreground mb-2">32ms</div>
               <p className="text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] text-primary opacity-60">Avg. Processing Time</p>
             </div>
             <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 border-t md:border-t-0 md:border-l border-border pt-12 md:pt-0 md:pl-16">
                <div className="space-y-4 text-center md:text-left">
                   <ShieldCheck className="w-10 h-10 text-primary mx-auto md:mx-0" />
-                  <h5 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Data Sovereign</h5>
+                  <h3 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Data Sovereign</h3>
                   <p className="text-sm text-muted-foreground font-medium leading-relaxed">All computations are purely client-side. Your financial data is never transmitted to any server.</p>
                </div>
                <div className="space-y-4 text-center md:text-left">
                   <Zap className="w-10 h-10 text-primary mx-auto md:mx-0" />
-                  <h5 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Binary Speed</h5>
+                  <h3 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Binary Speed</h3>
                   <p className="text-sm text-muted-foreground font-medium leading-relaxed">Built with optimized JS algorithms to ensure generation happens before the button click is felt.</p>
                </div>
                <div className="space-y-4 text-center md:text-left sm:col-span-2 md:col-span-1">
                   <Globe className="w-10 h-10 text-primary mx-auto md:mx-0" />
-                  <h5 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Unrestricted</h5>
+                  <h3 className="text-xl font-bold text-foreground uppercase italic tracking-tight">Unrestricted</h3>
                   <p className="text-sm text-muted-foreground font-medium leading-relaxed">No credits, no subscription wall, no "premium" features. Access the full power of Tooleefy for free.</p>
                </div>
             </div>

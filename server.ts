@@ -31,6 +31,28 @@ async function startServer() {
     res.json({ status: "ok", platform: "Tooleefy" });
   });
 
+  // Serve static crawling files directly to bypass SPA fallback and guarantee correctness
+  const serveCrawlFile = (fileName: string, contentType: string) => {
+    return (req: express.Request, res: express.Response) => {
+      const pathsToTry = [
+        path.join(process.cwd(), "dist", fileName),
+        path.join(process.cwd(), "public", fileName),
+        path.join(process.cwd(), fileName)
+      ];
+      for (const p of pathsToTry) {
+        if (fs.existsSync(p)) {
+          res.setHeader("Content-Type", contentType);
+          return res.sendFile(p);
+        }
+      }
+      res.status(404).send(`${fileName} not found`);
+    };
+  };
+
+  app.get("/llms.txt", serveCrawlFile("llms.txt", "text/plain; charset=utf-8"));
+  app.get("/robots.txt", serveCrawlFile("robots.txt", "text/plain; charset=utf-8"));
+  app.get("/sitemap.xml", serveCrawlFile("sitemap.xml", "application/xml; charset=utf-8"));
+
   // Ideal dynamic Open Graph (OG) image generator
   app.get("/api/og-image", (req, res) => {
     const tool = req.query.tool as string || "home";
