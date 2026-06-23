@@ -311,7 +311,7 @@ export function Navbar() {
                   className="absolute right-0 mt-3 w-56 rounded-2xl p-2 border border-slate-200 dark:border-white/10 shadow-2xl bg-white dark:bg-slate-900 z-50 flex flex-col gap-1 origin-top-right animate-in fade-in zoom-in duration-100"
                 >
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest">
                       Navigation
                     </span>
                   </div>

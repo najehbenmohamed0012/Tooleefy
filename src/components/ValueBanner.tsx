@@ -64,7 +64,15 @@ export function ValueBanner() {
                   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&h=60&q=80"
                 ].map((url, i) => (
                   <div key={i} className="w-6 h-6 rounded-full border-2 border-background overflow-hidden bg-muted">
-                    <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img 
+                      src={url} 
+                      alt="Supporter avatar" 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer" 
+                      loading="lazy" 
+                      width="24" 
+                      height="24" 
+                    />
                   </div>
                 ))}
               </div>

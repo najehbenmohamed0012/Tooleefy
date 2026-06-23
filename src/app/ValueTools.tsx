@@ -197,7 +197,15 @@ export function ValueTools() {
                 "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&h=100&q=80"
               ].map((url, i) => (
                 <div key={i} className="inline-block h-10 w-10 rounded-full ring-4 ring-background overflow-hidden bg-muted">
-                  <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img 
+                    src={url} 
+                    alt="Supporter avatar" 
+                    className="w-full h-full object-cover" 
+                    referrerPolicy="no-referrer" 
+                    loading="lazy" 
+                    width="40" 
+                    height="40" 
+                  />
                 </div>
               ))}
               <div className="flex items-center justify-center h-10 w-10 rounded-full ring-4 ring-background bg-primary text-white text-[10px] font-black">

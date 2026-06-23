@@ -42,7 +42,15 @@ export const ValueBanner: React.FC = () => {
                     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&h=60&q=80"
                   ].map((url, i) => (
                     <div key={i} className="w-5 h-5 rounded-full border border-slate-700 overflow-hidden bg-slate-800">
-                      <img src={url} alt="Supporter avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img 
+                        src={url} 
+                        alt="Supporter avatar" 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer" 
+                        loading="lazy" 
+                        width="20" 
+                        height="20" 
+                      />
                     </div>
                   ))}
                 </div>
