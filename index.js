@@ -7,4 +7,4 @@
  */
 
 // Load the compiled high-efficiency production server bundle
-require("./dist/server.cjs");
+import "./dist/server.cjs";

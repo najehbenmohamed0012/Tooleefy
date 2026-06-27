@@ -19,6 +19,25 @@ async function startServer() {
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
   const PORT = isSocket ? rawPort : (Number(rawPort) || 3000);
 
+  // Disable X-Powered-By header to prevent tech stack fingerprinting
+  app.disable("x-powered-by");
+
+  // Custom high-security headers middleware to eliminate common hosting vulnerability warnings
+  app.use((req, res, next) => {
+    const isPreview = req.headers.host?.includes("run.app") || req.headers.host?.includes("localhost");
+    if (!isPreview) {
+      res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    }
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co https://api.google.com https://generativelanguage.googleapis.com; frame-src 'self';"
+    );
+    next();
+  });
+
   // Modern compression middleware to shrink assets payload sizes and raise PageSpeed scores (Level 9 compression, threshold of 1024 bytes)
   app.use(compression({
     level: 9,
