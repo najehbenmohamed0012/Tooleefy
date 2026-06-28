@@ -11,6 +11,14 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    esbuild: {
+      target: 'es2022',
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'es2022',
+      },
+    },
     build: {
       target: 'esnext',
       minify: 'esbuild',
