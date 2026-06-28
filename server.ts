@@ -29,7 +29,7 @@ async function startServer() {
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co https://api.google.com https://generativelanguage.googleapis.com; frame-src 'self';"
+      "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https:;"
     );
     next();
   });
@@ -49,10 +49,12 @@ async function startServer() {
   // Serve static crawling files directly to bypass SPA fallback and guarantee correctness
   const serveCrawlFile = (fileName: string, contentType: string) => {
     return (req: express.Request, res: express.Response) => {
+      const baseDir = typeof __dirname !== "undefined" ? path.join(__dirname, "..") : process.cwd();
+      const distDir = typeof __dirname !== "undefined" ? __dirname : path.join(process.cwd(), "dist");
       const pathsToTry = [
-        path.join(process.cwd(), "dist", fileName),
-        path.join(process.cwd(), "public", fileName),
-        path.join(process.cwd(), fileName)
+        path.join(distDir, fileName),
+        path.join(baseDir, "public", fileName),
+        path.join(baseDir, fileName)
       ];
       for (const p of pathsToTry) {
         if (fs.existsSync(p)) {
@@ -506,7 +508,10 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    // Robust directory resolution supporting different hosting environments and working directories
+    const distPath = typeof __dirname !== "undefined"
+      ? __dirname
+      : path.join(process.cwd(), "dist");
     
     // Serve production static assets with highly caching max-age headers
     app.use(express.static(distPath, {

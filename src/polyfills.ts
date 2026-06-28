@@ -4,6 +4,71 @@
  */
 
 if (typeof window !== 'undefined') {
+  // Polyfill for localStorage and sessionStorage under restricted iframe/sandbox environments
+  const testStorage = (type: 'localStorage' | 'sessionStorage') => {
+    try {
+      const storage = window[type];
+      if (!storage) return false;
+      const testKey = '__storage_test_key__';
+      storage.setItem(testKey, testKey);
+      storage.removeItem(testKey);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const createInMemoryStorage = () => {
+    let store: Record<string, string> = {};
+    return {
+      getItem(key: string): string | null {
+        return store[key] !== undefined ? store[key] : null;
+      },
+      setItem(key: string, value: string): void {
+        store[key] = String(value);
+      },
+      removeItem(key: string): void {
+        delete store[key];
+      },
+      clear(): void {
+        store = {};
+      },
+      key(index: number): string | null {
+        const keys = Object.keys(store);
+        return keys[index] !== undefined ? keys[index] : null;
+      },
+      get length(): number {
+        return Object.keys(store).length;
+      }
+    };
+  };
+
+  if (!testStorage('localStorage')) {
+    console.warn('localStorage is restricted or unavailable, enabling in-memory polyfill fallback');
+    try {
+      Object.defineProperty(window, 'localStorage', {
+        value: createInMemoryStorage(),
+        writable: true,
+        configurable: true
+      });
+    } catch (e) {
+      console.error('Failed to define localStorage fallback', e);
+    }
+  }
+
+  if (!testStorage('sessionStorage')) {
+    console.warn('sessionStorage is restricted or unavailable, enabling in-memory polyfill fallback');
+    try {
+      Object.defineProperty(window, 'sessionStorage', {
+        value: createInMemoryStorage(),
+        writable: true,
+        configurable: true
+      });
+    } catch (e) {
+      console.error('Failed to define sessionStorage fallback', e);
+    }
+  }
+
   const originalMatchMedia = window.matchMedia;
 
   window.matchMedia = function(query: string): MediaQueryList {
