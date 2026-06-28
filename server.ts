@@ -23,17 +23,21 @@ async function startServer() {
 
   // Custom high-security headers middleware to eliminate common hosting vulnerability warnings
   app.use((req, res, next) => {
-    const isPreview = req.headers.host?.includes("run.app") || req.headers.host?.includes("localhost");
+    const isPreview = req.headers.host?.includes("run.app") || req.headers.host?.includes("localhost") || req.headers.host?.includes("3000");
     if (!isPreview) {
       res.setHeader("X-Frame-Options", "SAMEORIGIN");
     }
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("X-XSS-Protection", "1; mode=block");
-    res.setHeader(
-      "Content-Security-Policy",
-      "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https:;"
-    );
+    
+    // Disable Content-Security-Policy in development and preview modes to prevent Vite HMR, WebSocket, and inline script blocking
+    if (process.env.NODE_ENV === "production" && !isPreview) {
+      res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https:;"
+      );
+    }
     next();
   });
 
