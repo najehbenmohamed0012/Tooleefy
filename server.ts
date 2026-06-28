@@ -30,14 +30,6 @@ async function startServer() {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("X-XSS-Protection", "1; mode=block");
-    
-    // Disable Content-Security-Policy in development and preview modes to prevent Vite HMR, WebSocket, and inline script blocking
-    if (process.env.NODE_ENV === "production" && !isPreview) {
-      res.setHeader(
-        "Content-Security-Policy",
-        "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https:;"
-      );
-    }
     next();
   });
 
@@ -507,19 +499,25 @@ async function startServer() {
     return html;
   }
 
+  // Robust directory resolution supporting different hosting environments and working directories
+  // If __dirname is inside the dist folder (production bundle), we use it. Otherwise, we fallback to path.join(process.cwd(), "dist")
+  const distPath = typeof __dirname !== "undefined" && (__dirname.endsWith("dist") || __dirname.includes("/dist/") || __dirname.includes("\\dist"))
+    ? __dirname
+    : path.join(process.cwd(), "dist");
+  
+  // Auto-detect production mode based on whether we are running the compiled production bundle or NODE_ENV is production
+  const isRunningBundle = (typeof __filename !== "undefined" && (__filename.endsWith(".cjs") || __filename.includes("dist"))) ||
+                          (typeof __dirname !== "undefined" && (__dirname.endsWith("dist") || __dirname.includes("/dist/") || __dirname.includes("\\dist")));
+  const isProduction = process.env.NODE_ENV === "production" || isRunningBundle;
+
   // Vite development vs production router configurations
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    // Robust directory resolution supporting different hosting environments and working directories
-    const distPath = typeof __dirname !== "undefined"
-      ? __dirname
-      : path.join(process.cwd(), "dist");
-    
     // Serve production static assets with highly caching max-age headers
     app.use(express.static(distPath, {
       maxAge: "1d",
@@ -544,7 +542,7 @@ async function startServer() {
           res.setHeader("Content-Type", "text/html");
           res.status(200).send(htmlOutput);
         } else {
-          res.status(404).send("Core assets are packaging. Please wait a instant.");
+          res.status(404).send("Core assets are packaging. Please wait an instant.");
         }
       } catch (err) {
         console.error("HTML SEO Injection Error fallback:", err);
