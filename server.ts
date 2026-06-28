@@ -1,16 +1,12 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { fileURLToPath } from "url";
 import compression from "compression";
 import fs from "fs";
 import dotenv from "dotenv";
 
 // Load environment variables early from .env or Hostinger platform variables
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
