@@ -45,6 +45,134 @@ async function startServer() {
     res.json({ status: "ok", platform: "Tooleefy" });
   });
 
+  // Real-time Global Analytics Storage & Engine
+  const ANALYTICS_FILE = path.join(process.cwd(), "analytics-data.json");
+
+  // Load from file or return default
+  function loadGlobalAnalytics() {
+    try {
+      if (fs.existsSync(ANALYTICS_FILE)) {
+        const content = fs.readFileSync(ANALYTICS_FILE, "utf-8");
+        const parsed = JSON.parse(content);
+        return {
+          pageVisits: {
+            invoice: Number(parsed.pageVisits?.invoice) || 0,
+            converter: Number(parsed.pageVisits?.converter) || 0,
+            qr: Number(parsed.pageVisits?.qr) || 0,
+            barcode: Number(parsed.pageVisits?.barcode) || 0,
+            blog: Number(parsed.pageVisits?.blog) || 0,
+            home: Number(parsed.pageVisits?.home) || 0,
+            about: Number(parsed.pageVisits?.about) || 0,
+          },
+          totalVisits: Number(parsed.totalVisits) || 0,
+          registeredVisits: Number(parsed.registeredVisits) || 0,
+          guestVisits: Number(parsed.guestVisits) || 0,
+          actionsCount: {
+            converter: Number(parsed.actionsCount?.converter) || 0,
+            invoice: Number(parsed.actionsCount?.invoice) || 0,
+            qr: Number(parsed.actionsCount?.qr) || 0,
+            barcode: Number(parsed.actionsCount?.barcode) || 0,
+          },
+          tickerEvents: Array.isArray(parsed.tickerEvents) ? parsed.tickerEvents : []
+        };
+      }
+    } catch (err) {
+      console.error("Failed to load global analytics from file:", err);
+    }
+    return {
+      pageVisits: { invoice: 0, converter: 0, qr: 0, barcode: 0, blog: 0, home: 0, about: 0 },
+      totalVisits: 0,
+      registeredVisits: 0,
+      guestVisits: 0,
+      actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
+      tickerEvents: []
+    };
+  }
+
+  let globalAnalytics = loadGlobalAnalytics();
+
+  function saveGlobalAnalytics() {
+    try {
+      fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(globalAnalytics, null, 2), "utf-8");
+    } catch (err) {
+      console.error("Failed to save global analytics to file:", err);
+    }
+  }
+
+  // Get current global analytics
+  app.get("/api/analytics", (req, res) => {
+    res.json(globalAnalytics);
+  });
+
+  // Reset analytics endpoint
+  app.post("/api/analytics/reset", (req, res) => {
+    globalAnalytics = {
+      pageVisits: { invoice: 0, converter: 0, qr: 0, barcode: 0, blog: 0, home: 0, about: 0 },
+      totalVisits: 0,
+      registeredVisits: 0,
+      guestVisits: 0,
+      actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
+      tickerEvents: []
+    };
+    saveGlobalAnalytics();
+    res.json({ success: true, analytics: globalAnalytics });
+  });
+
+  // Track page view or action globally
+  app.post("/api/analytics/track", (req, res) => {
+    try {
+      const { type, page, tool, details, isRegistered, userEmail } = req.body;
+
+      if (type === "view") {
+        const validPages = ["invoice", "converter", "qr", "barcode", "blog", "home", "about"];
+        const key = validPages.includes(page) ? page : "home";
+
+        globalAnalytics.pageVisits[key] = (globalAnalytics.pageVisits[key] || 0) + 1;
+        globalAnalytics.totalVisits += 1;
+
+        if (isRegistered) {
+          globalAnalytics.registeredVisits += 1;
+        } else {
+          globalAnalytics.guestVisits += 1;
+        }
+      } else if (type === "action") {
+        const validTools = ["converter", "invoice", "qr", "barcode"];
+        if (validTools.includes(tool)) {
+          globalAnalytics.actionsCount[tool] = (globalAnalytics.actionsCount[tool] || 0) + 1;
+        }
+
+        let userLabel = "Guest user";
+        if (isRegistered) {
+          if (userEmail && userEmail.includes("@")) {
+            const [left, right] = userEmail.split("@");
+            const maskedLeft = left.substring(0, Math.min(4, left.length)) + "***";
+            userLabel = `User (${maskedLeft})`;
+          } else if (userEmail) {
+            userLabel = `User (${userEmail})`;
+          } else {
+            userLabel = "Registered user";
+          }
+        }
+
+        const newEvent = {
+          id: `action_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          msg: `${userLabel} ${details}`,
+          time: "Just now",
+          type: tool || "general",
+          timestamp: Date.now()
+        };
+
+        globalAnalytics.tickerEvents = [newEvent, ...globalAnalytics.tickerEvents].slice(0, 50);
+      }
+
+      saveGlobalAnalytics();
+      res.json({ success: true, analytics: globalAnalytics });
+    } catch (err: any) {
+      console.error("Failed to track global analytics:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Serve static crawling files directly to bypass SPA fallback and guarantee correctness
   const serveCrawlFile = (fileName: string, contentType: string) => {
     return (req: express.Request, res: express.Response) => {

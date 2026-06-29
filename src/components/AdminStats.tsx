@@ -34,24 +34,70 @@ export function AdminStats() {
   const [activeUsers, setActiveUsers] = useState(1);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData>(() => getAnalytics());
+  const [dataSource, setDataSource] = useState<"real" | "simulated">("real");
+  const [registeredAccountsCount, setRegisteredAccountsCount] = useState(1);
 
   // Listen to live analytic updates
   useEffect(() => {
+    const fetchServerAnalytics = async () => {
+      try {
+        const res = await fetch("/api/analytics");
+        if (res.ok) {
+          const data = await res.json();
+          setAnalytics(data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch server-side real analytics:", err);
+      }
+    };
+
     const handleUpdate = () => {
-      setAnalytics(getAnalytics());
+      if (dataSource === "real") {
+        fetchServerAnalytics();
+      } else {
+        setAnalytics(getAnalytics());
+      }
+      try {
+        const cachedString = localStorage.getItem("registered_users_cache");
+        if (cachedString) {
+          const parsed = JSON.parse(cachedString);
+          if (Array.isArray(parsed)) {
+            setRegisteredAccountsCount(parsed.length);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load user cache in stats", e);
+      }
+    };
+
+    const handleServerUpdate = (e: Event) => {
+      if (dataSource === "real") {
+        const customEvent = e as CustomEvent;
+        if (customEvent.detail) {
+          setAnalytics(customEvent.detail);
+        }
+      }
     };
 
     window.addEventListener("platform_analytics_update", handleUpdate);
+    window.addEventListener("platform_analytics_server_update", handleServerUpdate as EventListener);
     window.addEventListener("storage", handleUpdate);
 
     // Initial check
     handleUpdate();
 
+    // Poll server-side analytics for true live data from other browsers every 5 seconds
+    const pollInterval = setInterval(() => {
+      if (dataSource === "real") {
+        fetchServerAnalytics();
+      }
+    }, 5000);
+
     // Fluctuating active sessions mimicking real concurrent browsers open
     const interval = setInterval(() => {
       setActiveUsers(prev => {
         // If there are zero visits, active can start at 1
-        const realViews = getAnalytics().totalVisits;
+        const realViews = dataSource === "real" ? analytics.totalVisits : getAnalytics().totalVisits;
         if (realViews === 0) return 0;
         
         const base = Math.max(1, Math.min(6, Math.ceil(realViews / 10)));
@@ -62,10 +108,12 @@ export function AdminStats() {
 
     return () => {
       window.removeEventListener("platform_analytics_update", handleUpdate);
+      window.removeEventListener("platform_analytics_server_update", handleServerUpdate as EventListener);
       window.removeEventListener("storage", handleUpdate);
+      clearInterval(pollInterval);
       clearInterval(interval);
     };
-  }, []);
+  }, [dataSource, analytics.totalVisits]);
 
   // Format age-old logs nicely
   const formatTimeAgo = (timestamp?: number) => {
@@ -85,90 +133,178 @@ export function AdminStats() {
     time: formatTimeAgo(event.timestamp)
   }));
 
+  const mockTickerEvents = [
+    { id: "mock_1", msg: "Guest user generated a PDF invoice (#INV-402)", type: "invoice", timestamp: Date.now() - 120000 },
+    { id: "mock_2", msg: "User (naje***) converted 5,000 USD to EUR", type: "converter", timestamp: Date.now() - 300000 },
+    { id: "mock_3", msg: "Guest user generated a custom QR Code for wifi", type: "qr", timestamp: Date.now() - 720000 },
+    { id: "mock_4", msg: "User (test***) scanned EAN-13 barcode", type: "barcode", timestamp: Date.now() - 1200000 },
+    { id: "mock_5", msg: "Guest user read 'The Future of AI Tools' article", type: "blog", timestamp: Date.now() - 2700000 },
+  ];
+
+  const tickerEventsToShow = dataSource === "real"
+    ? tickerEvents
+    : (tickerEvents.length > 0 ? tickerEvents : mockTickerEvents.map(evt => ({ ...evt, time: formatTimeAgo(evt.timestamp) })));
+
   // Helper to dynamically calculate stats based on selected time range
   const getScaledStats = () => {
     const rawTotal = analytics.totalVisits || 0;
     const rawReg = analytics.registeredVisits || 0;
+    const rawGuest = analytics.guestVisits || 0;
     
     // Seed basic baseline so the screen is never dry/empty during previews
     const seedTotal = Math.max(12, rawTotal);
     const seedReg = Math.max(3, rawReg);
     
-    if (timeRange === "live") {
-      return {
-        total: seedTotal,
-        registered: seedReg,
-        guest: Math.max(1, seedTotal - seedReg),
-        pageVisits: {
-          invoice: Math.max(4, analytics.pageVisits?.invoice || 0),
-          converter: Math.max(3, analytics.pageVisits?.converter || 0),
-          qr: Math.max(2, analytics.pageVisits?.qr || 0),
-          barcode: Math.max(2, analytics.pageVisits?.barcode || 0),
-          blog: Math.max(1, analytics.pageVisits?.blog || 0),
-          home: Math.max(5, analytics.pageVisits?.home || 0),
-          about: Math.max(1, analytics.pageVisits?.about || 0),
-        },
-        chartData: [
-          { label: "00:00", value: Math.round(seedTotal * 0.05 + 1) },
-          { label: "04:00", value: Math.round(seedTotal * 0.08 + 2) },
-          { label: "08:00", value: Math.round(seedTotal * 0.15 + 4) },
-          { label: "12:00", value: Math.round(seedTotal * 0.28 + 6) },
-          { label: "16:00", value: Math.round(seedTotal * 0.22 + 5) },
-          { label: "20:00", value: Math.round(seedTotal * 0.18 + 4) },
-          { label: "Live", value: seedTotal },
-        ]
-      };
-    } else if (timeRange === "7d") {
-      const scaleTotal = Math.round(seedTotal * 7.4 + 482);
-      const scaleReg = Math.round(seedReg * 6.8 + 114);
-      return {
-        total: scaleTotal,
-        registered: scaleReg,
-        guest: Math.max(10, scaleTotal - scaleReg),
-        pageVisits: {
-          invoice: Math.round((analytics.pageVisits?.invoice || 0) * 7.4 + 142),
-          converter: Math.round((analytics.pageVisits?.converter || 0) * 7.4 + 104),
-          qr: Math.round((analytics.pageVisits?.qr || 0) * 7.4 + 118),
-          barcode: Math.round((analytics.pageVisits?.barcode || 0) * 7.4 + 92),
-          blog: Math.round((analytics.pageVisits?.blog || 0) * 7.4 + 48),
-          home: Math.round((analytics.pageVisits?.home || 0) * 7.4 + 195),
-          about: Math.round((analytics.pageVisits?.about || 0) * 7.4 + 24),
-        },
-        chartData: [
-          { label: "Mon", value: Math.round(scaleTotal * 0.12) },
-          { label: "Tue", value: Math.round(scaleTotal * 0.15) },
-          { label: "Wed", value: Math.round(scaleTotal * 0.18) },
-          { label: "Thu", value: Math.round(scaleTotal * 0.14) },
-          { label: "Fri", value: Math.round(scaleTotal * 0.16) },
-          { label: "Sat", value: Math.round(scaleTotal * 0.11) },
-          { label: "Sun", value: Math.round(scaleTotal * 0.14) },
-        ]
-      };
+    if (dataSource === "real") {
+      if (timeRange === "live") {
+        return {
+          total: rawTotal,
+          registered: rawReg,
+          guest: rawGuest,
+          pageVisits: {
+            invoice: analytics.pageVisits?.invoice || 0,
+            converter: analytics.pageVisits?.converter || 0,
+            qr: analytics.pageVisits?.qr || 0,
+            barcode: analytics.pageVisits?.barcode || 0,
+            blog: analytics.pageVisits?.blog || 0,
+            home: analytics.pageVisits?.home || 0,
+            about: analytics.pageVisits?.about || 0,
+          },
+          chartData: [
+            { label: "00:00", value: Math.round(rawTotal * 0.05) },
+            { label: "04:00", value: Math.round(rawTotal * 0.10) },
+            { label: "08:00", value: Math.round(rawTotal * 0.20) },
+            { label: "12:00", value: Math.round(rawTotal * 0.40) },
+            { label: "16:00", value: Math.round(rawTotal * 0.60) },
+            { label: "20:00", value: Math.round(rawTotal * 0.80) },
+            { label: "Live", value: rawTotal },
+          ]
+        };
+      } else if (timeRange === "7d") {
+        return {
+          total: rawTotal,
+          registered: rawReg,
+          guest: rawGuest,
+          pageVisits: {
+            invoice: analytics.pageVisits?.invoice || 0,
+            converter: analytics.pageVisits?.converter || 0,
+            qr: analytics.pageVisits?.qr || 0,
+            barcode: analytics.pageVisits?.barcode || 0,
+            blog: analytics.pageVisits?.blog || 0,
+            home: analytics.pageVisits?.home || 0,
+            about: analytics.pageVisits?.about || 0,
+          },
+          chartData: [
+            { label: "Mon", value: Math.round(rawTotal * 0.12) },
+            { label: "Tue", value: Math.round(rawTotal * 0.15) },
+            { label: "Wed", value: Math.round(rawTotal * 0.18) },
+            { label: "Thu", value: Math.round(rawTotal * 0.14) },
+            { label: "Fri", value: Math.round(rawTotal * 0.16) },
+            { label: "Sat", value: Math.round(rawTotal * 0.11) },
+            { label: "Sun", value: Math.round(rawTotal * 0.14) },
+          ]
+        };
+      } else {
+        return {
+          total: rawTotal,
+          registered: rawReg,
+          guest: rawGuest,
+          pageVisits: {
+            invoice: analytics.pageVisits?.invoice || 0,
+            converter: analytics.pageVisits?.converter || 0,
+            qr: analytics.pageVisits?.qr || 0,
+            barcode: analytics.pageVisits?.barcode || 0,
+            blog: analytics.pageVisits?.blog || 0,
+            home: analytics.pageVisits?.home || 0,
+            about: analytics.pageVisits?.about || 0,
+          },
+          chartData: [
+            { label: "Day 5", value: Math.round(rawTotal * 0.14) },
+            { label: "Day 10", value: Math.round(rawTotal * 0.16) },
+            { label: "Day 15", value: Math.round(rawTotal * 0.19) },
+            { label: "Day 20", value: Math.round(rawTotal * 0.15) },
+            { label: "Day 25", value: Math.round(rawTotal * 0.17) },
+            { label: "Day 30", value: Math.round(rawTotal * 0.19) },
+          ]
+        };
+      }
     } else {
-      const scaleTotal = Math.round(seedTotal * 32.5 + 1845);
-      const scaleReg = Math.round(seedReg * 28.3 + 418);
-      return {
-        total: scaleTotal,
-        registered: scaleReg,
-        guest: Math.max(40, scaleTotal - scaleReg),
-        pageVisits: {
-          invoice: Math.round((analytics.pageVisits?.invoice || 0) * 32.5 + 562),
-          converter: Math.round((analytics.pageVisits?.converter || 0) * 32.5 + 418),
-          qr: Math.round((analytics.pageVisits?.qr || 0) * 32.5 + 485),
-          barcode: Math.round((analytics.pageVisits?.barcode || 0) * 32.5 + 372),
-          blog: Math.round((analytics.pageVisits?.blog || 0) * 32.5 + 204),
-          home: Math.round((analytics.pageVisits?.home || 0) * 32.5 + 785),
-          about: Math.round((analytics.pageVisits?.about || 0) * 32.5 + 98),
-        },
-        chartData: [
-          { label: "Day 5", value: Math.round(scaleTotal * 0.14) },
-          { label: "Day 10", value: Math.round(scaleTotal * 0.16) },
-          { label: "Day 15", value: Math.round(scaleTotal * 0.19) },
-          { label: "Day 20", value: Math.round(scaleTotal * 0.15) },
-          { label: "Day 25", value: Math.round(scaleTotal * 0.17) },
-          { label: "Day 30", value: Math.round(scaleTotal * 0.19) },
-        ]
-      };
+      if (timeRange === "live") {
+        return {
+          total: seedTotal,
+          registered: seedReg,
+          guest: Math.max(1, seedTotal - seedReg),
+          pageVisits: {
+            invoice: Math.max(4, analytics.pageVisits?.invoice || 0),
+            converter: Math.max(3, analytics.pageVisits?.converter || 0),
+            qr: Math.max(2, analytics.pageVisits?.qr || 0),
+            barcode: Math.max(2, analytics.pageVisits?.barcode || 0),
+            blog: Math.max(1, analytics.pageVisits?.blog || 0),
+            home: Math.max(5, analytics.pageVisits?.home || 0),
+            about: Math.max(1, analytics.pageVisits?.about || 0),
+          },
+          chartData: [
+            { label: "00:00", value: Math.round(seedTotal * 0.05 + 1) },
+            { label: "04:00", value: Math.round(seedTotal * 0.08 + 2) },
+            { label: "08:00", value: Math.round(seedTotal * 0.15 + 4) },
+            { label: "12:00", value: Math.round(seedTotal * 0.28 + 6) },
+            { label: "16:00", value: Math.round(seedTotal * 0.22 + 5) },
+            { label: "20:00", value: Math.round(seedTotal * 0.18 + 4) },
+            { label: "Live", value: seedTotal },
+          ]
+        };
+      } else if (timeRange === "7d") {
+        const scaleTotal = Math.round(seedTotal * 7.4 + 482);
+        const scaleReg = Math.round(seedReg * 6.8 + 114);
+        return {
+          total: scaleTotal,
+          registered: scaleReg,
+          guest: Math.max(10, scaleTotal - scaleReg),
+          pageVisits: {
+            invoice: Math.round((analytics.pageVisits?.invoice || 0) * 7.4 + 142),
+            converter: Math.round((analytics.pageVisits?.converter || 0) * 7.4 + 104),
+            qr: Math.round((analytics.pageVisits?.qr || 0) * 7.4 + 118),
+            barcode: Math.round((analytics.pageVisits?.barcode || 0) * 7.4 + 92),
+            blog: Math.round((analytics.pageVisits?.blog || 0) * 7.4 + 48),
+            home: Math.round((analytics.pageVisits?.home || 0) * 7.4 + 195),
+            about: Math.round((analytics.pageVisits?.about || 0) * 7.4 + 24),
+          },
+          chartData: [
+            { label: "Mon", value: Math.round(scaleTotal * 0.12) },
+            { label: "Tue", value: Math.round(scaleTotal * 0.15) },
+            { label: "Wed", value: Math.round(scaleTotal * 0.18) },
+            { label: "Thu", value: Math.round(scaleTotal * 0.14) },
+            { label: "Fri", value: Math.round(scaleTotal * 0.16) },
+            { label: "Sat", value: Math.round(scaleTotal * 0.11) },
+            { label: "Sun", value: Math.round(scaleTotal * 0.14) },
+          ]
+        };
+      } else {
+        const scaleTotal = Math.round(seedTotal * 32.5 + 1845);
+        const scaleReg = Math.round(seedReg * 28.3 + 418);
+        return {
+          total: scaleTotal,
+          registered: scaleReg,
+          guest: Math.max(40, scaleTotal - scaleReg),
+          pageVisits: {
+            invoice: Math.round((analytics.pageVisits?.invoice || 0) * 32.5 + 562),
+            converter: Math.round((analytics.pageVisits?.converter || 0) * 32.5 + 418),
+            qr: Math.round((analytics.pageVisits?.qr || 0) * 32.5 + 485),
+            barcode: Math.round((analytics.pageVisits?.barcode || 0) * 32.5 + 372),
+            blog: Math.round((analytics.pageVisits?.blog || 0) * 32.5 + 204),
+            home: Math.round((analytics.pageVisits?.home || 0) * 32.5 + 785),
+            about: Math.round((analytics.pageVisits?.about || 0) * 32.5 + 98),
+          },
+          chartData: [
+            { label: "Day 5", value: Math.round(scaleTotal * 0.14) },
+            { label: "Day 10", value: Math.round(scaleTotal * 0.16) },
+            { label: "Day 15", value: Math.round(scaleTotal * 0.19) },
+            { label: "Day 20", value: Math.round(scaleTotal * 0.15) },
+            { label: "Day 25", value: Math.round(scaleTotal * 0.17) },
+            { label: "Day 30", value: Math.round(scaleTotal * 0.19) },
+          ]
+        };
+      }
     }
   };
 
@@ -219,7 +355,7 @@ export function AdminStats() {
     <div className="space-y-8">
       {/* Upper header controls */}
       <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem]">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
@@ -227,37 +363,62 @@ export function AdminStats() {
             </div>
             <p className="text-sm text-muted-foreground font-medium mt-1">Live audience monitoring, telemetry distribution, and structural visitor origins.</p>
           </div>
-          <div className="flex gap-2 bg-muted p-1.5 rounded-2xl border border-border/40 shrink-0">
-            <Button 
-              variant={timeRange === "live" ? "default" : "ghost"}
-              onClick={() => {
-                setTimeRange("live");
-                setHoveredPointIndex(null);
-              }}
-              className="rounded-xl h-10 font-bold text-xs px-4"
-            >
-              Live Monitor
-            </Button>
-            <Button 
-              variant={timeRange === "7d" ? "default" : "ghost"}
-              onClick={() => {
-                setTimeRange("7d");
-                setHoveredPointIndex(null);
-              }}
-              className="rounded-xl h-10 font-bold text-xs px-4"
-            >
-              7 Days
-            </Button>
-            <Button 
-              variant={timeRange === "30d" ? "default" : "ghost"}
-              onClick={() => {
-                setTimeRange("30d");
-                setHoveredPointIndex(null);
-              }}
-              className="rounded-xl h-10 font-bold text-xs px-4"
-            >
-              30 Days
-            </Button>
+          <div className="flex flex-wrap gap-4 items-center w-full xl:w-auto">
+            {/* Telemetry Data Source Toggle */}
+            <div className="flex gap-1.5 bg-muted p-1.5 rounded-2xl border border-border/40 shrink-0">
+              <Button 
+                variant={dataSource === "real" ? "default" : "ghost"}
+                onClick={() => setDataSource("real")}
+                className={`rounded-xl h-10 font-bold text-xs px-4 transition-colors ${
+                  dataSource === "real" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                Real Telemetry
+              </Button>
+              <Button 
+                variant={dataSource === "simulated" ? "default" : "ghost"}
+                onClick={() => setDataSource("simulated")}
+                className="rounded-xl h-10 font-bold text-xs px-4"
+              >
+                <Zap className="w-3.5 h-3.5 mr-1.5" />
+                Demo Mode
+              </Button>
+            </div>
+
+            {/* Time range switcher */}
+            <div className="flex gap-1.5 bg-muted p-1.5 rounded-2xl border border-border/40 shrink-0">
+              <Button 
+                variant={timeRange === "live" ? "default" : "ghost"}
+                onClick={() => {
+                  setTimeRange("live");
+                  setHoveredPointIndex(null);
+                }}
+                className="rounded-xl h-10 font-bold text-xs px-4"
+              >
+                Live Monitor
+              </Button>
+              <Button 
+                variant={timeRange === "7d" ? "default" : "ghost"}
+                onClick={() => {
+                  setTimeRange("7d");
+                  setHoveredPointIndex(null);
+                }}
+                className="rounded-xl h-10 font-bold text-xs px-4"
+              >
+                7 Days
+              </Button>
+              <Button 
+                variant={timeRange === "30d" ? "default" : "ghost"}
+                onClick={() => {
+                  setTimeRange("30d");
+                  setHoveredPointIndex(null);
+                }}
+                className="rounded-xl h-10 font-bold text-xs px-4"
+              >
+                30 Days
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -419,7 +580,7 @@ export function AdminStats() {
             <p className="text-3xl font-black italic text-foreground">{(totalVisits).toLocaleString()}</p>
             <p className="text-[10px] text-muted-foreground font-medium mt-1.5 flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              +14.8% increase from last week
+              {dataSource === "real" ? "All-time accumulated views" : "+14.8% increase from last week"}
             </p>
           </Card>
 
@@ -428,9 +589,13 @@ export function AdminStats() {
               <span className="text-xs font-black uppercase text-slate-500 tracking-wider">Registered Accounts</span>
               <Users className="w-5 h-5 text-indigo-500" />
             </div>
-            <p className="text-3xl font-black italic text-foreground">{(registeredVisits).toLocaleString()}</p>
+            <p className="text-3xl font-black italic text-foreground">
+              {dataSource === "real" ? registeredAccountsCount.toLocaleString() : registeredVisits.toLocaleString()}
+            </p>
             <p className="text-[10px] text-indigo-400 font-bold mt-1.5">
-              {Math.round((registeredVisits / totalVisits) * 100)}% of total traffic
+              {dataSource === "real" 
+                ? `${registeredVisits.toLocaleString()} registered session pageviews` 
+                : `${Math.round((registeredVisits / Math.max(1, totalVisits)) * 100)}% of total traffic`}
             </p>
           </Card>
 
@@ -441,7 +606,9 @@ export function AdminStats() {
             </div>
             <p className="text-3xl font-black italic text-foreground">{(guestVisits).toLocaleString()}</p>
             <p className="text-[10px] text-slate-400 font-medium mt-1.5">
-              Ephemeral unique browser fingerprints
+              {dataSource === "real"
+                ? "Untracked session unique pageviews"
+                : "Ephemeral unique browser fingerprints"}
             </p>
           </Card>
         </div>
@@ -455,7 +622,11 @@ export function AdminStats() {
               <h4 className="text-lg font-black uppercase italic text-foreground">Page visits & session metrics</h4>
               <span className="text-[10px] font-black uppercase tracking-widest text-[#0ea5e9] bg-[#0ea5e9]/10 px-2.5 py-1 rounded-full">Telemetry active</span>
             </div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Visit logs sorted by real-time engine activity counters and custom session retention timers.</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">
+              {dataSource === "real"
+                ? "Actual visit logs sorted by real-time telemetry activity counters."
+                : "Visit logs sorted by real-time engine activity counters and custom session retention timers."}
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -493,19 +664,23 @@ export function AdminStats() {
         <Card className="lg:col-span-1 p-8 border-none shadow-premium bg-card rounded-[2.5rem] flex flex-col justify-between">
           <div className="mb-6">
             <h4 className="text-lg font-black uppercase italic text-foreground">Live activity ticker</h4>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Simulated real-time signal tracker observing client-side execution handshakes.</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">
+              {dataSource === "real" 
+                ? "Real-time signal tracker observing client-side execution handshakes." 
+                : "Simulated real-time signal tracker observing client-side execution handshakes."}
+            </p>
           </div>
 
           <div className="space-y-4 flex-grow overflow-hidden relative min-h-[220px] max-h-[360px] pr-1">
             <AnimatePresence initial={false}>
-              {tickerEvents.length === 0 ? (
+              {tickerEventsToShow.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400 h-full">
                   <Activity className="w-8 h-8 text-primary animate-pulse mb-3" />
                   <p className="text-xs font-bold text-foreground">Awaiting live signals</p>
                   <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px] mx-auto">Real interaction tickers will render here as users perform conversions, scan QRs, or export invoices.</p>
                 </div>
               ) : (
-                tickerEvents.map((item) => (
+                tickerEventsToShow.map((item) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, x: 20, height: 0 }}

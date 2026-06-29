@@ -97,13 +97,40 @@ export function trackPageView(path: string) {
 
   // Determine user login status
   const userStr = localStorage.getItem("user");
-  if (userStr) {
+  const isRegistered = !!userStr;
+  let userEmail = "";
+  if (isRegistered) {
     data.registeredVisits += 1;
+    try {
+      const parsed = JSON.parse(userStr!);
+      userEmail = parsed.email || parsed.name || "";
+    } catch {}
   } else {
     data.guestVisits += 1;
   }
 
   saveAnalytics(data);
+
+  // Send to server-side global analytics tracker
+  fetch("/api/analytics/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "view",
+      page: key,
+      isRegistered,
+      userEmail
+    })
+  })
+  .then(res => res.json())
+  .then(resData => {
+    if (resData && resData.analytics) {
+      window.dispatchEvent(new CustomEvent("platform_analytics_server_update", { detail: resData.analytics }));
+    }
+  })
+  .catch(err => {
+    console.warn("Global analytics view report failed:", err);
+  });
 }
 
 // Track specific tool activity + append to live events feed
@@ -119,16 +146,18 @@ export function trackToolAction(tool: "converter" | "invoice" | "qr" | "barcode"
   // Get current user info for message
   const userStr = localStorage.getItem("user");
   let userLabel = "Guest user";
+  const isRegistered = !!userStr;
+  let userEmail = "";
   if (userStr) {
     try {
       const userObj = JSON.parse(userStr);
-      const email = userObj.email || userObj.name || "";
-      if (email.includes("@")) {
-        const [left, right] = email.split("@");
+      userEmail = userObj.email || userObj.name || "";
+      if (userEmail.includes("@")) {
+        const [left, right] = userEmail.split("@");
         const maskedLeft = left.substring(0, Math.min(4, left.length)) + "***";
         userLabel = `User (${maskedLeft})`;
       } else {
-        userLabel = `User (${email})`;
+        userLabel = `User (${userEmail})`;
       }
     } catch {
       userLabel = "Registered user";
@@ -149,4 +178,39 @@ export function trackToolAction(tool: "converter" | "invoice" | "qr" | "barcode"
 
   // Dispatch custom storage/visibility event so opened tabs update live immediately
   window.dispatchEvent(new Event("platform_analytics_update"));
+
+  // Send to server-side global analytics tracker
+  fetch("/api/analytics/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "action",
+      tool,
+      details,
+      isRegistered,
+      userEmail
+    })
+  })
+  .then(res => res.json())
+  .then(resData => {
+    if (resData && resData.analytics) {
+      window.dispatchEvent(new CustomEvent("platform_analytics_server_update", { detail: resData.analytics }));
+    }
+  })
+  .catch(err => {
+    console.warn("Global analytics action report failed:", err);
+  });
+}
+
+// Fetch global server-side analytics
+export async function getGlobalServerAnalytics(): Promise<AnalyticsData | null> {
+  try {
+    const res = await fetch("/api/analytics");
+    if (!res.ok) throw new Error("Failed to fetch global analytics");
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.warn("Could not retrieve server-side global analytics", err);
+    return null;
+  }
 }
