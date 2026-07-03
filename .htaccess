@@ -1,0 +1,32 @@
+# Tooleefy Hostinger & cPanel Deployment Configuration
+# ---------------------------------------------------
+
+# Enable Phusion Passenger to run the Node.js application
+<IfModule mod_passenger.c>
+    PassengerEnabled on
+    PassengerAppType node
+    PassengerStartupFile index.js
+</IfModule>
+
+# Handle URL Rewriting and Route Delegations
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 1. Force HTTPS redirect (essential for security and SEO)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 2. Static File Performance Optimization:
+    # If the requested asset exists inside the dist/ build folder,
+    # let Apache serve it directly to bypass Node.js entirely.
+    # This prevents triggering Hostinger's concurrent connection limits (Entry Processes).
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ /dist/$1 [L]
+
+    # 3. Dynamic Routes & SPA Routing Fallback:
+    # If the request is not for a physical file or folder, pass it to index.js
+    # so our Express server handles dynamic API calls and injects custom SEO meta tags.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.js [L]
+</IfModule>
