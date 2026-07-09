@@ -1,0 +1,5 @@
+# Disable Phusion Passenger for the static assets directory to ensure
+# Apache/Litespeed serves these files directly from disk, bypassing Node.js.
+<IfModule mod_passenger.c>
+    PassengerEnabled off
+</IfModule>
