@@ -24,9 +24,11 @@
     RewriteRule ^(.*)$ /dist/$1 [L]
 
     # 3. Dynamic Routes & SPA Routing Fallback:
-    # If the request is not for a physical file or folder, pass it to index.js
-    # so our Express server handles dynamic API calls and injects custom SEO meta tags.
+    # If the request is not for a physical file or folder, do not rewrite.
+    # Passenger is enabled, so Apache will hand off the original request URL (e.g. /tools/invoice)
+    # directly to our Node.js/Express server. This prevents Passenger from crashing (503 error)
+    # and keeps the original path intact so our server can inject the correct SEO meta tags!
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.js [L]
+    RewriteRule ^(.*)$ - [L]
 </IfModule>
