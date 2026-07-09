@@ -26,7 +26,16 @@ async function startServer() {
     if (req.query._route_) {
       const rawRoute = req.query._route_ as string;
       const normalizedRoute = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
-      req.url = normalizedRoute;
+      
+      // Extract original query parameters excluding _route_
+      const queryParams = { ...req.query };
+      delete queryParams._route_;
+      const queryKeys = Object.keys(queryParams);
+      const queryString = queryKeys.length > 0
+        ? "?" + queryKeys.map(k => `${encodeURIComponent(k)}=${encodeURIComponent(queryParams[k] as string)}`).join("&")
+        : "";
+        
+      req.url = normalizedRoute + queryString;
     } else if (req.path === "/index.js" || req.path === "/index.html") {
       req.url = "/";
     }

@@ -23,16 +23,16 @@
     # let Apache serve it directly to bypass Node.js entirely.
     # This prevents triggering Hostinger's concurrent connection limits (Entry Processes).
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
-    RewriteRule ^(.*)$ /dist/$1 [L]
+    RewriteRule ^(.*)$ dist/$1 [L]
 
     # 3. Dynamic Routes & SPA Routing Fallback:
-    # Rewrite all virtual paths (not physical files or folders, and not starting with /api)
+    # Rewrite all virtual paths (not physical files or folders)
     # to the startup file index.js with a query parameter preserving the original route path.
     # This prevents Passenger from searching for a startup file in subdirectories (causing 503)
     # while allowing our server to inspect the _route_ query parameter to inject correct SEO tags!
+    # Removing the leading slash in "index.js" is critical on Hostinger/cPanel to prevent 404 errors!
     RewriteRule ^index\.js$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} !^/api
-    RewriteRule ^(.*)$ /index.js?_route_=$1 [QSA,L]
+    RewriteRule ^(.*)$ index.js?_route_=$1 [QSA,L]
 </IfModule>
