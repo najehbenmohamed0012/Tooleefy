@@ -21,6 +21,18 @@ async function startServer() {
   // Disable X-Powered-By header to prevent tech stack fingerprinting
   app.disable("x-powered-by");
 
+  // Restore original URL from Apache rewrite parameter if present
+  app.use((req, res, next) => {
+    if (req.query._route_) {
+      const rawRoute = req.query._route_ as string;
+      const normalizedRoute = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
+      req.url = normalizedRoute;
+    } else if (req.path === "/index.js" || req.path === "/index.html") {
+      req.url = "/";
+    }
+    next();
+  });
+
   // Custom high-security headers middleware to eliminate common hosting vulnerability warnings
   app.use((req, res, next) => {
     const isPreview = req.headers.host?.includes("run.app") || req.headers.host?.includes("localhost") || req.headers.host?.includes("3000");

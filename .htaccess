@@ -27,11 +27,12 @@
 
     # 3. Dynamic Routes & SPA Routing Fallback:
     # Rewrite all virtual paths (not physical files or folders, and not starting with /api)
-    # to the root / with a query parameter preserving the original route path.
+    # to the startup file index.js with a query parameter preserving the original route path.
     # This prevents Passenger from searching for a startup file in subdirectories (causing 503)
     # while allowing our server to inspect the _route_ query parameter to inject correct SEO tags!
+    RewriteRule ^index\.js$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} !^/api
-    RewriteRule ^(.*)$ /?_route_=$1 [QSA,L]
+    RewriteRule ^(.*)$ /index.js?_route_=$1 [QSA,L]
 </IfModule>
