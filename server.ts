@@ -666,7 +666,13 @@ async function startServer() {
           if (!indexHtmlCache) {
             indexHtmlCache = fs.readFileSync(indexPath, "utf-8");
           }
-          const htmlOutput = getIndexHtml(req.path, req.headers.host);
+          // Detect original virtual path passed by Apache/Passenger rewrite
+          let reqPath = req.path;
+          if (req.query._route_) {
+            const rawRoute = req.query._route_ as string;
+            reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
+          }
+          const htmlOutput = getIndexHtml(reqPath, req.headers.host);
           res.setHeader("Content-Type", "text/html");
           res.status(200).send(htmlOutput);
         } else {
