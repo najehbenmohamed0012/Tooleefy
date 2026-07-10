@@ -21,6 +21,18 @@ async function startServer() {
   // Disable X-Powered-By header to prevent tech stack fingerprinting
   app.disable("x-powered-by");
 
+  // Debug request logging to help diagnose routing issues in production
+  app.use((req, res, next) => {
+    try {
+      const logFile = path.join(process.cwd(), "passenger-debug.log");
+      const logLine = `[${new Date().toISOString()}] ${req.method} URL:${req.url} PATH:${req.path} QUERY:${JSON.stringify(req.query)} IP:${req.ip} HOST:${req.headers.host}\n`;
+      fs.appendFileSync(logFile, logLine, "utf-8");
+    } catch (err) {
+      console.error("Debug logger error:", err);
+    }
+    next();
+  });
+
   // Restore original URL from Apache rewrite parameter if present
   app.use((req, res, next) => {
     if (req.query._route_) {

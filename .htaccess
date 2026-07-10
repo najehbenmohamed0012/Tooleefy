@@ -22,17 +22,19 @@
     # If the requested asset exists inside the dist/ build folder,
     # let Apache serve it directly to bypass Node.js entirely.
     # This prevents triggering Hostinger's concurrent connection limits (Entry Processes).
+    # We include both a direct relative path mapping and specific static folders for LiteSpeed compatibility.
+    RewriteRule ^(assets/.*)$ dist/$1 [L]
+    RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ dist/$1 [L]
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
     RewriteRule ^(.*)$ dist/$1 [L]
 
     # 3. Dynamic Routes & SPA Routing Fallback:
     # Rewrite all virtual paths (not physical files or folders)
-    # to the startup file index.js with a query parameter preserving the original route path.
-    # This prevents Passenger from searching for a startup file in subdirectories (causing 503)
-    # while allowing our server to inspect the _route_ query parameter to inject correct SEO tags!
-    # Removing the leading slash in "index.js" is critical on Hostinger/cPanel to prevent 404 errors!
+    # to the startup file /index.js with a query parameter preserving the original route path.
+    # We prefix with / to ensure LiteSpeed resolves the file from the domain's root folder
+    # rather than treating it as a relative path in non-existent subdirectories (avoiding 404s).
     RewriteRule ^index\.js$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.js?_route_=$1 [QSA,L]
+    RewriteRule ^(.*)$ /index.js?_route_=$1 [QSA,L]
 </IfModule>
