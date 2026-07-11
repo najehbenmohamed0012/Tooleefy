@@ -30,11 +30,11 @@
 
     # 3. Dynamic Routes & SPA Routing Fallback:
     # Rewrite all virtual paths (not physical files or folders)
-    # to the startup file /index.js with a query parameter preserving the original route path.
-    # We prefix with / to ensure LiteSpeed resolves the file from the domain's root folder
-    # rather than treating it as a relative path in non-existent subdirectories (avoiding 404s).
+    # to the startup file index.js with a query parameter preserving the original route path.
+    # On Hostinger and cPanel, removing the leading slash from index.js is critical 
+    # to let Apache resolve the file relative to the current directory (avoiding 404s).
     RewriteRule ^index\.js$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ /index.js?_route_=$1 [QSA,L]
+    RewriteRule ^(.*)$ index.js?_route_=$1 [QSA,L]
 </IfModule>
