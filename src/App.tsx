@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { trackPageView } from "@/utils/analytics";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { Home } from "@/app/Home";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeContext";
@@ -104,6 +105,9 @@ export default function App() {
             </Routes>
           </Suspense>
         </main>
+        <div className="container mx-auto px-6 max-w-7xl">
+          <AdSenseUnit slot="7940156299" type="leaderboard" className="mt-8 mb-4" />
+        </div>
         <Footer />
         <Toaster />
       </div>

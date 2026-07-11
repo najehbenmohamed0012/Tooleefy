@@ -29,21 +29,21 @@ export function Footer() {
             <div>
               <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Popular Tools</div>
               <div className="flex flex-col gap-4 text-sm font-bold text-foreground/70 dark:text-white/70">
-                <Link to="/tools/invoice" className="hover:text-primary transition-colors">Invoice Maker</Link>
-                <Link to="/tools/qr" className="hover:text-primary transition-colors">QR Generator</Link>
-                <Link to="/tools/barcode" className="hover:text-primary transition-colors">Barcode Suite</Link>
-                <Link to="/tools/converter" className="hover:text-primary transition-colors">Units Converter</Link>
+                <Link to="/tools/invoice" className="hover:text-primary transition-colors">Invoice generator</Link>
+                <Link to="/tools/qr" className="hover:text-primary transition-colors">QR code generator</Link>
+                <Link to="/tools/barcode" className="hover:text-primary transition-colors">barcode generator</Link>
+                <Link to="/tools/converter" className="hover:text-primary transition-colors">units converter</Link>
               </div>
             </div>
 
             <div>
               <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/30 mb-8">Resources</div>
               <div className="flex flex-col gap-4 text-sm font-bold text-foreground/70 dark:text-white/70">
-                <Link to="/categories" className="hover:text-primary transition-colors">Tool Library</Link>
-                <Link to="/blog" className="hover:text-primary transition-colors">Insights Blog</Link>
-                <Link to="/faq" className="hover:text-primary transition-colors">Help & FAQ</Link>
-                <Link to="/about" className="hover:text-primary transition-colors">About Us</Link>
-                <Link to="/contact" className="hover:text-primary transition-colors">Contact Support</Link>
+                <Link to="/about" className="hover:text-primary transition-colors">about us</Link>
+                <Link to="/contact" className="hover:text-primary transition-colors">contact us</Link>
+                <Link to="/categories" className="hover:text-primary transition-colors">tools library</Link>
+                <Link to="/blog" className="hover:text-primary transition-colors">blog</Link>
+                <Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link>
               </div>
             </div>
           </div>
