@@ -28,7 +28,17 @@
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
     RewriteRule ^(.*)$ dist/$1 [L]
 
-    # 3. Dynamic Routes & SPA Routing Fallback:
+    # 3. Clean URL Virtual-to-Physical Route Mapping (SEO & Hostinger 404 Resolution)
+    # If the user visits a path that has a pre-rendered folder inside dist/ containing index.html,
+    # rewrite to that specific index.html directly. This allows Apache/Hostinger to serve the
+    # correct page static files natively, enabling full multi-page indexing and zero refresh 404s.
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f
+    RewriteRule ^(.*)$ dist/$1/index.html [L]
+
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f
+    RewriteRule ^(.*)$ dist/$1index.html [L]
+
+    # 4. Dynamic Routes & SPA Routing Fallback:
     # Rewrite all virtual paths (not physical files or folders)
     # to the startup file index.js with a query parameter preserving the original route path.
     # On Hostinger and cPanel, removing the leading slash from index.js is critical 
