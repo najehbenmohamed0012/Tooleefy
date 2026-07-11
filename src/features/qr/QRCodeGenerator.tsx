@@ -3,6 +3,7 @@ import { SingleQRGenerator } from "./SingleQRGenerator";
 import { BulkQRGenerator } from "./BulkQRGenerator";
 import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { QRFAQ } from "./QRFAQ";
 
 export function QRCodeGenerator() {
@@ -77,6 +78,7 @@ export function QRCodeGenerator() {
       </AnimatePresence>
 
       <ValueBanner />
+      <AdSenseUnit slot="1849204719" type="leaderboard" className="my-8" />
       <QRFAQ />
     </div>
   );

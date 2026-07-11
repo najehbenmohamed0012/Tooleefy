@@ -3,6 +3,7 @@ import { SingleBarcodeGenerator } from "./SingleBarcodeGenerator";
 import { BulkBarcodeGenerator } from "./BulkBarcodeGenerator";
 import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { BarcodeFAQ } from "./BarcodeFAQ";
 
 export function BarcodeGenerator() {
@@ -77,6 +78,7 @@ export function BarcodeGenerator() {
       </AnimatePresence>
 
       <ValueBanner />
+      <AdSenseUnit slot="2940251718" type="banner" className="my-8" />
       <BarcodeFAQ />
     </div>
   );

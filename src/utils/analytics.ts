@@ -18,6 +18,10 @@ export interface AnalyticsData {
     type: string;
     timestamp: number;
   }>;
+  geoCountries?: Record<string, number>;
+  devices?: Record<string, number>;
+  browsers?: Record<string, number>;
+  demographics?: Record<string, number>;
 }
 
 const STORAGE_KEY = "platform_real_analytics_v1";
@@ -109,6 +113,39 @@ export function trackPageView(path: string) {
     data.guestVisits += 1;
   }
 
+  // Simple heuristic for geo country
+  let geo = "Other";
+  const lang = (navigator.language || "").toLowerCase();
+  const tz = typeof Intl !== "undefined" && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : "";
+  
+  if (tz.includes("New_York") || tz.includes("Chicago") || tz.includes("Denver") || tz.includes("Los_Angeles") || lang.endsWith("us")) geo = "US";
+  else if (tz.includes("Paris") || lang.endsWith("fr")) geo = "FR";
+  else if (tz.includes("Berlin") || lang.endsWith("de")) geo = "DE";
+  else if (tz.includes("Tunis") || lang.endsWith("tn")) geo = "TN";
+  else if (tz.includes("London") || lang.endsWith("gb")) geo = "UK";
+  else if (tz.includes("Toronto") || tz.includes("Vancouver") || lang.endsWith("ca")) geo = "CA";
+  else if (tz.includes("Tokyo") || lang.endsWith("jp")) geo = "JP";
+  else if (lang.startsWith("fr")) geo = "FR";
+  else if (lang.startsWith("de")) geo = "DE";
+  else if (lang.startsWith("ar")) geo = "TN";
+  else if (lang.startsWith("ja")) geo = "JP";
+
+  // Simple heuristic for device
+  let device = "desktop";
+  const ua = navigator.userAgent.toLowerCase();
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+    device = "tablet";
+  } else if (/mobile|iphone|ipod|android|blackberry|iemobile|kindle|silk-accelerated/i.test(ua)) {
+    device = "mobile";
+  }
+
+  // Simple heuristic for browser
+  let browser = "other";
+  if (ua.includes("chrome") && !ua.includes("chromium") && !ua.includes("edg") && !ua.includes("opr")) browser = "chrome";
+  else if (ua.includes("safari") && !ua.includes("chrome") && !ua.includes("chromium")) browser = "safari";
+  else if (ua.includes("firefox")) browser = "firefox";
+  else if (ua.includes("edg")) browser = "chrome"; // group Edge with Chrome
+
   saveAnalytics(data);
 
   // Send to server-side global analytics tracker
@@ -119,7 +156,10 @@ export function trackPageView(path: string) {
       type: "view",
       page: key,
       isRegistered,
-      userEmail
+      userEmail,
+      geo,
+      device,
+      browser
     })
   })
   .then(res => res.json())

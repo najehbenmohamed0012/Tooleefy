@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { 
   Calendar, 
   User, 
@@ -14,10 +14,38 @@ import {
   ThumbsUp,
   Clock,
   BookOpen,
-  Share2
+  Share2,
+  Check,
+  Mail,
+  Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
+
+const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z" />
+  </svg>
+);
+
+const LinkedinIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+  </svg>
+);
+
+const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.631 2.022 14.161.992 11.537.992c-5.44 0-9.866 4.372-9.87 9.802 0 1.714.47 3.387 1.357 4.847l-.905 3.3 3.4-.885zm11.373-7.54c-.268-.134-1.585-.78-1.82-.866-.237-.087-.41-.13-.58.134-.17.26-.66.82-.808.99-.148.17-.295.19-.562.057-.268-.134-1.13-.417-2.154-1.33-.797-.71-1.335-1.59-1.492-1.858-.157-.268-.017-.413.118-.547.12-.12.268-.313.402-.47.135-.156.18-.268.27-.447.09-.178.044-.335-.022-.47-.067-.134-.58-1.4-.795-1.92-.21-.504-.424-.43-.58-.43h-.496c-.17 0-.447.064-.68.314-.233.25-.89.87-.89 2.122 0 1.25.908 2.458 1.033 2.625.125.166 1.786 2.727 4.327 3.82.605.26 1.076.415 1.444.532.608.193 1.162.165 1.6.1.487-.07 1.585-.648 1.808-1.242.224-.594.224-1.103.157-1.21-.067-.107-.246-.17-.514-.304z" />
+  </svg>
+);
 
 export interface BlogPost {
   id: string;
@@ -43,6 +71,178 @@ export interface BlogPost {
   seoKeywords?: string;
 }
 
+const parseItalicsOnly = (text: string): React.ReactNode => {
+  const italicRegex = /\*([^*]+)\*/g;
+  const matches = [...text.matchAll(italicRegex)];
+  
+  if (matches.length === 0) {
+    return text;
+  }
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  matches.forEach((match, mIdx) => {
+    const matchIndex = match.index || 0;
+    if (matchIndex > lastIndex) {
+      parts.push(<span key={`text-plain-it-${mIdx}`}>{text.substring(lastIndex, matchIndex)}</span>);
+    }
+    
+    const italicText = match[1];
+    parts.push(
+      <em key={`text-italic-${mIdx}`} className="italic font-medium text-slate-700 dark:text-slate-300">
+        {italicText}
+      </em>
+    );
+    
+    lastIndex = matchIndex + match[0].length;
+  });
+  
+  if (lastIndex < text.length) {
+    parts.push(<span key="text-plain-it-end">{text.substring(lastIndex)}</span>);
+  }
+  
+  return <>{parts}</>;
+};
+
+const parseBoldAndItalics = (text: string): React.ReactNode => {
+  const boldRegex = /\*\*([^*]+)\*\*/g;
+  const matches = [...text.matchAll(boldRegex)];
+  
+  if (matches.length === 0) {
+    return parseItalicsOnly(text);
+  }
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  matches.forEach((match, mIdx) => {
+    const matchIndex = match.index || 0;
+    if (matchIndex > lastIndex) {
+      parts.push(<span key={`text-plain-${mIdx}`}>{parseItalicsOnly(text.substring(lastIndex, matchIndex))}</span>);
+    }
+    
+    const boldText = match[1];
+    parts.push(
+      <strong key={`text-bold-${mIdx}`} className="font-extrabold text-foreground">
+        {parseItalicsOnly(boldText)}
+      </strong>
+    );
+    
+    lastIndex = matchIndex + match[0].length;
+  });
+  
+  if (lastIndex < text.length) {
+    parts.push(<span key="text-plain-end">{parseItalicsOnly(text.substring(lastIndex))}</span>);
+  }
+  
+  return <>{parts}</>;
+};
+
+const parseInlineFormatting = (text: string): React.ReactNode => {
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const matches = [...text.matchAll(linkRegex)];
+  
+  if (matches.length === 0) {
+    return parseBoldAndItalics(text);
+  }
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  matches.forEach((match, mIdx) => {
+    const matchIndex = match.index || 0;
+    if (matchIndex > lastIndex) {
+      parts.push(<span key={`text-${mIdx}`}>{parseBoldAndItalics(text.substring(lastIndex, matchIndex))}</span>);
+    }
+    
+    const label = match[1];
+    const url = match[2];
+    parts.push(
+      <a 
+        key={`link-${mIdx}`} 
+        href={url} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-primary hover:underline font-bold"
+      >
+        {parseBoldAndItalics(label)}
+      </a>
+    );
+    
+    lastIndex = matchIndex + match[0].length;
+  });
+  
+  if (lastIndex < text.length) {
+    parts.push(<span key="text-end">{parseBoldAndItalics(text.substring(lastIndex))}</span>);
+  }
+  
+  return <>{parts}</>;
+};
+
+const renderParagraphWithFormatting = (text: string, idx: number) => {
+  const imageRegex = /!\[([^\]]*)\]\((.*?)\)/g;
+  const matches = [...text.matchAll(imageRegex)];
+
+  if (matches.length > 0) {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, mIdx) => {
+      const matchIndex = match.index || 0;
+      if (matchIndex > lastIndex) {
+        const textBefore = text.substring(lastIndex, matchIndex);
+        parts.push(
+          <span key={`text-before-${mIdx}`}>{parseInlineFormatting(textBefore)}</span>
+        );
+      }
+      
+      const alt = match[1] || "Article Image";
+      const src = match[2];
+      
+      parts.push(
+        <div key={`img-container-${mIdx}`} className="my-6 space-y-2 flex flex-col items-center justify-center">
+          <div className="relative group overflow-hidden rounded-3xl border border-border/40 shadow-md max-w-full">
+            <img 
+              src={src} 
+              alt={alt} 
+              referrerPolicy="no-referrer"
+              className="max-h-[500px] w-auto max-w-full object-contain rounded-3xl transition-transform duration-300 group-hover:scale-[1.01]"
+              id={`article-img-${idx}-${mIdx}`}
+            />
+          </div>
+          {alt && alt !== "Illustration infographic" && (
+            <p className="text-center text-xs text-muted-foreground italic font-medium">
+              {alt}
+            </p>
+          )}
+        </div>
+      );
+      
+      lastIndex = matchIndex + match[0].length;
+    });
+    
+    if (lastIndex < text.length) {
+      const textAfter = text.substring(lastIndex);
+      parts.push(
+        <span key="text-after">{parseInlineFormatting(textAfter)}</span>
+      );
+    }
+    
+    return (
+      <div key={idx} className="text-base text-muted-foreground font-medium leading-relaxed my-4">
+        {parts}
+      </div>
+    );
+  }
+
+  return (
+    <p key={idx} className="text-base text-muted-foreground font-medium leading-relaxed">
+      {parseInlineFormatting(text)}
+    </p>
+  );
+};
+
 export const defaultArticles: BlogPost[] = [
   {
     id: "art-1",
@@ -63,7 +263,7 @@ Modern JavaScript runtimes, accelerated WASM engines, and physical sandbox stora
 By embracing this decentralization, developers can build faster, cheaper, and inherently secure professional utilities that treat clients as powerful computation peers rather than dumb terminals.`,
     date: "May 15, 2024",
     author: "Tech Insider",
-    category: "Insights",
+    category: "Business",
     views: 1420,
     reactions: { heart: 88, fire: 54, thumbsUp: 31 },
     published: true,
@@ -96,7 +296,7 @@ Many business managers approve invoices on their smartphones. Avoid sending phys
 Double-checking sales taxes or regional VAT rates manually invite computational errors. Always use an auto-calculating professional generator like **Tooleefy Invoices** to ensure perfect sums.`,
     date: "May 10, 2024",
     author: "Finance Pro",
-    category: "Business",
+    category: "Invoice Generator",
     views: 935,
     reactions: { heart: 42, fire: 22, thumbsUp: 19 },
     published: true,
@@ -126,7 +326,7 @@ Because humans cannot read raw QR pixel arrays intuitively, we rely entirely on 
 Understanding how to isolate QR code generation inside client environments ensures that your team and your corporate users remain secure.`,
     date: "May 05, 2024",
     author: "Security Team",
-    category: "Dev",
+    category: "QR Code Generator",
     views: 2125,
     reactions: { heart: 110, fire: 72, thumbsUp: 50 },
     published: true,
@@ -140,21 +340,116 @@ Understanding how to isolate QR code generation inside client environments ensur
 export function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [copied, setCopied] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const articleIdParam = searchParams.get("article");
+
+  const categories = [
+    "All",
+    "Invoice Generator",
+    "Units Converter",
+    "QR Code Generator",
+    "Barcode Generator",
+    "Finance",
+    "Business",
+    "Insurance"
+  ];
 
   // Load from local storage and sync
   useEffect(() => {
     const raw = localStorage.getItem("blog_posts");
+    let loadedPosts: BlogPost[] = [];
     if (!raw) {
       localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+      loadedPosts = defaultArticles;
       setPosts(defaultArticles);
     } else {
       try {
-        setPosts(JSON.parse(raw));
+        loadedPosts = JSON.parse(raw);
+        setPosts(loadedPosts);
       } catch {
+        loadedPosts = defaultArticles;
         setPosts(defaultArticles);
       }
     }
+
+    // Direct land / deep link support from shared URL params
+    if (articleIdParam && loadedPosts.length > 0) {
+      const match = loadedPosts.find(p => p.id === articleIdParam);
+      if (match) {
+        setSelectedPost(match);
+      }
+    }
   }, []);
+
+  // Update URL if deep linked article changes
+  useEffect(() => {
+    if (posts.length > 0 && articleIdParam) {
+      const match = posts.find(p => p.id === articleIdParam);
+      if (match && (!selectedPost || selectedPost.id !== match.id)) {
+        setSelectedPost(match);
+      }
+    } else if (!articleIdParam && selectedPost) {
+      setSelectedPost(null);
+    }
+  }, [articleIdParam, posts]);
+
+  // Dynamic Open Graph and Meta Tag optimization for the selected article
+  useEffect(() => {
+    if (selectedPost) {
+      const originalTitle = document.title;
+      const originalDescription = document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
+
+      // Update basic HTML document title
+      document.title = `${selectedPost.title} | Tooleefy Blog`;
+      
+      const updateMeta = (name: string, value: string, isProperty = false) => {
+        const attribute = isProperty ? "property" : "name";
+        let meta = document.querySelector(`meta[${attribute}="${name}"]`);
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.setAttribute(attribute, name);
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute("content", value);
+      };
+
+      const shareUrl = `${window.location.origin}/blog?article=${selectedPost.id}`;
+
+      // Basic SEO Meta tags
+      updateMeta("description", selectedPost.excerpt);
+      if (selectedPost.seoKeywords) {
+        updateMeta("keywords", selectedPost.seoKeywords);
+      } else {
+        updateMeta("keywords", `${selectedPost.category}, Tooleefy Blog, ${selectedPost.title.split(" ").join(", ")}`);
+      }
+
+      // Open Graph Social Media Tags
+      updateMeta("og:title", selectedPost.title, true);
+      updateMeta("og:description", selectedPost.excerpt, true);
+      updateMeta("og:type", "article", true);
+      updateMeta("og:url", shareUrl, true);
+      if (selectedPost.coverImage) {
+        updateMeta("og:image", selectedPost.coverImage, true);
+      }
+      updateMeta("og:site_name", "Tooleefy", true);
+
+      // Twitter Cards Tags
+      updateMeta("twitter:card", "summary_large_image");
+      updateMeta("twitter:title", selectedPost.title);
+      updateMeta("twitter:description", selectedPost.excerpt);
+      if (selectedPost.coverImage) {
+        updateMeta("twitter:image", selectedPost.coverImage);
+      }
+
+      // Cleanup to restore original general meta tags on back navigation
+      return () => {
+        document.title = originalTitle;
+        updateMeta("description", originalDescription);
+      };
+    }
+  }, [selectedPost]);
 
   const handleOpenPost = (post: BlogPost) => {
     // Increment view locally
@@ -167,6 +462,7 @@ export function Blog() {
     setPosts(updated);
     localStorage.setItem("blog_posts", JSON.stringify(updated));
     setSelectedPost({ ...post, views: (post.views || 0) + 1 });
+    setSearchParams({ article: post.id });
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     // Track page views in analytics index
@@ -216,6 +512,22 @@ export function Blog() {
   };
 
   const publishedPosts = posts.filter(p => p.published);
+  const filteredPosts = publishedPosts.filter(p => 
+    selectedCategory === "All" ? true : p.category === selectedCategory
+  );
+
+  const relatedArticles = selectedPost 
+    ? posts
+        .filter((p) => p.published && p.id !== selectedPost.id)
+        .sort((a, b) => {
+          // Prioritize different categories for maximum diversity and engagement
+          const aDiff = a.category !== selectedPost.category ? 1 : 0;
+          const bDiff = b.category !== selectedPost.category ? 1 : 0;
+          if (aDiff !== bDiff) return bDiff - aDiff;
+          return (b.views || 0) - (a.views || 0);
+        })
+        .slice(0, 3)
+    : [];
 
   return (
     <div className="bg-muted min-h-screen">
@@ -228,31 +540,69 @@ export function Blog() {
             exit={{ opacity: 0 }}
           >
             <PageHeader 
-              title="Tooleefy Insights." 
-              description="The latest thoughts on localized productivity, data sovereignty, and business optimization."
-              badge="Journal"
+              title="Tooleefy Blog" 
+              description="The official publication for Tooleefy tools, offering premium masterclasses on invoice generation, dynamic QR & barcode solutions, units converter technology, plus strategic guides covering corporate finance, business productivity, and custom insurance models."
+              badge="Blog"
             />
             
-            <section className="py-24">
+            <section className="py-16 md:py-20">
               <div className="container mx-auto px-6">
-                {publishedPosts.length === 0 ? (
-                  <div className="text-center py-20 bg-card rounded-[2.5rem] p-12 shadow-premium">
-                    <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-lg font-black text-foreground uppercase tracking-wider">No Articles Published</p>
-                    <p className="text-muted-foreground mt-2">Check back shortly for premium content updates.</p>
+                
+                {/* Dynamic Category Filters */}
+                <div className="mb-12 bg-card p-6 md:p-8 rounded-[2rem] border border-border/20 shadow-sm">
+                  <p className="text-xs font-black uppercase text-slate-400 tracking-wider mb-4">Filter articles by category:</p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {categories.map((cat) => {
+                      const isActive = selectedCategory === cat;
+                      const count = cat === "All" 
+                        ? publishedPosts.length 
+                        : publishedPosts.filter(p => p.category === cat).length;
+                      
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedCategory(cat)}
+                          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 border cursor-pointer ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+                              : "bg-muted/40 text-muted-foreground border-border/30 hover:bg-muted hover:text-foreground hover:border-border"
+                          }`}
+                        >
+                          {cat}
+                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold transition-colors ${
+                            isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {filteredPosts.length === 0 ? (
+                  <div className="text-center py-20 bg-card rounded-[2.5rem] p-12 shadow-premium border border-border/20">
+                    <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+                    <p className="text-lg font-black text-foreground uppercase tracking-wider">No Articles Found</p>
+                    <p className="text-muted-foreground mt-2">There are currently no published articles in the "{selectedCategory}" category.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                    {publishedPosts.map((article, idx) => (
-                      <motion.div
-                        key={article.id || article.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="group cursor-pointer bg-card rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-premium transition-all duration-500 border border-border/20"
-                        onClick={() => handleOpenPost(article)}
-                      >
+                    {filteredPosts.map((article, idx) => (
+                      <React.Fragment key={article.id || article.title}>
+                        {idx === 2 && (
+                          <div className="col-span-full">
+                            <AdSenseUnit slot="5938204918" type="in-feed" className="my-4" />
+                          </div>
+                        )}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: idx * 0.1 }}
+                          className="group cursor-pointer bg-card rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-premium transition-all duration-500 border border-border/20"
+                          onClick={() => handleOpenPost(article)}
+                        >
                         <div className="aspect-[16/10] bg-muted relative overflow-hidden">
                           {article.coverImage ? (
                             <img 
@@ -298,7 +648,8 @@ export function Blog() {
                           </div>
                         </div>
                       </motion.div>
-                    ))}
+                    </React.Fragment>
+                  ))}
                   </div>
                 )}
               </div>
@@ -317,7 +668,10 @@ export function Blog() {
               <div className="container mx-auto px-6 max-w-4xl flex items-center justify-between">
                 <Button 
                   variant="ghost" 
-                  onClick={() => setSelectedPost(null)}
+                  onClick={() => {
+                    setSelectedPost(null);
+                    setSearchParams({});
+                  }}
                   className="rounded-xl font-bold gap-2 text-sm text-foreground hover:bg-muted"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Articles
@@ -382,45 +736,54 @@ export function Blog() {
               </blockquote>
 
               {/* Body Content - beautiful typography */}
-              <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-semibold space-y-6">
+              <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-semibold space-y-6 animate-fade-in">
                 {selectedPost.content.split("\n\n").map((block, idx) => {
-                  if (block.startsWith("## ")) {
+                  const renderedBlock = (() => {
+                    if (block.startsWith("## ")) {
+                      return (
+                        <h2 key={idx} className="text-2xl md:text-3xl font-black text-foreground italic uppercase tracking-tight pt-6 border-b border-border/40 pb-2">
+                          {parseInlineFormatting(block.replace("## ", ""))}
+                        </h2>
+                      );
+                    }
+                    if (block.startsWith("### ")) {
+                      return (
+                        <h3 key={idx} className="text-xl font-black text-foreground uppercase tracking-wider pt-4">
+                          {parseInlineFormatting(block.replace("### ", ""))}
+                        </h3>
+                      );
+                    }
+                    if (block.startsWith("- ")) {
+                      return (
+                        <ul key={idx} className="list-disc pl-6 space-y-2 text-muted-foreground font-medium">
+                          {block.split("\n").map((li, i) => (
+                            <li key={i}>{parseInlineFormatting(li.replace("- ", ""))}</li>
+                          ))}
+                        </ul>
+                      );
+                    }
+                    if (block.startsWith("1. ")) {
+                      return (
+                        <ol key={idx} className="list-decimal pl-6 space-y-3 text-muted-foreground font-medium">
+                          {block.split("\n").map((li, i) => (
+                            <li key={i}>{parseInlineFormatting(li.substring(3))}</li>
+                          ))}
+                        </ol>
+                      );
+                    }
+                    return renderParagraphWithFormatting(block, idx);
+                  })();
+
+                  if (idx === 4) {
                     return (
-                      <h2 key={idx} className="text-2xl md:text-3xl font-black text-foreground italic uppercase tracking-tight pt-6 border-b border-border/40 pb-2">
-                        {block.replace("## ", "")}
-                      </h2>
+                      <React.Fragment key={idx}>
+                        <AdSenseUnit slot="8920153810" type="sidebar" className="my-8" />
+                        {renderedBlock}
+                      </React.Fragment>
                     );
                   }
-                  if (block.startsWith("### ")) {
-                    return (
-                      <h3 key={idx} className="text-xl font-black text-foreground uppercase tracking-wider pt-4">
-                        {block.replace("### ", "")}
-                      </h3>
-                    );
-                  }
-                  if (block.startsWith("- ")) {
-                    return (
-                      <ul key={idx} className="list-disc pl-6 space-y-2 text-muted-foreground font-medium">
-                        {block.split("\n").map((li, i) => (
-                          <li key={i}>{li.replace("- ", "").replace(/\*\*/g, "")}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  if (block.startsWith("1. ")) {
-                    return (
-                      <ol key={idx} className="list-decimal pl-6 space-y-3 text-muted-foreground font-medium">
-                        {block.split("\n").map((li, i) => (
-                          <li key={i}>{li.substring(3).replace(/\*\*/g, "")}</li>
-                        ))}
-                      </ol>
-                    );
-                  }
-                  return (
-                    <p key={idx} className="text-base text-muted-foreground font-medium leading-relaxed">
-                      {block}
-                    </p>
-                  );
+
+                  return <React.Fragment key={idx}>{renderedBlock}</React.Fragment>;
                 })}
               </div>
 
@@ -455,8 +818,161 @@ export function Blog() {
                     <span>{(selectedPost.reactions?.thumbsUp || 0)}</span>
                   </Button>
                 </div>
+
+                {/* Premium Social Media Sharing Station */}
+                <div className="mt-10 pt-8 border-t border-border/40 text-center space-y-4">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-black flex items-center justify-center gap-2">
+                    <Share2 className="w-3.5 h-3.5 text-primary" /> Share this Masterclass
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {/* Copy Link Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/blog?article=${selectedPost.id}`;
+                        navigator.clipboard.writeText(shareUrl);
+                        setCopied(true);
+                        toast.success("Article link copied to clipboard!");
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="h-11 px-4 rounded-xl border-border/30 hover:bg-muted hover:text-foreground text-muted-foreground text-xs font-bold gap-2 cursor-pointer transition-all duration-300"
+                    >
+                      {copied ? (
+                        <Check className="w-4 h-4 text-green-500 animate-bounce" />
+                      ) : (
+                        <Link2 className="w-4 h-4 text-primary" />
+                      )}
+                      <span>{copied ? "Copied Link!" : "Copy Link"}</span>
+                    </Button>
+
+                    {/* Share on X (Twitter) */}
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}&text=${encodeURIComponent(`${selectedPost.title} - Read this masterclass on Tooleefy Blog`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-slate-900 hover:bg-black text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
+                      title="Share on X (Twitter)"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </a>
+
+                    {/* Share on Facebook */}
+                    <a
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#1877F2] hover:bg-[#0c63d4] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
+                      title="Share on Facebook"
+                    >
+                      <FacebookIcon className="w-5 h-5" />
+                    </a>
+
+                    {/* Share on LinkedIn */}
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#0077B5] hover:bg-[#005a8a] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
+                      title="Share on LinkedIn"
+                    >
+                      <LinkedinIcon className="w-4.5 h-4.5" />
+                    </a>
+
+                    {/* Share on WhatsApp */}
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${selectedPost.title} - ${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#25D366] hover:bg-[#128C7E] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
+                      title="Share on WhatsApp"
+                    >
+                      <WhatsappIcon className="w-4.5 h-4.5" />
+                    </a>
+
+                    {/* Share via Email */}
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(selectedPost.title)}&body=${encodeURIComponent(`I highly recommend reading this premium blog post from Tooleefy:\n\n${selectedPost.title}\n${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-muted hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer border border-border/30"
+                      title="Share via Email"
+                    >
+                      <Mail className="w-4 h-4 text-primary" />
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* AdSense Unit between single article content and related articles */}
+            <div className="container mx-auto px-6 max-w-4xl mt-12">
+              <AdSenseUnit slot="6920153841" type="leaderboard" />
+            </div>
+
+            {/* Premium Related Articles Section */}
+            {relatedArticles.length > 0 && (
+              <div className="container mx-auto px-6 max-w-4xl mt-16">
+                <div className="flex items-center gap-3 mb-8">
+                  <span className="h-px bg-border/40 flex-1" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    Related articles to explore
+                  </h3>
+                  <span className="h-px bg-border/40 flex-1" />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {relatedArticles.map((article, idx) => (
+                    <motion.div
+                      key={article.id || article.title}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="group cursor-pointer bg-card rounded-[2rem] overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 border border-border/20 flex flex-col h-full"
+                      onClick={() => {
+                        setSelectedPost(article);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      <div className="aspect-[16/10] bg-muted relative overflow-hidden">
+                        {article.coverImage ? (
+                          <img 
+                            src={article.coverImage} 
+                            alt={article.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+                        )}
+                        <div className="absolute top-4 left-4 px-2.5 py-0.5 bg-background/90 backdrop-blur-sm rounded-full text-[9px] font-black uppercase tracking-widest text-primary border border-border/10">
+                          {article.category}
+                        </div>
+                      </div>
+
+                      <div className="p-5 flex flex-col flex-grow">
+                        <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-3">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-primary" /> {article.date}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm md:text-base font-black text-foreground mb-2 group-hover:text-primary transition-colors leading-tight line-clamp-2">
+                          {article.title}
+                        </h4>
+
+                        <p className="text-muted-foreground font-medium text-xs leading-relaxed mb-4 line-clamp-2 flex-grow">
+                          {article.excerpt}
+                        </p>
+
+                        <div className="flex items-center justify-between text-foreground font-black uppercase text-[9px] tracking-widest pt-3 border-t border-border/40 mt-auto">
+                          <span className="group-hover:text-primary transition-colors flex items-center gap-1.5">
+                            Read Now <ArrowRight className="w-3.5 h-3.5 text-primary group-hover:translate-x-1 transition-transform" />
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

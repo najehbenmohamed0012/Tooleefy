@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { 
   FileText, 
   QrCode, 
@@ -74,8 +75,11 @@ export function Categories() {
         badge="Core Library"
       />
       
-      <section className="py-20">
+      <section className="py-12">
         <div className="container mx-auto px-6">
+          {/* Header Billboard / Leaderboard Ad Unit */}
+          <AdSenseUnit slot="7208149163" type="banner" className="mb-12" />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {categories.map((cat, idx) => (
               <motion.div
@@ -129,6 +133,9 @@ export function Categories() {
               </motion.div>
             ))}
           </div>
+
+          {/* Bottom Leaderboard / Content-Match Ad Unit */}
+          <AdSenseUnit slot="8109356127" type="leaderboard" className="mt-16" />
         </div>
       </section>
     </div>

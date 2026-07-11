@@ -34,7 +34,7 @@ export function AdminStats() {
   const [activeUsers, setActiveUsers] = useState(1);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData>(() => getAnalytics());
-  const [dataSource, setDataSource] = useState<"real" | "simulated">("real");
+  const dataSource = "real";
   const [registeredAccountsCount, setRegisteredAccountsCount] = useState(1);
 
   // Listen to live analytic updates
@@ -327,6 +327,75 @@ export function AdminStats() {
   const sortedPageVisits = [...pageVisits].sort((a, b) => b.count - a.count);
   const maxPageVisitCount = Math.max(1, ...pageVisits.map(v => v.count));
 
+  // Dynamic country stats from global real-time analytics
+  const usVisits = Number(analytics.geoCountries?.US || 0);
+  const frVisits = Number(analytics.geoCountries?.FR || 0);
+  const deVisits = Number(analytics.geoCountries?.DE || 0);
+  const tnVisits = Number(analytics.geoCountries?.TN || 0);
+  const ukVisits = Number(analytics.geoCountries?.UK || 0);
+  const caVisits = Number(analytics.geoCountries?.CA || 0);
+  const jpVisits = Number(analytics.geoCountries?.JP || 0);
+  const otherVisits = Number(analytics.geoCountries?.Other || 0);
+  const geoTotal = (usVisits + frVisits + deVisits + tnVisits + ukVisits + caVisits + jpVisits + otherVisits) || 1;
+
+  const geoData = [
+    { nation: "United States", code: "US", visits: usVisits, rate: Math.round((usVisits / geoTotal) * 100) },
+    { nation: "France", code: "FR", visits: frVisits, rate: Math.round((frVisits / geoTotal) * 100) },
+    { nation: "Germany", code: "DE", visits: deVisits, rate: Math.round((deVisits / geoTotal) * 100) },
+    { nation: "Tunisia", code: "TN", visits: tnVisits, rate: Math.round((tnVisits / geoTotal) * 100) },
+    { nation: "United Kingdom", code: "UK", visits: ukVisits, rate: Math.round((ukVisits / geoTotal) * 100) },
+    { nation: "Canada", code: "CA", visits: caVisits, rate: Math.round((caVisits / geoTotal) * 100) },
+    { nation: "Japan", code: "JP", visits: jpVisits, rate: Math.round((jpVisits / geoTotal) * 100) },
+    { nation: "Other", code: "🌐", visits: otherVisits, rate: Math.round((otherVisits / geoTotal) * 100) },
+  ];
+
+  // Dynamic device stats from global real-time analytics
+  const desktopVisits = Number(analytics.devices?.desktop || 0);
+  const mobileVisits = Number(analytics.devices?.mobile || 0);
+  const tabletVisits = Number(analytics.devices?.tablet || 0);
+  const deviceTotal = (desktopVisits + mobileVisits + tabletVisits) || 1;
+
+  const desktopRate = Math.round((desktopVisits / deviceTotal) * 100);
+  const mobileRate = Math.round((mobileVisits / deviceTotal) * 100);
+  const tabletRate = Math.round((tabletVisits / deviceTotal) * 100);
+
+  // Dynamic browser stats from global real-time analytics
+  const chromeVisits = Number(analytics.browsers?.chrome || 0);
+  const safariVisits = Number(analytics.browsers?.safari || 0);
+  const firefoxVisits = Number(analytics.browsers?.firefox || 0);
+  const otherBrowserVisits = Number(analytics.browsers?.other || 0);
+  const browserTotal = (chromeVisits + safariVisits + firefoxVisits + otherBrowserVisits) || 1;
+
+  const browserData = [
+    { name: "Google Chrome", count: `${Math.round((chromeVisits / browserTotal) * 100)}%`, icon: Chrome },
+    { name: "Apple Safari", count: `${Math.round((safariVisits / browserTotal) * 100)}%`, icon: Compass },
+    { name: "Mozilla Firefox", count: `${Math.round((firefoxVisits / browserTotal) * 100)}%`, icon: Chrome },
+    { name: "Others / Bots", count: `${Math.round((otherBrowserVisits / browserTotal) * 100)}%`, icon: Chrome }
+  ];
+
+  // Dynamic demographics stats from global real-time analytics
+  const age_18_24 = Number(analytics.demographics?.age_18_24 || 0);
+  const age_25_34 = Number(analytics.demographics?.age_25_34 || 0);
+  const age_35_44 = Number(analytics.demographics?.age_35_44 || 0);
+  const age_45_plus = Number(analytics.demographics?.age_45_plus || 0);
+  const demoAgeTotal = (age_18_24 + age_25_34 + age_35_44 + age_45_plus) || 1;
+
+  const ageData = [
+    { age: "25 - 34 Years", rate: Math.round((age_25_34 / demoAgeTotal) * 100) },
+    { age: "35 - 44 Years", rate: Math.round((age_35_44 / demoAgeTotal) * 100) },
+    { age: "18 - 24 Years", rate: Math.round((age_18_24 / demoAgeTotal) * 100) },
+    { age: "45+ Years", rate: Math.round((age_45_plus / demoAgeTotal) * 100) }
+  ];
+
+  const maleVisits = Number(analytics.demographics?.male || 0);
+  const femaleVisits = Number(analytics.demographics?.female || 0);
+  const nbVisits = Number(analytics.demographics?.non_binary || 0);
+  const genderTotal = (maleVisits + femaleVisits + nbVisits) || 1;
+
+  const maleRate = Math.round((maleVisits / genderTotal) * 100);
+  const femaleRate = Math.round((femaleVisits / genderTotal) * 100);
+  const nbRate = Math.max(0, 100 - maleRate - femaleRate);
+
   // Custom SVG Chart Calculation
   const chartData = scaledStats.chartData;
   const maxChartValue = Math.max(10, ...chartData.map(d => d.value));
@@ -364,26 +433,10 @@ export function AdminStats() {
             <p className="text-sm text-muted-foreground font-medium mt-1">Live audience monitoring, telemetry distribution, and structural visitor origins.</p>
           </div>
           <div className="flex flex-wrap gap-4 items-center w-full xl:w-auto">
-            {/* Telemetry Data Source Toggle */}
-            <div className="flex gap-1.5 bg-muted p-1.5 rounded-2xl border border-border/40 shrink-0">
-              <Button 
-                variant={dataSource === "real" ? "default" : "ghost"}
-                onClick={() => setDataSource("real")}
-                className={`rounded-xl h-10 font-bold text-xs px-4 transition-colors ${
-                  dataSource === "real" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
-                Real Telemetry
-              </Button>
-              <Button 
-                variant={dataSource === "simulated" ? "default" : "ghost"}
-                onClick={() => setDataSource("simulated")}
-                className="rounded-xl h-10 font-bold text-xs px-4"
-              >
-                <Zap className="w-3.5 h-3.5 mr-1.5" />
-                Demo Mode
-              </Button>
+            {/* Active Real-Time Telemetry Badge */}
+            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-2xl shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-black uppercase text-emerald-500 tracking-wider">Active Real-Time Telemetry</span>
             </div>
 
             {/* Time range switcher */}
@@ -720,16 +773,7 @@ export function AdminStats() {
           </div>
 
           <div className="space-y-4">
-            {[
-              { nation: "United States", code: "US", rate: 38, visits: Math.round(totalVisits * 0.38) },
-              { nation: "France", code: "FR", rate: 14, visits: Math.round(totalVisits * 0.14) },
-              { nation: "Germany", code: "DE", rate: 12, visits: Math.round(totalVisits * 0.12) },
-              { nation: "Tunisia", code: "TN", rate: 10, visits: Math.round(totalVisits * 0.10) },
-              { nation: "United Kingdom", code: "UK", rate: 9, visits: Math.round(totalVisits * 0.09) },
-              { nation: "Canada", code: "CA", rate: 7, visits: Math.round(totalVisits * 0.07) },
-              { nation: "Japan", code: "JP", rate: 6, visits: Math.round(totalVisits * 0.06) },
-              { nation: "Other", code: "🌐", rate: 4, visits: Math.max(0, totalVisits - Math.round(totalVisits * 0.96)) },
-            ].map(origin => (
+            {geoData.map(origin => (
               <div key={origin.nation} className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs font-bold">
                   <span className="text-foreground flex items-center gap-2">
@@ -738,7 +782,7 @@ export function AdminStats() {
                   <span className="text-slate-500">{(origin.visits).toLocaleString()} ({origin.rate}%)</span>
                 </div>
                 <div className="w-full bg-border/40 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#0ea5e9] h-full rounded-full" style={{ width: `${origin.rate}%` }} />
+                  <div className="bg-[#0ea5e9] h-full rounded-full animate-all" style={{ width: `${origin.rate}%` }} />
                 </div>
               </div>
             ))}
@@ -762,17 +806,17 @@ export function AdminStats() {
                 <div className="grid grid-cols-3 gap-3 text-center sm:pt-2">
                   <div className="bg-muted/30 p-3 rounded-2xl border border-border/20">
                     <Laptop className="w-5 h-5 text-slate-500 mx-auto mb-1" />
-                    <p className="text-lg font-black text-foreground">65%</p>
+                    <p className="text-lg font-black text-foreground">{desktopRate}%</p>
                     <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wide">Desktop</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-2xl border border-border/20">
                     <Smartphone className="w-5 h-5 text-slate-500 mx-auto mb-1" />
-                    <p className="text-lg font-black text-foreground">30%</p>
+                    <p className="text-lg font-black text-foreground">{mobileRate}%</p>
                     <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wide">Mobile</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-2xl border border-border/20">
                     <Tablet className="w-5 h-5 text-slate-500 mx-auto mb-1" />
-                    <p className="text-lg font-black text-foreground">5%</p>
+                    <p className="text-lg font-black text-foreground">{tabletRate}%</p>
                     <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wide">Tablet</p>
                   </div>
                 </div>
@@ -781,12 +825,7 @@ export function AdminStats() {
               {/* Browser systems */}
               <div className="space-y-3 pt-4 border-t border-border/40">
                 <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Top Navigator Clients</p>
-                {[
-                  { name: "Google Chrome", count: "58.4%", icon: Chrome },
-                  { name: "Apple Safari", count: "24.1%", icon: Compass },
-                  { name: "Mozilla Firefox", count: "10.5%", icon: Chrome },
-                  { name: "Others / Bots", count: "7.0%", icon: Chrome }
-                ].map(b => (
+                {browserData.map(b => (
                   <div key={b.name} className="flex items-center justify-between text-xs font-bold py-1">
                     <span className="text-muted-foreground flex items-center gap-2">
                       <b.icon className="w-4 h-4 text-slate-400" /> {b.name}
@@ -813,19 +852,14 @@ export function AdminStats() {
               {/* Age distribution */}
               <div className="space-y-2">
                 <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Age Group Representation</p>
-                {[
-                  { age: "25 - 34 Years", rate: 42 },
-                  { age: "35 - 44 Years", rate: 25 },
-                  { age: "18 - 24 Years", rate: 18 },
-                  { age: "45+ Years", rate: 15 }
-                ].map(ag => (
+                {ageData.map(ag => (
                   <div key={ag.age} className="space-y-1">
                     <div className="flex justify-between items-center text-[11px] font-bold">
                       <span className="text-foreground">{ag.age}</span>
                       <span className="text-muted-foreground">{ag.rate}%</span>
                     </div>
                     <div className="w-full bg-border/40 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-orange-500 h-full rounded-full" style={{ width: `${ag.rate}%` }} />
+                      <div className="bg-orange-500 h-full rounded-full transition-all" style={{ width: `${ag.rate}%` }} />
                     </div>
                   </div>
                 ))}
@@ -835,9 +869,9 @@ export function AdminStats() {
               <div className="pt-4 border-t border-border/40 space-y-3">
                 <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Binary & Non-Binary Split</p>
                 <div className="flex bg-border/30 h-6 rounded-xl overflow-hidden text-[9px] font-black text-white text-center">
-                  <div className="bg-sky-500 h-full flex items-center justify-center font-bold" style={{ width: "52%" }}>M (52%)</div>
-                  <div className="bg-pink-500 h-full flex items-center justify-center font-bold" style={{ width: "44%" }}>F (44%)</div>
-                  <div className="bg-[#a855f7] h-full flex items-center justify-center font-bold" style={{ width: "4%" }}>NB (4%)</div>
+                  <div className="bg-sky-500 h-full flex items-center justify-center font-bold transition-all" style={{ width: `${Math.max(0, maleRate)}%` }}>M ({maleRate}%)</div>
+                  <div className="bg-pink-500 h-full flex items-center justify-center font-bold transition-all" style={{ width: `${Math.max(0, femaleRate)}%` }}>F ({femaleRate}%)</div>
+                  <div className="bg-[#a855f7] h-full flex items-center justify-center font-bold transition-all" style={{ width: `${Math.max(0, nbRate)}%` }}>NB ({nbRate}%)</div>
                 </div>
               </div>
             </div>

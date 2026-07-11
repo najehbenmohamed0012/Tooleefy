@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { ConverterFAQ } from "./ConverterFAQ";
 import { toast } from "sonner";
 import { logActivity } from "@/supabase/db";
@@ -461,6 +462,7 @@ export function UnitsConverter() {
           </p>
         </div>
       </div>
+      <AdSenseUnit slot="3940156291" type="banner" className="my-8" />
       <ConverterFAQ />
     </div>
   );

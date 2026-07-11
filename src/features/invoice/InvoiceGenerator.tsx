@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { InvoicePreview } from "./InvoicePreview";
 import { FAQSection } from "./FAQSection";
 import { ValueBanner } from "@/components/ValueBanner";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { Logo } from "@/components/Logo";
 import { Star, Trophy } from "lucide-react";
 import { logActivity } from "@/supabase/db";
@@ -985,6 +986,7 @@ export function InvoiceGenerator() {
           </div>
         </div>
         <ValueBanner />
+        <AdSenseUnit slot="4920153842" type="banner" className="my-8" />
         <FAQSection />
       </div>
 

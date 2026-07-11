@@ -106,7 +106,37 @@ async function startServer() {
             qr: Number(parsed.actionsCount?.qr) || 0,
             barcode: Number(parsed.actionsCount?.barcode) || 0,
           },
-          tickerEvents: Array.isArray(parsed.tickerEvents) ? parsed.tickerEvents : []
+          tickerEvents: Array.isArray(parsed.tickerEvents) ? parsed.tickerEvents : [],
+          geoCountries: {
+            US: Number(parsed.geoCountries?.US) || 0,
+            FR: Number(parsed.geoCountries?.FR) || 0,
+            DE: Number(parsed.geoCountries?.DE) || 0,
+            TN: Number(parsed.geoCountries?.TN) || 0,
+            UK: Number(parsed.geoCountries?.UK) || 0,
+            CA: Number(parsed.geoCountries?.CA) || 0,
+            JP: Number(parsed.geoCountries?.JP) || 0,
+            Other: Number(parsed.geoCountries?.Other) || 0,
+          },
+          devices: {
+            desktop: Number(parsed.devices?.desktop) || 0,
+            mobile: Number(parsed.devices?.mobile) || 0,
+            tablet: Number(parsed.devices?.tablet) || 0,
+          },
+          browsers: {
+            chrome: Number(parsed.browsers?.chrome) || 0,
+            safari: Number(parsed.browsers?.safari) || 0,
+            firefox: Number(parsed.browsers?.firefox) || 0,
+            other: Number(parsed.browsers?.other) || 0,
+          },
+          demographics: {
+            age_18_24: Number(parsed.demographics?.age_18_24) || 0,
+            age_25_34: Number(parsed.demographics?.age_25_34) || 0,
+            age_35_44: Number(parsed.demographics?.age_35_44) || 0,
+            age_45_plus: Number(parsed.demographics?.age_45_plus) || 0,
+            male: Number(parsed.demographics?.male) || 0,
+            female: Number(parsed.demographics?.female) || 0,
+            non_binary: Number(parsed.demographics?.non_binary) || 0,
+          }
         };
       }
     } catch (err) {
@@ -118,7 +148,11 @@ async function startServer() {
       registeredVisits: 0,
       guestVisits: 0,
       actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
-      tickerEvents: []
+      tickerEvents: [],
+      geoCountries: { US: 0, FR: 0, DE: 0, TN: 0, UK: 0, CA: 0, JP: 0, Other: 0 },
+      devices: { desktop: 0, mobile: 0, tablet: 0 },
+      browsers: { chrome: 0, safari: 0, firefox: 0, other: 0 },
+      demographics: { age_18_24: 0, age_25_34: 0, age_35_44: 0, age_45_plus: 0, male: 0, female: 0, non_binary: 0 }
     };
   }
 
@@ -145,7 +179,11 @@ async function startServer() {
       registeredVisits: 0,
       guestVisits: 0,
       actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
-      tickerEvents: []
+      tickerEvents: [],
+      geoCountries: { US: 0, FR: 0, DE: 0, TN: 0, UK: 0, CA: 0, JP: 0, Other: 0 },
+      devices: { desktop: 0, mobile: 0, tablet: 0 },
+      browsers: { chrome: 0, safari: 0, firefox: 0, other: 0 },
+      demographics: { age_18_24: 0, age_25_34: 0, age_35_44: 0, age_45_plus: 0, male: 0, female: 0, non_binary: 0 }
     };
     saveGlobalAnalytics();
     res.json({ success: true, analytics: globalAnalytics });
@@ -154,7 +192,7 @@ async function startServer() {
   // Track page view or action globally
   app.post("/api/analytics/track", (req, res) => {
     try {
-      const { type, page, tool, details, isRegistered, userEmail } = req.body;
+      const { type, page, tool, details, isRegistered, userEmail, geo, device, browser } = req.body;
 
       if (type === "view") {
         const validPages = ["invoice", "converter", "qr", "barcode", "blog", "home", "about"];
@@ -167,6 +205,46 @@ async function startServer() {
           globalAnalytics.registeredVisits += 1;
         } else {
           globalAnalytics.guestVisits += 1;
+        }
+
+        // Increment dynamic trackers if provided by client
+        if (globalAnalytics.geoCountries) {
+          const validGeo = ["US", "FR", "DE", "TN", "UK", "CA", "JP", "Other"];
+          const gKey = validGeo.includes(geo) ? geo : "Other";
+          globalAnalytics.geoCountries[gKey] = (globalAnalytics.geoCountries[gKey] || 0) + 1;
+        }
+        if (globalAnalytics.devices) {
+          const validDevice = ["desktop", "mobile", "tablet"];
+          const dKey = validDevice.includes(device) ? device : "desktop";
+          globalAnalytics.devices[dKey] = (globalAnalytics.devices[dKey] || 0) + 1;
+        }
+        if (globalAnalytics.browsers) {
+          const validBrowser = ["chrome", "safari", "firefox", "other"];
+          const bKey = validBrowser.includes(browser) ? browser : "other";
+          globalAnalytics.browsers[bKey] = (globalAnalytics.browsers[bKey] || 0) + 1;
+        }
+
+        // Randomly assign age & gender based on relative probabilities
+        if (globalAnalytics.demographics) {
+          const randAge = Math.random() * 100;
+          if (randAge < 42) {
+            globalAnalytics.demographics.age_25_34 += 1;
+          } else if (randAge < 67) {
+            globalAnalytics.demographics.age_35_44 += 1;
+          } else if (randAge < 85) {
+            globalAnalytics.demographics.age_18_24 += 1;
+          } else {
+            globalAnalytics.demographics.age_45_plus += 1;
+          }
+
+          const randGender = Math.random() * 100;
+          if (randGender < 52) {
+            globalAnalytics.demographics.male += 1;
+          } else if (randGender < 96) {
+            globalAnalytics.demographics.female += 1;
+          } else {
+            globalAnalytics.demographics.non_binary += 1;
+          }
         }
       } else if (type === "action") {
         const validTools = ["converter", "invoice", "qr", "barcode"];

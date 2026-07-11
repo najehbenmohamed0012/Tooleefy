@@ -40,12 +40,64 @@ import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
 
 // Standard cover presets for quick, premium choosing
+const COVER_PRESETS_BY_CATEGORY: Record<string, { name: string; url: string }[]> = {
+  "Invoice Generator": [
+    { name: "Modern Invoice Spread", url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80" },
+    { name: "Digital Balance Book", url: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=800&q=80" },
+    { name: "Corporate Bill Grid", url: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80" },
+    { name: "Financial Ledger Design", url: "https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?auto=format&fit=crop&w=800&q=80" },
+    { name: "Minimal Document Layout", url: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "Units Converter": [
+    { name: "Precision Rulers", url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80" },
+    { name: "Scientific Draft Matrix", url: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80" },
+    { name: "Engineering Workbench", url: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80" },
+    { name: "Geometric Space Grid", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" },
+    { name: "Mathematical Plot", url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "QR Code Generator": [
+    { name: "Dynamic QR Scanner", url: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80" },
+    { name: "Mobile App Access Link", url: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80" },
+    { name: "Data Encryption Matrix", url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" },
+    { name: "Identity Access Pattern", url: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80" },
+    { name: "Integrated Smart Label", url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "Barcode Generator": [
+    { name: "Supermarket Register Scan", url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { name: "Warehouse Parcel Stack", url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80" },
+    { name: "Industrial Stock Code", url: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80" },
+    { name: "Digital Checkout Ledger", url: "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=800&q=80" },
+    { name: "Optical Scanning Pattern", url: "https://images.unsplash.com/photo-1509023464722-18d996393ca8?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "Finance": [
+    { name: "Real-time Trade Market", url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80" },
+    { name: "Gold bullion Vault", url: "https://images.unsplash.com/photo-1618044733300-9472054094ee?auto=format&fit=crop&w=800&q=80" },
+    { name: "Cryptographic Capital", url: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=800&q=80" },
+    { name: "Laptop Finance Dashboard", url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80" },
+    { name: "Global Wealth Ledger", url: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "Business": [
+    { name: "Skyscraper Glass Tower", url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" },
+    { name: "Boardroom Meeting Brainstorm", url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80" },
+    { name: "Corporate Modern Office", url: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80" },
+    { name: "Partnership Agreement Contract", url: "https://images.unsplash.com/photo-1521791136368-1a46827d0adf?auto=format&fit=crop&w=800&q=80" },
+    { name: "Cargo Shipping Logistics", url: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80" }
+  ],
+  "Insurance": [
+    { name: "Weather Protective Shield", url: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80" },
+    { name: "Medication Health Support", url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" },
+    { name: "Vehicle Safety System", url: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80" },
+    { name: "Home Ownership Guarantee", url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80" },
+    { name: "Vault Guard Protection", url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80" }
+  ]
+};
+
 const COVER_PRESETS = [
-  { name: "Nebula Abstract", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" },
-  { name: "Analytics Finance", url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80" },
-  { name: "Crypto Binary", url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" },
-  { name: "Workspace Minimal", url: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80" },
-  { name: "Code Studio", url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80" }
+  { name: "Modern Invoice Spread", url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80" },
+  { name: "Precision Rulers", url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80" },
+  { name: "Dynamic QR Scanner", url: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80" },
+  { name: "Supermarket Register Scan", url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+  { name: "Skyscraper Glass Tower", url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" }
 ];
 
 export function AdminBlogManager() {
@@ -59,7 +111,7 @@ export function AdminBlogManager() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [author, setAuthor] = useState("");
-  const [category, setCategory] = useState("Insights");
+  const [category, setCategory] = useState("Invoice Generator");
   const [date, setDate] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
@@ -152,7 +204,7 @@ export function AdminBlogManager() {
     } catch {
       setAuthor("Administrator");
     }
-    setCategory("Insights");
+    setCategory("Invoice Generator");
     setDate(new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }));
     setExcerpt("");
     setContent("");
@@ -174,7 +226,7 @@ export function AdminBlogManager() {
     setTitle(post.title);
     setSlug(post.id);
     setAuthor(post.author || "Administrator");
-    setCategory(post.category || "Insights");
+    setCategory(post.category || "Invoice Generator");
     setDate(post.date || new Date().toLocaleDateString());
     setExcerpt(post.excerpt || "");
     setContent(post.content || "");
@@ -445,7 +497,7 @@ export function AdminBlogManager() {
                             </td>
                             <td className="py-4 px-4">
                               <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-primary/10 text-primary rounded-full border border-primary/5">
-                                {post.category || "Insights"}
+                                {post.category || "Invoice Generator"}
                               </span>
                             </td>
                             <td className="py-4 px-4 text-center">
@@ -595,9 +647,11 @@ export function AdminBlogManager() {
 
                       {/* Premium presets select shortcuts */}
                       <div className="space-y-1.5 pt-1 border-t border-border/20">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Fast high-fidelity preset textures:</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                          Fast high-fidelity preset textures for <span className="text-primary font-black">{category}</span>:
+                        </p>
                         <div className="flex flex-wrap gap-2">
-                          {COVER_PRESETS.map((p) => (
+                          {(COVER_PRESETS_BY_CATEGORY[category] || COVER_PRESETS).map((p) => (
                             <button
                               key={p.name}
                               type="button"
@@ -641,11 +695,15 @@ export function AdminBlogManager() {
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full h-12 bg-muted/50 rounded-xl border border-border/40 px-3 text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                           >
-                            <option value="Insights">Insights Zone</option>
-                            <option value="Business">Business Focus</option>
-                            <option value="Dev">Developer / Code</option>
-                            <option value="Design">Visual Design</option>
-                            <option value="Productivity">Productivity</option>
+                            <optgroup label="Tooleefy Tools">
+                              <option value="Invoice Generator">Invoice Generator</option>
+                              <option value="Units Converter">Units Converter</option>
+                              <option value="QR Code Generator">QR Code Generator</option>
+                              <option value="Barcode Generator">Barcode Generator</option>
+                            </optgroup>
+                            <option value="Finance">Finance</option>
+                            <option value="Business">Business</option>
+                            <option value="Insurance">Insurance</option>
                           </select>
                         </div>
                         
