@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, Settings, User, LayoutDashboard, Wrench, HelpCircle, LogIn } from "lucide-react";
+import { Menu, X, LogOut, Settings, User, LayoutDashboard, Wrench, HelpCircle, LogIn, BookOpen } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
@@ -103,9 +103,10 @@ export function Navbar() {
           <span className="text-2xl font-black tracking-tight text-primary dark:text-white transition-colors duration-500">Tooleefy</span>
         </Link>
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-10">
+        <div className="hidden lg:flex items-center gap-10">
           <div className="flex items-center gap-8 text-sm font-black uppercase tracking-[0.2em]">
-            <Link to="/categories" className="text-primary dark:text-white font-extrabold hover:opacity-80 transition-opacity">Tools</Link>
+            <Link to="/categories" className="text-primary dark:text-white font-extrabold hover:opacity-80 transition-opacity mr-24">all tools</Link>
+            <Link to="/blog" className="text-primary dark:text-white font-extrabold hover:opacity-80 transition-opacity">Blog</Link>
             <Link to="/faq" className="text-primary dark:text-white font-extrabold hover:opacity-80 transition-opacity">FAQ</Link>
           </div>
           
@@ -201,7 +202,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile Actions */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
           {user && (
             <div className="relative mr-2">
@@ -324,7 +325,18 @@ export function Navbar() {
                     className="flex items-center gap-2.5 w-full p-2.5 rounded-xl cursor-pointer text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group focus:outline-none text-slate-800 dark:text-slate-200"
                   >
                     <Wrench className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                    <span className="font-bold text-xs">All Tools Pages</span>
+                    <span className="font-bold text-xs">all tools</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setIsOpen(false);
+                      navigate("/blog");
+                    }} 
+                    className="flex items-center gap-2.5 w-full p-2.5 rounded-xl cursor-pointer text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group focus:outline-none text-slate-800 dark:text-slate-200"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    <span className="font-bold text-xs">Blog</span>
                   </button>
 
                   <button 
