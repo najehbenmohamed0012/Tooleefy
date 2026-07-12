@@ -43,9 +43,7 @@
     # to the startup file index.js with a query parameter preserving the original route path.
     # On Hostinger and cPanel, removing the leading slash from index.js is critical 
     # to let Apache resolve the file relative to the current directory (avoiding 404s).
-    # We EXCLUDE /api/ routes so they are routed natively by Passenger, preserving POST bodies.
     RewriteRule ^index\.js$ - [L]
-    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.js?_route_=$1 [QSA,L]
