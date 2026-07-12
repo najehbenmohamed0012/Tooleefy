@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
+import { fetchBlogPosts, upsertBlogPost } from "@/supabase/db";
 import { 
   Calendar, 
   User, 
@@ -358,35 +359,47 @@ export function Blog() {
     "Insurance"
   ];
 
-  // Load from local storage and sync
+  // Load from Supabase (or local storage fallback) and sync
   useEffect(() => {
-    const raw = localStorage.getItem("blog_posts");
-    let loadedPosts: BlogPost[] = [];
-    if (!raw) {
-      localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
-      loadedPosts = defaultArticles;
-      setPosts(defaultArticles);
-    } else {
-      try {
-        loadedPosts = JSON.parse(raw);
-        setPosts(loadedPosts);
-      } catch {
-        loadedPosts = defaultArticles;
-        setPosts(defaultArticles);
-      }
-    }
+    const loadPosts = async () => {
+      const dbPosts = await fetchBlogPosts();
+      let loadedPosts: BlogPost[] = [];
 
-    // Direct land / deep link support from shared URL params
-    if (articleIdParam && loadedPosts.length > 0) {
-      const match = loadedPosts.find(p => p.id === articleIdParam);
-      if (match) {
-        setSelectedPost(match);
-        if (!id) {
-          navigate(`/blog/${match.id}`, { replace: true });
+      if (dbPosts && dbPosts.length > 0) {
+        loadedPosts = dbPosts;
+        setPosts(dbPosts);
+        localStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+      } else {
+        const raw = localStorage.getItem("blog_posts");
+        if (!raw) {
+          localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+          loadedPosts = defaultArticles;
+          setPosts(defaultArticles);
+        } else {
+          try {
+            loadedPosts = JSON.parse(raw);
+            setPosts(loadedPosts);
+          } catch {
+            loadedPosts = defaultArticles;
+            setPosts(defaultArticles);
+          }
         }
       }
-    }
-  }, []);
+
+      // Direct land / deep link support from shared URL params
+      if (articleIdParam && loadedPosts.length > 0) {
+        const match = loadedPosts.find(p => p.id === articleIdParam);
+        if (match) {
+          setSelectedPost(match);
+          if (!id) {
+            navigate(`/blog/${match.id}`, { replace: true });
+          }
+        }
+      }
+    };
+
+    loadPosts();
+  }, [articleIdParam, id, navigate]);
 
   // Update URL if deep linked article changes
   useEffect(() => {
@@ -462,18 +475,23 @@ export function Blog() {
   }, [selectedPost]);
 
   const handleOpenPost = (post: BlogPost) => {
-    // Increment view locally
+    const updatedPost = { ...post, views: (post.views || 0) + 1 };
+    
+    // Increment view locally and update state
     const updated = posts.map(p => {
       if (p.id === post.id) {
-        return { ...p, views: (p.views || 0) + 1 };
+        return updatedPost;
       }
       return p;
     });
     setPosts(updated);
     localStorage.setItem("blog_posts", JSON.stringify(updated));
-    setSelectedPost({ ...post, views: (post.views || 0) + 1 });
+    setSelectedPost(updatedPost);
     navigate(`/blog/${post.id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Background push to Supabase
+    upsertBlogPost(updatedPost);
 
     // Track page views in analytics index
     try {
@@ -489,16 +507,18 @@ export function Blog() {
   const handleReact = (type: "heart" | "fire" | "thumbsUp") => {
     if (!selectedPost) return;
     
+    let updatedPostObj: BlogPost | null = null;
     const updatedPosts = posts.map(p => {
       if (p.id === selectedPost.id) {
         const reactions = p.reactions || { heart: 0, fire: 0, thumbsUp: 0 };
-        return {
+        updatedPostObj = {
           ...p,
           reactions: {
             ...reactions,
             [type]: (reactions[type] || 0) + 1
           }
         };
+        return updatedPostObj;
       }
       return p;
     });
@@ -506,17 +526,23 @@ export function Blog() {
     setPosts(updatedPosts);
     localStorage.setItem("blog_posts", JSON.stringify(updatedPosts));
     
-    setSelectedPost(prev => {
-      if (!prev) return null;
-      const rx = prev.reactions || { heart: 0, fire: 0, thumbsUp: 0 };
-      return {
-        ...prev,
-        reactions: {
-          ...rx,
-          [type]: (rx[type] || 0) + 1
-        }
-      };
-    });
+    if (updatedPostObj) {
+      setSelectedPost(updatedPostObj);
+      // Background push to Supabase
+      upsertBlogPost(updatedPostObj);
+    } else {
+      setSelectedPost(prev => {
+        if (!prev) return null;
+        const rx = prev.reactions || { heart: 0, fire: 0, thumbsUp: 0 };
+        return {
+          ...prev,
+          reactions: {
+            ...rx,
+            [type]: (rx[type] || 0) + 1
+          }
+        };
+      });
+    }
 
     toast.success("Thank you for your response!");
   };

@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
+import { fetchBlogPosts, upsertBlogPost, deleteBlogPost } from "@/supabase/db";
 
 // Standard cover presets for quick, premium choosing
 const COVER_PRESETS_BY_CATEGORY: Record<string, { name: string; url: string }[]> = {
@@ -232,17 +233,27 @@ export function AdminBlogManager() {
 
   // Load posts
   useEffect(() => {
-    const raw = localStorage.getItem("blog_posts");
-    if (raw) {
-      try {
-        setPosts(JSON.parse(raw));
-      } catch {
-        setPosts(defaultArticles);
+    const loadPosts = async () => {
+      const dbPosts = await fetchBlogPosts();
+      if (dbPosts && dbPosts.length > 0) {
+        setPosts(dbPosts);
+        localStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+      } else {
+        const raw = localStorage.getItem("blog_posts");
+        if (raw) {
+          try {
+            setPosts(JSON.parse(raw));
+          } catch {
+            setPosts(defaultArticles);
+          }
+        } else {
+          localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+          setPosts(defaultArticles);
+        }
       }
-    } else {
-      localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
-      setPosts(defaultArticles);
-    }
+    };
+
+    loadPosts();
 
     // Prefill author from logged-in user if available
     try {
@@ -339,8 +350,11 @@ export function AdminBlogManager() {
     const updated = posts.map(p => {
       if (p.id === postId) {
         const nextState = !p.published;
+        const updatedPost = { ...p, published: nextState };
+        // Upsert to Supabase
+        upsertBlogPost(updatedPost);
         toast.success(nextState ? `Published "${p.title}" successfully!` : `Unpublished "${p.title}" to Draft state.`);
-        return { ...p, published: nextState };
+        return updatedPost;
       }
       return p;
     });
@@ -354,6 +368,8 @@ export function AdminBlogManager() {
 
     if (window.confirm(`Are you sure you want to permanently delete "${target.title}"? This action cannot be undone.`)) {
       const filtered = posts.filter(p => p.id !== postId);
+      // Delete from Supabase
+      deleteBlogPost(postId);
       syncPosts(filtered);
       toast.success("Blog article deleted successfully.");
     }
@@ -480,6 +496,9 @@ export function AdminBlogManager() {
       updatedList = posts.map(p => p.id === selectedPostId ? compiledPost : p);
       toast.success(`Updated article alterations for "${compiledPost.title}" successfully.`);
     }
+
+    // Upsert to Supabase
+    upsertBlogPost(compiledPost);
 
     syncPosts(updatedList);
     setEditorMode("list");
@@ -853,6 +872,8 @@ export function AdminBlogManager() {
                               seoDesc: generatedArticle.seoDescription || generatedArticle.excerpt,
                               seoKeywords: generatedArticle.seoKeywords || aiKeywords
                             };
+                            // Upsert to Supabase
+                            upsertBlogPost(newPost);
                             syncPosts([newPost, ...posts]);
                             toast.success(`Successfully published: "${newPost.title}"!`);
                             setEditorMode("list");

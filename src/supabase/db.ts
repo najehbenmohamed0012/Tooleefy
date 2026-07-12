@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { trackToolAction } from "@/utils/analytics";
+import type { BlogPost } from "@/app/Articles";
 
 export interface Activity {
   id?: string;
@@ -192,3 +193,78 @@ export async function fetchActivities() {
     return { data: localActs, type: 'local' };
   }
 }
+
+// Fetch blog posts from Supabase table 'blog_posts' with graceful fallbacks
+export async function fetchBlogPosts(): Promise<BlogPost[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .order("date", { ascending: false });
+
+    if (error) {
+      console.warn("Supabase fetchBlogPosts failed (table may not exist or RLS active):", error.message);
+      return null;
+    }
+    return data as BlogPost[];
+  } catch (err) {
+    console.error("Error in fetchBlogPosts:", err);
+    return null;
+  }
+}
+
+// Upsert a blog post to Supabase 'blog_posts' table
+export async function upsertBlogPost(post: BlogPost): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("blog_posts")
+      .upsert({
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        date: post.date,
+        author: post.author,
+        category: post.category,
+        views: post.views,
+        reactions: post.reactions,
+        published: post.published,
+        coverImage: post.coverImage,
+        coverImageAlt: post.coverImageAlt,
+        coverImageCaption: post.coverImageCaption,
+        coverImageTitle: post.coverImageTitle,
+        seoTitle: post.seoTitle,
+        seoDesc: post.seoDesc,
+        seoKeywords: post.seoKeywords
+      });
+
+    if (error) {
+      console.error("Supabase upsertBlogPost failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Error in upsertBlogPost:", err);
+    return false;
+  }
+}
+
+// Delete a blog post from Supabase 'blog_posts' table
+export async function deleteBlogPost(postId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("blog_posts")
+      .delete()
+      .eq("id", postId);
+
+    if (error) {
+      console.error("Supabase deleteBlogPost failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Error in deleteBlogPost:", err);
+    return false;
+  }
+}
+
