@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import compression from "compression";
 import fs from "fs";
 import dotenv from "dotenv";
+import { GoogleGenAI } from "@google/genai";
 
 // Load environment variables early from .env or Hostinger platform variables
 dotenv.config();
@@ -520,6 +521,93 @@ async function startServer() {
     } catch (error) {
       console.error("Exchange rates fetch failure, serving fallback cache:", error);
       res.json({ fiat: ratesCache.fiat || DEFAULT_FIAT_RATES, crypto: ratesCache.crypto || DEFAULT_CRYPTO_RATES });
+    }
+  });
+
+  // Lazy-loaded Gemini AI API setup for the Article Writer
+  let aiClient: GoogleGenAI | null = null;
+  function getGeminiClient(): GoogleGenAI {
+    if (!aiClient) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY environment variable is required in settings");
+      }
+      aiClient = new GoogleGenAI({ apiKey });
+    }
+    return aiClient;
+  }
+
+  app.post("/api/ai/write", async (req, res) => {
+    try {
+      const { prompt, category, tone, targetLength, primaryKeywords } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: "Missing required parameter: prompt" });
+      }
+
+      const client = getGeminiClient();
+      
+      const keywordsList = Array.isArray(primaryKeywords) 
+        ? primaryKeywords.join(", ") 
+        : (primaryKeywords || "");
+
+      const systemInstruction = `You are an expert copywriter and SEO professional blog writer for Tooleefy, a premium local-first business offline utilities suite.
+Your goal is to write a highly engaging, professional, human-written-like blog post that provides extreme value to our users (business owners, freelancers, operations managers).
+
+Here is a list of the actual pages and tools on our website:
+- Home (Offline Business Suite): /
+- Invoice Generator: /tools/invoice
+- QR Code Generator: /tools/qr
+- Barcode Generator: /tools/barcode
+- Units Converter: /tools/converter
+- Categories Hub: /categories
+- About Tooleefy: /about
+- Support FAQ: /faq
+- Contact Us: /contact
+- Value Our Tools (Feedback): /value-our-tools
+
+CRITICAL RULES:
+1. You MUST organically and naturally link to some of these pages inside the article content using Markdown format, like [Invoice Generator](/tools/invoice) or [QR Code Generator](/tools/qr). Choose 2-4 links that are highly relevant to the subject. Do not make up any other URLs.
+2. The language must feel premium, authentic, insightful, and absolutely human-written (no repetitive AI introductory phrases, no fluff, concise paragraphs, bold key terms, clear structure).
+3. The content must use structured Markdown headings (##, ###), ordered/unordered lists, and strong emphasis tags where appropriate.
+4. You must output your response in STRICTly valid JSON matching this schema:
+{
+  "title": "A highly clickable, SEO-friendly title under 65 characters",
+  "excerpt": "A short, engaging 2-sentence summary of the article under 150 characters",
+  "content": "The full blog article in Markdown format with headers, lists, bold terms, and natural internal links.",
+  "seoTitle": "A highly optimized meta title under 60 characters",
+  "seoDescription": "A highly optimized meta description under 155 characters that includes the primary keywords naturally",
+  "seoKeywords": "comma, separated, list, of, keywords",
+  "unsplashKeyword": "a single search keyword for Unsplash that best represents this article visually (e.g. 'accounting', 'invoice', 'barcode', 'qrcode', 'measurement')"
+}`;
+
+      const userPrompt = `Write a comprehensive blog article about: "${prompt}"
+Category/Theme of the article: "${category || "Business"}"
+Tone: "${tone || "Professional"}"
+Target Length: ~${targetLength || 1000} words
+Primary SEO Keywords to include: "${keywordsList}"`;
+
+      const result = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: userPrompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json"
+        }
+      });
+
+      const responseText = result.text;
+      if (!responseText) {
+        throw new Error("No response text received from Gemini API");
+      }
+
+      const articleJson = JSON.parse(responseText.trim());
+      res.json({ success: true, article: articleJson });
+    } catch (err: any) {
+      console.error("Gemini AI Writer error:", err);
+      res.status(500).json({ 
+        error: "AI Generation failed. Ensure GEMINI_API_KEY is configured in the settings.",
+        details: err?.message || err 
+      });
     }
   });
 
