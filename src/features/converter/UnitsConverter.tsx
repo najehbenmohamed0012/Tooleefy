@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiUrl } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,7 +97,7 @@ export function UnitsConverter() {
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        const res = await fetch("/api/exchange-rates");
+        const res = await fetch(getApiUrl("/api/exchange-rates"));
         const data = await res.json();
         setDynamicRates({
           currency: data.fiat,

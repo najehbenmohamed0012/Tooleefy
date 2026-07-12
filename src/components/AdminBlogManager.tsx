@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
 import { fetchBlogPosts, upsertBlogPost, deleteBlogPost } from "@/supabase/db";
+import { getApiUrl } from "@/lib/utils";
 
 // Standard cover presets for quick, premium choosing
 const COVER_PRESETS_BY_CATEGORY: Record<string, { name: string; url: string }[]> = {
@@ -178,7 +179,7 @@ export function AdminBlogManager() {
       await addLogWithDelay(`[SYSTEM] Instantiating server-side Gemini 3.5 LLM context window...`, 600);
       await addLogWithDelay(`[TRANSMITTING] Dispatched request to secure endpoint /api/ai/write...`, 500);
 
-      const response = await fetch("/api/ai/write", {
+      const response = await fetch(getApiUrl("/api/ai/write"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -21,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import { getAnalytics, AnalyticsData } from "@/utils/analytics";
+import { getApiUrl } from "@/lib/utils";
 
 interface PageVisit {
   name: string;
@@ -41,7 +42,7 @@ export function AdminStats() {
   useEffect(() => {
     const fetchServerAnalytics = async () => {
       try {
-        const res = await fetch("/api/analytics");
+        const res = await fetch(getApiUrl("/api/analytics"));
         if (res.ok) {
           const data = await res.json();
           setAnalytics(data);

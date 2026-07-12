@@ -1,4 +1,5 @@
 // Analytics helper for tracking real-time platform metrics starting from 0.
+import { getApiUrl } from "@/lib/utils";
 
 export interface AnalyticsData {
   pageVisits: Record<string, number>;
@@ -149,7 +150,7 @@ export function trackPageView(path: string) {
   saveAnalytics(data);
 
   // Send to server-side global analytics tracker
-  fetch("/api/analytics/track", {
+  fetch(getApiUrl("/api/analytics/track"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -220,7 +221,7 @@ export function trackToolAction(tool: "converter" | "invoice" | "qr" | "barcode"
   window.dispatchEvent(new Event("platform_analytics_update"));
 
   // Send to server-side global analytics tracker
-  fetch("/api/analytics/track", {
+  fetch(getApiUrl("/api/analytics/track"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -245,7 +246,7 @@ export function trackToolAction(tool: "converter" | "invoice" | "qr" | "barcode"
 // Fetch global server-side analytics
 export async function getGlobalServerAnalytics(): Promise<AnalyticsData | null> {
   try {
-    const res = await fetch("/api/analytics");
+    const res = await fetch(getApiUrl("/api/analytics"));
     if (!res.ok) throw new Error("Failed to fetch global analytics");
     const data = await res.json();
     return data;
