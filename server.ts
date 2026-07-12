@@ -34,8 +34,15 @@ async function startServer() {
     next();
   });
 
-  // Restore original URL from Apache rewrite parameter if present
+  // Restore original URL and handle subdirectory/routing translations under Passenger
   app.use((req, res, next) => {
+    // 1. If this is a subdirectory API deployment, strip any parent folder prefix
+    const apiIndex = req.url.indexOf("/api/");
+    if (apiIndex > 0) {
+      req.url = req.url.substring(apiIndex);
+    }
+
+    // 2. Restore original URL from Apache rewrite parameter if present
     if (req.query._route_) {
       const rawRoute = req.query._route_ as string;
       const normalizedRoute = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
