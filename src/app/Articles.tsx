@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { 
   Calendar, 
   User, 
@@ -342,8 +342,10 @@ export function Blog() {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [copied, setCopied] = useState<boolean>(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const articleIdParam = searchParams.get("article");
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const articleIdParam = id || searchParams.get("article");
 
   const categories = [
     "All",
@@ -379,6 +381,9 @@ export function Blog() {
       const match = loadedPosts.find(p => p.id === articleIdParam);
       if (match) {
         setSelectedPost(match);
+        if (!id) {
+          navigate(`/blog/${match.id}`, { replace: true });
+        }
       }
     }
   }, []);
@@ -387,13 +392,18 @@ export function Blog() {
   useEffect(() => {
     if (posts.length > 0 && articleIdParam) {
       const match = posts.find(p => p.id === articleIdParam);
-      if (match && (!selectedPost || selectedPost.id !== match.id)) {
-        setSelectedPost(match);
+      if (match) {
+        if (!selectedPost || selectedPost.id !== match.id) {
+          setSelectedPost(match);
+        }
+        if (!id) {
+          navigate(`/blog/${match.id}`, { replace: true });
+        }
       }
     } else if (!articleIdParam && selectedPost) {
       setSelectedPost(null);
     }
-  }, [articleIdParam, posts]);
+  }, [articleIdParam, posts, id, navigate, selectedPost]);
 
   // Dynamic Open Graph and Meta Tag optimization for the selected article
   useEffect(() => {
@@ -415,7 +425,7 @@ export function Blog() {
         meta.setAttribute("content", value);
       };
 
-      const shareUrl = `${window.location.origin}/blog?article=${selectedPost.id}`;
+      const shareUrl = `${window.location.origin}/blog/${selectedPost.id}`;
 
       // Basic SEO Meta tags
       updateMeta("description", selectedPost.excerpt);
@@ -462,7 +472,7 @@ export function Blog() {
     setPosts(updated);
     localStorage.setItem("blog_posts", JSON.stringify(updated));
     setSelectedPost({ ...post, views: (post.views || 0) + 1 });
-    setSearchParams({ article: post.id });
+    navigate(`/blog/${post.id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     // Track page views in analytics index
@@ -670,7 +680,7 @@ export function Blog() {
                   variant="ghost" 
                   onClick={() => {
                     setSelectedPost(null);
-                    setSearchParams({});
+                    navigate("/blog");
                   }}
                   className="rounded-xl font-bold gap-2 text-sm text-foreground hover:bg-muted"
                 >
@@ -829,7 +839,7 @@ export function Blog() {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        const shareUrl = `${window.location.origin}/blog?article=${selectedPost.id}`;
+                        const shareUrl = `${window.location.origin}/blog/${selectedPost.id}`;
                         navigator.clipboard.writeText(shareUrl);
                         setCopied(true);
                         toast.success("Article link copied to clipboard!");
@@ -847,7 +857,7 @@ export function Blog() {
 
                     {/* Share on X (Twitter) */}
                     <a
-                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}&text=${encodeURIComponent(`${selectedPost.title} - Read this masterclass on Tooleefy Blog`)}`}
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${window.location.origin}/blog/${selectedPost.id}`)}&text=${encodeURIComponent(`${selectedPost.title} - Read this masterclass on Tooleefy Blog`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-slate-900 hover:bg-black text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
@@ -858,7 +868,7 @@ export function Blog() {
 
                     {/* Share on Facebook */}
                     <a
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/blog/${selectedPost.id}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#1877F2] hover:bg-[#0c63d4] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
@@ -869,7 +879,7 @@ export function Blog() {
 
                     {/* Share on LinkedIn */}
                     <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${window.location.origin}/blog/${selectedPost.id}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#0077B5] hover:bg-[#005a8a] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
@@ -880,7 +890,7 @@ export function Blog() {
 
                     {/* Share on WhatsApp */}
                     <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${selectedPost.title} - ${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${selectedPost.title} - ${window.location.origin}/blog/${selectedPost.id}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-[#25D366] hover:bg-[#128C7E] text-white hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer"
@@ -891,7 +901,7 @@ export function Blog() {
 
                     {/* Share via Email */}
                     <a
-                      href={`mailto:?subject=${encodeURIComponent(selectedPost.title)}&body=${encodeURIComponent(`I highly recommend reading this premium blog post from Tooleefy:\n\n${selectedPost.title}\n${window.location.origin}/blog?article=${selectedPost.id}`)}`}
+                      href={`mailto:?subject=${encodeURIComponent(selectedPost.title)}&body=${encodeURIComponent(`I highly recommend reading this premium blog post from Tooleefy:\n\n${selectedPost.title}\n${window.location.origin}/blog/${selectedPost.id}`)}`}
                       className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-muted hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground hover:scale-105 transition-all duration-300 shadow-sm cursor-pointer border border-border/30"
                       title="Share via Email"
                     >
@@ -928,6 +938,7 @@ export function Blog() {
                       className="group cursor-pointer bg-card rounded-[2rem] overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 border border-border/20 flex flex-col h-full"
                       onClick={() => {
                         setSelectedPost(article);
+                        navigate(`/blog/${article.id}`);
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                     >

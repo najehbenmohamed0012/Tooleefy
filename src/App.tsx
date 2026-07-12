@@ -72,6 +72,7 @@ export default function App() {
               {/* Nav & Info Pages */}
               <Route path="/categories" element={<Categories />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:id" element={<Blog />} />
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/contact" element={<Contact />} />
