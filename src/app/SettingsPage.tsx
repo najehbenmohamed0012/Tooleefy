@@ -899,180 +899,182 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
                 </Card>
 
                 {/* Brand Asset Center: Logo Builder & Exporter */}
-                <Card className="p-8 md:p-12 border-none shadow-premium rounded-[2.5rem] bg-card mt-8">
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-6 mb-8">
-                    <div>
-                      <h3 className="text-2xl font-black italic uppercase text-foreground">Platform Logo Workspace</h3>
-                      <p className="text-sm text-muted-foreground font-medium mt-1">
-                        Configure layout templates, preview brand assets, and download Tooleefy corporate logo assets built directly from source code as transparent PNG vectors.
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                      <ImageIcon className="w-5 h-5" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    {/* Live Canvas Preview Panel */}
-                    <div className="xl:col-span-7 space-y-4">
-                      <div className="text-xs font-black uppercase tracking-wider text-slate-500">Live Brand Preview (520 x 160)</div>
-                      
-                      {/* Checkboard preview container */}
-                      <div className="relative rounded-[2rem] border-2 border-dashed border-border overflow-hidden flex items-center justify-center p-6 min-h-[220px]">
-                        {logoPreviewBg === "checkboard" && (
-                          <div className="absolute inset-0 opacity-40 dark:opacity-20 pointer-events-none" style={{
-                            backgroundImage: "radial-gradient(#94a3b8 1px, transparent 1px)",
-                            backgroundSize: "16px 16px"
-                          }} />
-                        )}
-                        <canvas 
-                          ref={canvasRef} 
-                          width={520} 
-                          height={160} 
-                          className={`relative max-w-full rounded-2xl shadow-premium z-10 transition-all border ${
-                            logoPreviewBg === "light" ? "bg-white border-slate-300/45" : 
-                            logoPreviewBg === "dark" ? "bg-slate-950 border-white/5" : 
-                            "bg-transparent border-dashed border-slate-300/30"
-                          }`}
-                        />
+                {isAdmin && (
+                  <Card className="p-8 md:p-12 border-none shadow-premium rounded-[2.5rem] bg-card mt-8">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-6 mb-8">
+                      <div>
+                        <h3 className="text-2xl font-black italic uppercase text-foreground">Platform Logo Workspace</h3>
+                        <p className="text-sm text-muted-foreground font-medium mt-1">
+                          Configure layout templates, preview brand assets, and download Tooleefy corporate logo assets built directly from source code as transparent PNG vectors.
+                        </p>
                       </div>
-
-                      {/* Preview Background Selection */}
-                      <div className="flex items-center gap-3 bg-muted/30 p-3 rounded-2xl text-xs">
-                        <span className="font-bold text-muted-foreground">Preview Backing:</span>
-                        <div className="flex gap-1.5 flex-wrap">
-                          <button
-                            type="button"
-                            onClick={() => setLogoPreviewBg("checkboard")}
-                            className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
-                              logoPreviewBg === "checkboard" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
-                            }`}
-                          >
-                            Adaptive Dot-Grid
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setLogoPreviewBg("light")}
-                            className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
-                              logoPreviewBg === "light" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
-                            }`}
-                          >
-                            Bright White
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setLogoPreviewBg("dark")}
-                            className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
-                              logoPreviewBg === "dark" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
-                            }`}
-                          >
-                            Dark Emerald
-                          </button>
-                        </div>
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                        <ImageIcon className="w-5 h-5" />
                       </div>
                     </div>
 
-                    {/* Logo Control Panel */}
-                    <div className="xl:col-span-5 space-y-6 flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <div className="space-y-1">
-                          <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Logo Style Preset</Label>
-                          <p className="text-[10px] text-muted-foreground">Switch the corporate color palette of the download packet.</p>
-                        </div>
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                      {/* Live Canvas Preview Panel */}
+                      <div className="xl:col-span-7 space-y-4">
+                        <div className="text-xs font-black uppercase tracking-wider text-slate-500">Live Brand Preview (520 x 160)</div>
                         
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setLogoMode("light")}
-                            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                              logoMode === "light" 
-                                ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
-                                : "border-border hover:bg-muted/50"
+                        {/* Checkboard preview container */}
+                        <div className="relative rounded-[2rem] border-2 border-dashed border-border overflow-hidden flex items-center justify-center p-6 min-h-[220px]">
+                          {logoPreviewBg === "checkboard" && (
+                            <div className="absolute inset-0 opacity-40 dark:opacity-20 pointer-events-none" style={{
+                              backgroundImage: "radial-gradient(#94a3b8 1px, transparent 1px)",
+                              backgroundSize: "16px 16px"
+                            }} />
+                          )}
+                          <canvas 
+                            ref={canvasRef} 
+                            width={520} 
+                            height={160} 
+                            className={`relative max-w-full rounded-2xl shadow-premium z-10 transition-all border ${
+                              logoPreviewBg === "light" ? "bg-white border-slate-300/45" : 
+                              logoPreviewBg === "dark" ? "bg-slate-950 border-white/5" : 
+                              "bg-transparent border-dashed border-slate-300/30"
                             }`}
-                          >
-                            <span className="text-xs font-black block text-foreground">Standard Light Logo</span>
-                            <span className="text-[9px] text-muted-foreground mt-1 block">Green Icon Block<br />Green Corporate Text</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setLogoMode("dark")}
-                            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                              logoMode === "dark" 
-                                ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
-                                : "border-border hover:bg-muted/50"
-                            }`}
-                          >
-                            <span className="text-xs font-black block text-foreground">Standard Dark Logo</span>
-                            <span className="text-[9px] text-muted-foreground mt-1 block">Green Icon Block<br />Bright White Text</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setLogoMode("emerald")}
-                            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                              logoMode === "emerald" 
-                                ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
-                                : "border-border hover:bg-muted/50"
-                            }`}
-                          >
-                            <span className="text-xs font-black block text-foreground">Minimal Invert Logo</span>
-                            <span className="text-[9px] text-muted-foreground mt-1 block">White Icon Block<br />Green Corporate Text</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setLogoMode("mono")}
-                            className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                              logoMode === "mono" 
-                                ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
-                                : "border-border hover:bg-muted/50"
-                            }`}
-                          >
-                            <span className="text-xs font-black block text-foreground">Forest Luxury Logo</span>
-                            <span className="text-[9px] text-muted-foreground mt-1 block">Dark Moss Icon Block<br />Dark Moss Text</span>
-                          </button>
-                        </div>
-
-                        {/* Custom Core Text */}
-                        <div className="space-y-4 pt-2">
-                          <Label htmlFor="logoCustomText" className="text-xs font-black uppercase tracking-wider text-slate-500">Logo Headline Text</Label>
-                          <Input 
-                            id="logoCustomText"
-                            value={logoCustomText}
-                            onChange={(e) => setLogoCustomText(e.target.value.substring(0, 24))}
-                            placeholder="Branding word"
-                            className="h-11 rounded-xl"
                           />
                         </div>
 
-                        {/* Resolution toggle */}
-                        <div className="flex items-center justify-between p-4 bg-muted/40 rounded-2xl border border-border/40">
-                          <div>
-                            <span className="text-xs font-black block text-foreground">Retina High Resolution</span>
-                            <span className="text-[9.5px] text-muted-foreground">Applies 3x dynamic multiplier vector scaling (1560x480 png)</span>
+                        {/* Preview Background Selection */}
+                        <div className="flex items-center gap-3 bg-muted/30 p-3 rounded-2xl text-xs">
+                          <span className="font-bold text-muted-foreground">Preview Backing:</span>
+                          <div className="flex gap-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => setLogoPreviewBg("checkboard")}
+                              className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
+                                logoPreviewBg === "checkboard" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
+                              }`}
+                            >
+                              Adaptive Dot-Grid
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLogoPreviewBg("light")}
+                              className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
+                                logoPreviewBg === "light" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
+                              }`}
+                            >
+                              Bright White
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLogoPreviewBg("dark")}
+                              className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-all ${
+                                logoPreviewBg === "dark" ? "bg-primary text-white" : "hover:bg-muted font-semibold text-foreground/80"
+                              }`}
+                            >
+                              Dark Emerald
+                            </button>
                           </div>
-                          <input 
-                            type="checkbox"
-                            checked={logoHighRes}
-                            onChange={(e) => setLogoHighRes(e.target.checked)}
-                            aria-label="Retina High Resolution"
-                            className="w-4.5 h-4.5 accent-primary rounded-lg shrink-0 cursor-pointer"
-                          />
                         </div>
                       </div>
 
-                      {/* Download Executable */}
-                      <Button
-                        type="button"
-                        onClick={handleDownloadLogo}
-                        className="w-full h-14 bg-primary hover:bg-primary/95 text-white font-black uppercase tracking-widest text-xs rounded-2xl border-2 border-emerald-950/20 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-2 cursor-pointer shadow-premium"
-                      >
-                        <Download className="w-4 h-4" /> Export Brand PNG Logo
-                      </Button>
+                      {/* Logo Control Panel */}
+                      <div className="xl:col-span-5 space-y-6 flex flex-col justify-between">
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Logo Style Preset</Label>
+                            <p className="text-[10px] text-muted-foreground">Switch the corporate color palette of the download packet.</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setLogoMode("light")}
+                              className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                                logoMode === "light" 
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
+                                  : "border-border hover:bg-muted/50"
+                              }`}
+                            >
+                              <span className="text-xs font-black block text-foreground">Standard Light Logo</span>
+                              <span className="text-[9px] text-muted-foreground mt-1 block">Green Icon Block<br />Green Corporate Text</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setLogoMode("dark")}
+                              className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                                logoMode === "dark" 
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
+                                  : "border-border hover:bg-muted/50"
+                              }`}
+                            >
+                              <span className="text-xs font-black block text-foreground">Standard Dark Logo</span>
+                              <span className="text-[9px] text-muted-foreground mt-1 block">Green Icon Block<br />Bright White Text</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setLogoMode("emerald")}
+                              className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                                logoMode === "emerald" 
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
+                                  : "border-border hover:bg-muted/50"
+                              }`}
+                            >
+                              <span className="text-xs font-black block text-foreground">Minimal Invert Logo</span>
+                              <span className="text-[9px] text-muted-foreground mt-1 block">White Icon Block<br />Green Corporate Text</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setLogoMode("mono")}
+                              className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                                logoMode === "mono" 
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary/25" 
+                                  : "border-border hover:bg-muted/50"
+                              }`}
+                            >
+                              <span className="text-xs font-black block text-foreground">Forest Luxury Logo</span>
+                              <span className="text-[9px] text-muted-foreground mt-1 block">Dark Moss Icon Block<br />Dark Moss Text</span>
+                            </button>
+                          </div>
+
+                          {/* Custom Core Text */}
+                          <div className="space-y-4 pt-2">
+                            <Label htmlFor="logoCustomText" className="text-xs font-black uppercase tracking-wider text-slate-500">Logo Headline Text</Label>
+                            <Input 
+                              id="logoCustomText"
+                              value={logoCustomText}
+                              onChange={(e) => setLogoCustomText(e.target.value.substring(0, 24))}
+                              placeholder="Branding word"
+                              className="h-11 rounded-xl"
+                            />
+                          </div>
+
+                          {/* Resolution toggle */}
+                          <div className="flex items-center justify-between p-4 bg-muted/40 rounded-2xl border border-border/40">
+                            <div>
+                              <span className="text-xs font-black block text-foreground">Retina High Resolution</span>
+                              <span className="text-[9.5px] text-muted-foreground">Applies 3x dynamic multiplier vector scaling (1560x480 png)</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={logoHighRes}
+                              onChange={(e) => setLogoHighRes(e.target.checked)}
+                              aria-label="Retina High Resolution"
+                              className="w-4.5 h-4.5 accent-primary rounded-lg shrink-0 cursor-pointer"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Download Executable */}
+                        <Button
+                          type="button"
+                          onClick={handleDownloadLogo}
+                          className="w-full h-14 bg-primary hover:bg-primary/95 text-white font-black uppercase tracking-widest text-xs rounded-2xl border-2 border-emerald-950/20 border-b-[6px] hover:border-b-[4px] active:border-b-2 active:translate-y-[4px] transition-all gap-2 cursor-pointer shadow-premium"
+                        >
+                          <Download className="w-4 h-4" /> Export Brand PNG Logo
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                )}
               </div>
             )}
 
