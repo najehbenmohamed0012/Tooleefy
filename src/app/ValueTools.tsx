@@ -1,12 +1,25 @@
-import { useState, ChangeEvent, ReactNode } from "react";
+import { useState, ChangeEvent, ReactNode, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, CreditCard, Sparkles, Heart, Zap, ShieldCheck, Globe } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export function ValueTools() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem("tooleefy_hide_value_page") === "true") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
+  if (localStorage.getItem("tooleefy_hide_value_page") === "true") {
+    return null;
+  }
+
   const [amount, setAmount] = useState<number | null>(4);
   const [isCustom, setIsCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
 import { trackPageView } from "@/utils/analytics";
 import { Navbar } from "@/components/Navbar";
@@ -76,7 +76,14 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/value-our-tools" element={<ValueTools />} />
+              <Route 
+                path="/value-our-tools" 
+                element={
+                  localStorage.getItem("tooleefy_hide_value_page") === "true" 
+                    ? <Navigate to="/" replace /> 
+                    : <ValueTools />
+                } 
+              />
               
               {/* Dashboards */}
               <Route path="/dashboard" element={<UserDashboard />} />

@@ -1,9 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Heart, Stars, Zap } from "lucide-react";
 
 export const ValueBanner: React.FC = () => {
+  const [hidden, setHidden] = useState(() => {
+    return localStorage.getItem("tooleefy_hide_banners") === "true" || 
+           localStorage.getItem("tooleefy_hide_value_page") === "true";
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHidden(
+        localStorage.getItem("tooleefy_hide_banners") === "true" || 
+        localStorage.getItem("tooleefy_hide_value_page") === "true"
+      );
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("tooleefy_preferences_changed", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("tooleefy_preferences_changed", handleStorageChange);
+    };
+  }, []);
+
+  if (hidden) {
+    return null;
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 mt-20">
       <div className="relative group overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-1 md:p-2 shadow-2xl">

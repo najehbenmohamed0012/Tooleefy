@@ -196,6 +196,34 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
   const [prefLang, setPrefLang] = useState(() => localStorage.getItem("pref_lang") || "en");
   const [qrColor, setQrColor] = useState(() => localStorage.getItem("pref_qr_color") || "#0F172A");
 
+  // Admin Platform Override states
+  const [hideBanners, setHideBanners] = useState(() => localStorage.getItem("tooleefy_hide_banners") === "true");
+  const [hideValuePage, setHideValuePage] = useState(() => localStorage.getItem("tooleefy_hide_value_page") === "true");
+
+  const handleToggleHideBanners = (val: boolean) => {
+    setHideBanners(val);
+    localStorage.setItem("tooleefy_hide_banners", String(val));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+    if (val) {
+      toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+    } else {
+      toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+    }
+  };
+
+  const handleToggleHideValuePage = (val: boolean) => {
+    setHideValuePage(val);
+    localStorage.setItem("tooleefy_hide_value_page", String(val));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+    if (val) {
+      toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+    } else {
+      toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+    }
+  };
+
   // Logo Downloader and Customizer states
   const [logoMode, setLogoMode] = useState<'light' | 'dark' | 'emerald' | 'mono'>('light');
   const [logoPreviewBg, setLogoPreviewBg] = useState<'checkboard' | 'light' | 'dark'>('checkboard');
@@ -889,6 +917,41 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
                         </label>
                       </div>
                     </div>
+
+                    {isAdmin && (
+                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                        <Label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Settings className="w-4 h-4 text-primary" /> Admin Overrides & Controls
+                        </Label>
+                        <div className="space-y-4">
+                          <label className="flex items-start gap-4 p-4 rounded-2xl hover:bg-muted/50 cursor-pointer transition-colors">
+                            <input 
+                              type="checkbox"
+                              checked={hideBanners}
+                              onChange={(e) => handleToggleHideBanners(e.target.checked)}
+                              className="mt-1 w-4.5 h-4.5 accent-primary cursor-pointer rounded-lg shrink-0"
+                            />
+                            <div>
+                              <span className="font-extrabold block text-sm text-foreground">Hide All Platform Banners</span>
+                              <span className="text-xs text-muted-foreground block font-medium mt-0.5">Hide all "Value our Tools" banners and donation callouts globally across all tool pages and the footer.</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-start gap-4 p-4 rounded-2xl hover:bg-muted/50 cursor-pointer transition-colors">
+                            <input 
+                              type="checkbox"
+                              checked={hideValuePage}
+                              onChange={(e) => handleToggleHideValuePage(e.target.checked)}
+                              className="mt-1 w-4.5 h-4.5 accent-primary cursor-pointer rounded-lg shrink-0"
+                            />
+                            <div>
+                              <span className="font-extrabold block text-sm text-foreground">Hide "Value our Tools" Support Page</span>
+                              <span className="text-xs text-muted-foreground block font-medium mt-0.5">Disable access to the supporter and donation workspace. References will automatically redirect to home safely.</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex justify-end pt-4">
                       <Button type="submit" className="h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-secondary transition-colors">

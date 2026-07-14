@@ -3,8 +3,35 @@ import { motion } from "motion/react";
 import { Sparkles, Heart, Zap, ShieldCheck, Globe } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 export function ValueBanner() {
+  const [hidden, setHidden] = useState(() => {
+    return localStorage.getItem("tooleefy_hide_banners") === "true" || 
+           localStorage.getItem("tooleefy_hide_value_page") === "true";
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHidden(
+        localStorage.getItem("tooleefy_hide_banners") === "true" || 
+        localStorage.getItem("tooleefy_hide_value_page") === "true"
+      );
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("tooleefy_preferences_changed", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("tooleefy_preferences_changed", handleStorageChange);
+    };
+  }, []);
+
+  if (hidden) {
+    return null;
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 30 }}

@@ -30,7 +30,8 @@ import {
   UserCheck,
   UserPlus,
   Mail,
-  UserX
+  UserX,
+  Settings
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,39 @@ export function AdminDashboard() {
   const [maintenanceActive, setMaintenanceActive] = useState<boolean>(() => {
     return localStorage.getItem("tooleefy_maintenance") === "true";
   });
+  
+  const [hideBanners, setHideBanners] = useState<boolean>(() => {
+    return localStorage.getItem("tooleefy_hide_banners") === "true";
+  });
+  const [hideValuePage, setHideValuePage] = useState<boolean>(() => {
+    return localStorage.getItem("tooleefy_hide_value_page") === "true";
+  });
+
+  const handleToggleHideBanners = () => {
+    const newVal = !hideBanners;
+    setHideBanners(newVal);
+    localStorage.setItem("tooleefy_hide_banners", String(newVal));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+    if (newVal) {
+      toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+    } else {
+      toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+    }
+  };
+
+  const handleToggleHideValuePage = () => {
+    const newVal = !hideValuePage;
+    setHideValuePage(newVal);
+    localStorage.setItem("tooleefy_hide_value_page", String(newVal));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+    if (newVal) {
+      toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+    } else {
+      toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+    }
+  };
   
   const [rebooting, setRebooting] = useState(false);
   const [rebootLogs, setRebootLogs] = useState<string[]>([]);
@@ -775,6 +809,50 @@ export function AdminDashboard() {
                     <span className="text-sm font-bold">DNS Edge</span>
                   </div>
                   <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">Global</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Platform Override Preferences Card */}
+            <Card className="p-8 border-none shadow-premium rounded-[2.5rem] bg-card">
+              <h3 className="text-lg font-black text-foreground mb-6 uppercase italic tracking-tight flex items-center gap-2">
+                <Settings className="w-5 h-5 text-primary" /> Platform Preferences
+              </h3>
+              <div className="space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <span className="text-sm font-bold block">Hide Platform Banners</span>
+                    <span className="text-xs text-muted-foreground font-medium block mt-1">Hide "Value our Tools" promotion banners globally.</span>
+                  </div>
+                  <button 
+                    onClick={handleToggleHideBanners}
+                    className="shrink-0 focus:outline-none"
+                    aria-label="Toggle Hide Platform Banners"
+                  >
+                    {hideBanners ? (
+                      <ToggleRight className="w-10 h-10 text-primary" />
+                    ) : (
+                      <ToggleLeft className="w-10 h-10 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 border-t border-border pt-6">
+                  <div className="flex-1">
+                    <span className="text-sm font-bold block">Hide Supporter Page</span>
+                    <span className="text-xs text-muted-foreground font-medium block mt-1">Hide and disable the "Value our Tools" page.</span>
+                  </div>
+                  <button 
+                    onClick={handleToggleHideValuePage}
+                    className="shrink-0 focus:outline-none"
+                    aria-label="Toggle Hide Supporter Page"
+                  >
+                    {hideValuePage ? (
+                      <ToggleRight className="w-10 h-10 text-primary" />
+                    ) : (
+                      <ToggleLeft className="w-10 h-10 text-muted-foreground" />
+                    )}
+                  </button>
                 </div>
               </div>
             </Card>
