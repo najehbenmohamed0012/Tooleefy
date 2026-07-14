@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   FileText, 
   QrCode, 
@@ -11,8 +11,19 @@ import {
   ShieldCheck, 
   Zap, 
   Globe,
-  ArrowRightLeft 
+  ArrowRightLeft,
+  Flame,
+  Eye,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  BookOpen,
+  Heart
 } from "lucide-react";
+import { defaultArticles, BlogPost } from "@/app/Articles";
+import { fetchBlogPosts } from "@/supabase/db";
+import { AdSenseUnit } from "@/components/AdSenseUnit";
 
 const tools = [
   {
@@ -48,6 +59,50 @@ const tools = [
 export function Home() {
   const animatedWords = ["Invoicing", "QR Codes", "Barcodes", "Conversions"];
   const [index, setIndex] = useState(0);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const loadBlogPosts = async () => {
+      try {
+        const posts = await fetchBlogPosts();
+        if (posts && posts.length > 0) {
+          const sorted = [...posts].sort((a, b) => b.views - a.views);
+          setBlogPosts(sorted);
+        } else {
+          const stored = localStorage.getItem("blog_posts");
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              const sorted = [...parsed].sort((a, b) => b.views - a.views);
+              setBlogPosts(sorted);
+              return;
+            } catch {
+              // ignore
+            }
+          }
+          const sorted = [...defaultArticles].sort((a, b) => b.views - a.views);
+          setBlogPosts(sorted);
+        }
+      } catch (err) {
+        console.error("Failed to load blog posts in Home", err);
+        const sorted = [...defaultArticles].sort((a, b) => b.views - a.views);
+        setBlogPosts(sorted);
+      }
+    };
+    loadBlogPosts();
+  }, []);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollAmount = container.clientWidth * 0.85;
+      container.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -263,6 +318,149 @@ export function Home() {
                   <p className="text-sm text-muted-foreground font-medium leading-relaxed">No credits, no subscription wall, no "premium" features. Access the full power of Tooleefy for free.</p>
                </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Google AdSense Ads Section */}
+      <section className="py-8 bg-muted/5 border-t border-border">
+        <div className="container mx-auto px-6">
+          <div className="max-w-5xl mx-auto">
+            <AdSenseUnit slot="9182374650" type="leaderboard" className="my-0" />
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Hot Articles Slider Section */}
+      <section className="py-24 bg-muted/20 border-t border-border overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                <Flame className="w-4 h-4 fill-current animate-pulse" />
+                Trending on Blog
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black text-foreground tracking-tight italic">
+                Hot Articles & <span className="text-primary underline decoration-primary/30 underline-offset-8">Insights</span>
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">
+                Stay updated with curated enterprise guidelines, advanced localization workflows, and secure browser-side computing algorithms written by industry pioneers.
+              </p>
+            </div>
+
+            {/* Slider Navigation Controls */}
+            <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
+              <button
+                onClick={() => handleScroll('left')}
+                className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center hover:bg-primary hover:text-white transition-all hover:-translate-x-1 duration-300 shadow-sm cursor-pointer active:scale-95 group"
+                aria-label="Previous articles"
+              >
+                <ChevronLeft className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+              <button
+                onClick={() => handleScroll('right')}
+                className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center hover:bg-primary hover:text-white transition-all hover:translate-x-1 duration-300 shadow-sm cursor-pointer active:scale-95 group"
+                aria-label="Next articles"
+              >
+                <ChevronRight className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+          {/* Slider Flex Track */}
+          <div
+            ref={scrollContainerRef}
+            className="flex gap-8 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 scroll-smooth"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {blogPosts.map((post) => {
+              const getCategoryStyle = (category: string) => {
+                const lower = category.toLowerCase();
+                if (lower.includes("invoice")) return "bg-emerald-500 text-white";
+                if (lower.includes("qr")) return "bg-blue-500 text-white";
+                if (lower.includes("barcode")) return "bg-purple-500 text-white";
+                if (lower.includes("converter")) return "bg-orange-500 text-white";
+                return "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900";
+              };
+
+              return (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="w-[300px] sm:w-[380px] shrink-0 snap-start snap-always group"
+                >
+                  <Card className="h-full bg-card hover:bg-card/90 border border-border/40 hover:border-primary/30 shadow-premium hover:shadow-2xl transition-all duration-500 rounded-[2rem] overflow-hidden flex flex-col p-4">
+                    {/* Cover Image */}
+                    <div className="relative h-48 sm:h-56 rounded-[1.5rem] overflow-hidden bg-muted mb-6">
+                      <img
+                        src={post.coverImage || "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?auto=format&fit=crop&w=800&q=80"}
+                        alt={post.coverImageAlt || post.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        id={`home-blog-img-${post.id}`}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
+                      
+                      {/* Badge overlay */}
+                      <span className={`absolute top-4 left-4 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg ${getCategoryStyle(post.category)}`}>
+                        {post.category}
+                      </span>
+                    </div>
+
+                    {/* Metadata line */}
+                    <div className="flex items-center gap-4 text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
+                      <span>{post.date}</span>
+                      <span>&bull;</span>
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5" />
+                        5 min read
+                      </span>
+                    </div>
+
+                    {/* Title & Excerpt */}
+                    <div className="space-y-3 flex-grow">
+                      <h3 className="text-xl font-extrabold text-foreground tracking-tight line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
+                        {post.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-px bg-border/40 my-5" />
+
+                    {/* Footer Row (Reactions / CTA) */}
+                    <div className="flex items-center justify-between">
+                      {/* Social Metrics */}
+                      <div className="flex items-center gap-3 text-muted-foreground text-[11px] font-black uppercase tracking-wider">
+                        <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg">
+                          <Eye className="w-3.5 h-3.5 text-primary/70" />
+                          {post.views}
+                        </span>
+                        {(post.reactions?.heart > 0 || post.reactions?.fire > 0) && (
+                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg text-red-500 dark:text-red-400">
+                            <Flame className="w-3.5 h-3.5 fill-current" />
+                            {(post.reactions?.heart || 0) + (post.reactions?.fire || 0)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action trigger */}
+                      <Link
+                        to={`/blog/${post.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-black text-primary uppercase tracking-widest group-hover:gap-2.5 transition-all duration-300"
+                      >
+                        Read Article
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

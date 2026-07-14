@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { trackPageView } from "@/utils/analytics";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -53,6 +53,24 @@ function PageSkeleton() {
 }
 
 export default function App() {
+  const [hideValuePage, setHideValuePage] = useState(() => {
+    return localStorage.getItem("tooleefy_hide_value_page") === "true";
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setHideValuePage(localStorage.getItem("tooleefy_hide_value_page") === "true");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("tooleefy_preferences_changed", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("tooleefy_preferences_changed", handleStorageChange);
+    };
+  }, []);
+
   return (
     <ThemeProvider>
       <BrowserRouter>
@@ -79,7 +97,7 @@ export default function App() {
               <Route 
                 path="/value-our-tools" 
                 element={
-                  localStorage.getItem("tooleefy_hide_value_page") === "true" 
+                  hideValuePage 
                     ? <Navigate to="/" replace /> 
                     : <ValueTools />
                 } 
