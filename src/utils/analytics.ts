@@ -163,7 +163,13 @@ export function trackPageView(path: string) {
       browser
     })
   })
-  .then(res => res.json())
+  .then(res => {
+    const contentType = res.headers.get("content-type");
+    if (res.ok && contentType && contentType.includes("application/json")) {
+      return res.json();
+    }
+    return null;
+  })
   .then(resData => {
     if (resData && resData.analytics) {
       window.dispatchEvent(new CustomEvent("platform_analytics_server_update", { detail: resData.analytics }));
@@ -232,7 +238,13 @@ export function trackToolAction(tool: "converter" | "invoice" | "qr" | "barcode"
       userEmail
     })
   })
-  .then(res => res.json())
+  .then(res => {
+    const contentType = res.headers.get("content-type");
+    if (res.ok && contentType && contentType.includes("application/json")) {
+      return res.json();
+    }
+    return null;
+  })
   .then(resData => {
     if (resData && resData.analytics) {
       window.dispatchEvent(new CustomEvent("platform_analytics_server_update", { detail: resData.analytics }));
@@ -248,6 +260,10 @@ export async function getGlobalServerAnalytics(): Promise<AnalyticsData | null> 
   try {
     const res = await fetch(getApiUrl("/api/analytics"));
     if (!res.ok) throw new Error("Failed to fetch global analytics");
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Server returned non-JSON content type");
+    }
     const data = await res.json();
     return data;
   } catch (err) {

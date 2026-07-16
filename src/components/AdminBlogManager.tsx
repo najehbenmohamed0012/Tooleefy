@@ -122,7 +122,7 @@ export function AdminBlogManager() {
   // Rich form states
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [author, setAuthor] = useState("");
+  const [author, setAuthor] = useState("Tooleefy Team");
   const [category, setCategory] = useState("Invoice Generator");
   const [date, setDate] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -192,8 +192,16 @@ export function AdminBlogManager() {
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
+        const contentType = response.headers.get("content-type");
+        const errData = (contentType && contentType.includes("application/json"))
+          ? await response.json().catch(() => ({}))
+          : {};
         throw new Error(errData.error || `Server responded with status ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON content type. The AI server may be restarting or under high demand. Please try again in a few seconds.");
       }
 
       const data = await response.json();
@@ -201,10 +209,18 @@ export function AdminBlogManager() {
         throw new Error("Invalid response format received from AI writing node.");
       }
 
-      await addLogWithDelay(`[COMPILING] Article body structure received! Generating clean HTML/Markdown parsing layouts...`, 300);
-      await addLogWithDelay(`[LINKING] Automatically linked to relevant suite products: "${aiCategory}"...`, 400);
-      await addLogWithDelay(`[SEO] Final Meta Score: 98/100. Verification complete!`, 400);
-      await addLogWithDelay(`[SUCCESS] Article fully drafted and cached in temporary sandbox state.`, 300);
+      if (data.fallback) {
+        await addLogWithDelay(`[SYSTEM] Gemini API rate limit or high demand detected. Engaging local content engine...`, 300);
+        await addLogWithDelay(`[COMPILING] High-fidelity B2B article template compiled for category: "${aiCategory}"`, 300);
+        await addLogWithDelay(`[LINKING] Organic internal links automatically linked and styled...`, 300);
+        await addLogWithDelay(`[SEO] Meta descriptions and SEO titles configured successfully!`, 300);
+        await addLogWithDelay(`[SUCCESS] Premium article successfully created from offline presets!`, 300);
+      } else {
+        await addLogWithDelay(`[COMPILING] Article body structure received! Generating clean HTML/Markdown parsing layouts...`, 300);
+        await addLogWithDelay(`[LINKING] Automatically linked to relevant suite products: "${aiCategory}"...`, 400);
+        await addLogWithDelay(`[SEO] Final Meta Score: 98/100. Verification complete!`, 400);
+        await addLogWithDelay(`[SUCCESS] Article fully drafted and cached in temporary sandbox state.`, 300);
+      }
 
       // Pre-select Unsplash cover image based on Unsplash keyword or category
       let mappedImg = "";
@@ -218,7 +234,7 @@ export function AdminBlogManager() {
         ...data.article,
         coverImage: mappedImg,
         category: aiCategory,
-        author: author || "Administrator",
+        author: author || "Tooleefy Team",
         date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })
       });
 
@@ -256,17 +272,11 @@ export function AdminBlogManager() {
 
     loadPosts();
 
-    // Prefill author from logged-in user if available
+    // Prefill author as Tooleefy Team by default
     try {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setAuthor(parsed.name || "Administrator");
-      } else {
-        setAuthor("Administrator");
-      }
+      setAuthor("Tooleefy Team");
     } catch {
-      setAuthor("Administrator");
+      setAuthor("Tooleefy Team");
     }
   }, []);
 
@@ -299,14 +309,7 @@ export function AdminBlogManager() {
   const handleLaunchNew = () => {
     setTitle("");
     setSlug("");
-    // Re-load author name safely
-    try {
-      const savedUser = localStorage.getItem("user");
-      const parsed = savedUser ? JSON.parse(savedUser) : null;
-      setAuthor(parsed?.name || "Administrator");
-    } catch {
-      setAuthor("Administrator");
-    }
+    setAuthor("Tooleefy Team");
     setCategory("Invoice Generator");
     setDate(new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }));
     setExcerpt("");
@@ -328,7 +331,7 @@ export function AdminBlogManager() {
   const handleLaunchEdit = (post: BlogPost) => {
     setTitle(post.title);
     setSlug(post.id);
-    setAuthor(post.author || "Administrator");
+    setAuthor(post.author || "Tooleefy Team");
     setCategory(post.category || "Invoice Generator");
     setDate(post.date || new Date().toLocaleDateString());
     setExcerpt(post.excerpt || "");
@@ -475,7 +478,7 @@ export function AdminBlogManager() {
       excerpt: excerpt.trim() || title.trim().substring(0, 120) + "...",
       content: content,
       date: date || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      author: author.trim() || "Administrator",
+      author: author.trim() || "Tooleefy Team",
       category: category,
       views: selectedPostId ? (posts.find(p => p.id === selectedPostId)?.views || 0) : 0,
       reactions: selectedPostId ? (posts.find(p => p.id === selectedPostId)?.reactions || { heart: 0, fire: 0, thumbsUp: 0 }) : { heart: 0, fire: 0, thumbsUp: 0 },
@@ -778,6 +781,18 @@ export function AdminBlogManager() {
                     />
                   </div>
 
+                  <div className="space-y-1.5">
+                    <Label htmlFor="aiAuthor" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Article Author</Label>
+                    <Input
+                      id="aiAuthor"
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="Tooleefy Team"
+                      className="h-11 rounded-xl text-xs font-semibold bg-muted/10 border-border/40"
+                      disabled={isAiGenerating}
+                    />
+                  </div>
+
                   <Button
                     type="submit"
                     className="w-full h-13 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black uppercase tracking-wider text-xs gap-2 shadow-lg shadow-violet-500/10 cursor-pointer hover:from-violet-700 hover:to-indigo-700"
@@ -841,6 +856,7 @@ export function AdminBlogManager() {
                             setSeoTitle(generatedArticle.seoTitle || generatedArticle.title);
                             setSeoDesc(generatedArticle.seoDescription || generatedArticle.excerpt);
                             setSeoKeywords(generatedArticle.seoKeywords || aiKeywords);
+                            setAuthor(generatedArticle.author || "Tooleefy Team");
                             setDate(new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }));
                             setEditorMode("new");
                             toast.success("Loaded AI article into manual editor. Feel free to surgically refine content!");
@@ -860,7 +876,7 @@ export function AdminBlogManager() {
                               excerpt: generatedArticle.excerpt,
                               content: generatedArticle.content,
                               date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-                              author: author || "Administrator",
+                              author: author || "Tooleefy Team",
                               category: generatedArticle.category,
                               views: 0,
                               reactions: { heart: 0, fire: 0, thumbsUp: 0 },
@@ -1202,7 +1218,7 @@ export function AdminBlogManager() {
                         />
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="postCategory" className="text-xs font-black uppercase tracking-wider text-slate-500">Vertical Category</Label>
                           <select
@@ -1230,6 +1246,17 @@ export function AdminBlogManager() {
                             value={author}
                             onChange={(e) => setAuthor(e.target.value)}
                             placeholder="Najeh Ben Mohamed"
+                            className="h-12 rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="postDate" className="text-xs font-black uppercase tracking-wider text-slate-500">Publish Date</Label>
+                          <Input 
+                            id="postDate"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            placeholder="e.g., Jul 16, 2026"
                             className="h-12 rounded-xl"
                           />
                         </div>
@@ -1422,7 +1449,7 @@ Tooleefy clients read this prose dynamically inside real browser isolated enviro
                         <span>•</span>
                         <span>Published {date || "Just now"}</span>
                         <span>•</span>
-                        <span>By {author || "Administrator"}</span>
+                        <span>By {author || "Tooleefy Team"}</span>
                       </div>
 
                       <h1 className="text-2xl md:text-4xl font-black text-foreground italic uppercase tracking-tight leading-tight mb-4">

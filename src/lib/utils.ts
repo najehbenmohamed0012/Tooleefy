@@ -43,19 +43,37 @@ export function getApiUrl(apiPath: string): string {
   let subfolder = "";
   let matched = false;
   
-  // Find if the pathname ends with any of the known routes
+  // Find if the pathname contains any of the known routes as a distinct path segment
   for (const route of knownRoutes) {
-    if (pathname.endsWith(route)) {
-      subfolder = pathname.substring(0, pathname.length - route.length);
+    if (pathname === route) {
+      subfolder = "";
       matched = true;
       break;
+    }
+
+    const index = pathname.indexOf(route);
+    if (index !== -1) {
+      const afterRoute = pathname.substring(index + route.length);
+      // Ensure it's a whole path segment (either ends immediately or is followed by a slash)
+      if (afterRoute === "" || afterRoute.startsWith("/")) {
+        subfolder = pathname.substring(0, index);
+        matched = true;
+        break;
+      }
     }
   }
 
   // If no known route was matched, and we are not at the root "/",
-  // then the entire pathname might be a subfolder deployment (e.g. /tooleefy)
+  // we check if the first segment is a known subfolder name (like "tooleefy")
+  // to avoid treating general 404/unmatched paths as subfolders.
   if (!matched && pathname !== "/") {
-    subfolder = pathname;
+    const segments = pathname.split("/").filter(Boolean);
+    const firstSegment = segments[0] || "";
+    if (firstSegment === "tooleefy") {
+      subfolder = "/tooleefy";
+    } else {
+      subfolder = "";
+    }
   }
 
   // Ensure subfolder has a leading slash and no trailing slash

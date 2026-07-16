@@ -626,9 +626,9 @@ export function Blog() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                     {filteredPosts.map((article, idx) => (
                       <React.Fragment key={article.id || article.title}>
-                        {idx === 3 && (
+                        {idx > 0 && idx % 3 === 0 && (
                           <div className="col-span-full">
-                            <AdSenseUnit slot="5938204918" type="in-feed" className="my-4" />
+                            <AdSenseUnit slot={`5938204918-${idx}`} type="in-feed" className="my-4" />
                           </div>
                         )}
                         <motion.div

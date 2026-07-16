@@ -98,11 +98,20 @@ export function UnitsConverter() {
     const fetchRates = async () => {
       try {
         const res = await fetch(getApiUrl("/api/exchange-rates"));
+        if (!res.ok) {
+          throw new Error(`Server returned status ${res.status}`);
+        }
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned non-JSON content type");
+        }
         const data = await res.json();
-        setDynamicRates({
-          currency: data.fiat,
-          crypto: data.crypto
-        });
+        if (data && data.fiat && data.crypto) {
+          setDynamicRates({
+            currency: data.fiat,
+            crypto: data.crypto
+          });
+        }
       } catch (err) {
         console.error("Fetch rates failed", err);
       }

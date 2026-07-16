@@ -4,7 +4,8 @@ import { createServer as createViteServer } from "vite";
 import compression from "compression";
 import fs from "fs";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
+import { createClient } from "@supabase/supabase-js";
 
 // Load environment variables early from .env or Hostinger platform variables
 dotenv.config();
@@ -312,9 +313,120 @@ async function startServer() {
     };
   };
 
+  let supabaseClient: any = null;
+  const getSupabaseClient = () => {
+    if (supabaseClient) return supabaseClient;
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+        return supabaseClient;
+      } catch (err) {
+        console.warn("Failed to create Supabase client for sitemap:", err);
+      }
+    }
+    return null;
+  };
+
   app.get("/llms.txt", serveCrawlFile("llms.txt", "text/plain; charset=utf-8"));
   app.get("/robots.txt", serveCrawlFile("robots.txt", "text/plain; charset=utf-8"));
-  app.get("/sitemap.xml", serveCrawlFile("sitemap.xml", "application/xml; charset=utf-8"));
+
+  // Ideal Dynamic Sitemap Generator allowing Google Search Console to index every page including dynamic blog posts
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const baseUrl = "https://tooleefy.com";
+      const currentDate = new Date().toISOString().split("T")[0];
+
+      // 1. Core static public pages
+      const staticPages = [
+        { loc: "/", changefreq: "daily", priority: "1.0" },
+        { loc: "/tools/invoice", changefreq: "weekly", priority: "0.9" },
+        { loc: "/tools/qr", changefreq: "weekly", priority: "0.9" },
+        { loc: "/tools/barcode", changefreq: "weekly", priority: "0.9" },
+        { loc: "/tools/converter", changefreq: "weekly", priority: "0.9" },
+        { loc: "/categories", changefreq: "weekly", priority: "0.8" },
+        { loc: "/blog", changefreq: "daily", priority: "0.8" },
+        { loc: "/about", changefreq: "monthly", priority: "0.7" },
+        { loc: "/faq", changefreq: "monthly", priority: "0.7" },
+        { loc: "/contact", changefreq: "monthly", priority: "0.7" },
+        { loc: "/value-our-tools", changefreq: "weekly", priority: "0.8" },
+        { loc: "/privacy", changefreq: "monthly", priority: "0.5" },
+        { loc: "/terms", changefreq: "monthly", priority: "0.5" },
+        { loc: "/cookies", changefreq: "monthly", priority: "0.5" }
+      ];
+
+      // 2. Fetch blog posts from Supabase or use fallback defaults
+      let blogPosts: { id: string; date?: string }[] = [];
+      const client = getSupabaseClient();
+      if (client) {
+        try {
+          const { data, error } = await client
+            .from("blog_posts")
+            .select("id, date")
+            .order("date", { ascending: false });
+          if (!error && data && data.length > 0) {
+            blogPosts = data;
+          }
+        } catch (err) {
+          console.warn("Error fetching blog posts for sitemap, using defaults:", err);
+        }
+      }
+
+      // If no blog posts fetched from Supabase, use the fallback defaults
+      if (blogPosts.length === 0) {
+        blogPosts = [
+          { id: "art-1", date: "May 15, 2024" },
+          { id: "art-2", date: "May 10, 2024" },
+          { id: "art-3", date: "May 05, 2024" }
+        ];
+      }
+
+      // Generate XML
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+      // Add static pages
+      staticPages.forEach(p => {
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}${p.loc}</loc>\n`;
+        xml += `    <lastmod>${currentDate}</lastmod>\n`;
+        xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
+        xml += `    <priority>${p.priority}</priority>\n`;
+        xml += `  </url>\n`;
+      });
+
+      // Add dynamic blog posts
+      blogPosts.forEach(post => {
+        let postModDate = currentDate;
+        if (post.date) {
+          try {
+            const parsedDate = new Date(post.date);
+            if (!isNaN(parsedDate.getTime())) {
+              postModDate = parsedDate.toISOString().split("T")[0];
+            }
+          } catch (e) {
+            // keep currentDate
+          }
+        }
+
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/blog/${post.id}</loc>\n`;
+        xml += `    <lastmod>${postModDate}</lastmod>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>0.8</priority>\n`;
+        xml += `  </url>\n`;
+      });
+
+      xml += `</urlset>\n`;
+
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.send(xml);
+    } catch (error: any) {
+      console.error("Sitemap generation failed:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
   // Ideal dynamic Open Graph (OG) image generator
   app.get("/api/og-image", (req, res) => {
@@ -544,6 +656,122 @@ async function startServer() {
     return aiClient;
   }
 
+  function generateFallbackArticle(prompt: string, category: string, tone: string, targetLength: number, keywords: string) {
+    const cleanPrompt = prompt ? prompt.trim() : "Digital Tools and Creator Productivity";
+    const title = cleanPrompt.length > 60 ? cleanPrompt : `The Strategic Guide to ${cleanPrompt}`;
+    const excerpt = `Learn how to leverage ${cleanPrompt} to optimize your workflow, reduce operational overhead, and drive efficiency in your business.`;
+    
+    const keywordsArr = keywords ? keywords.split(",").map(k => k.trim()) : ["productivity", "tools", "business automation"];
+    const formattedKeywords = keywordsArr.join(", ");
+    
+    const cleanTone = tone || "Professional";
+    const toneDesc = cleanTone.toLowerCase() === "playful" 
+      ? "an engaging, energetic, and approachable" 
+      : cleanTone.toLowerCase() === "technical"
+      ? "a detailed, analytic, and precise"
+      : "a professional, clear, and action-oriented";
+
+    // Customize based on keywords in prompt
+    const lowerPrompt = cleanPrompt.toLowerCase();
+    let intro = "";
+    let section1Title = "";
+    let section1Content = "";
+    let section2Title = "";
+    let section2Content = "";
+    let section3Title = "";
+    let section3Content = "";
+    let link = "";
+
+    if (lowerPrompt.includes("invoice") || lowerPrompt.includes("billing") || lowerPrompt.includes("payment")) {
+      link = "[Invoice Generator](/tools/invoice)";
+      intro = `Managing finances effectively is the backbone of any successful venture. When it comes to billing, using a dedicated ${link} streamlines client billing and secures faster payments. Under a ${toneDesc} perspective, let's explore how optimizing your invoicing structure elevates brand trust and cash flow.`;
+      
+      section1Title = `1. Accelerating Cash Flow with Professional Invoicing`;
+      section1Content = `Slow billing cycles are a leading cause of cash flow bottlenecks. To solve this, creators and freelancers should adopt instant, single-page billing documents that display payment structures, terms of service, and itemized lists clearly. By standardizing these templates, businesses can reduce disputes and ensure that accounting pipelines remain smooth and friction-free.`;
+      
+      section2Title = `2. Three Essential Rules for Frictionless Billing`;
+      section2Content = `To achieve seamless billing, consider implementing these fundamental principles:\n\n1. **Specify Terms Explicitly**: Clearly state 'Due on Receipt' or 'Net 30' to set clear expectations.\n2. **Include Auto-Compiled Details**: Ensure tax details, business addresses, and payment portals are pre-calculated to prevent calculation errors.\n3. **Brand Your Invoices**: Use consistent logos, typography, and accent colors to reinforce your brand identity during every touchpoint.`;
+      
+      section3Title = `3. Leveraging Automated Tools for Scalability`;
+      section3Content = `Using automated templates saves hours of manual data entry weekly. Our premium local-first ${link} allows you to draft enterprise-grade billing sheets instantly, secure offline local storage, and export clean print-ready PDFs without relying on unstable internet connections.`;
+    } else if (lowerPrompt.includes("qr") || lowerPrompt.includes("quick response") || lowerPrompt.includes("scan")) {
+      link = "[QR Code Generator](/tools/qr)";
+      intro = `QR codes have revolutionized offline-to-online marketing, customer engagement, and inventory tracking. Leveraging our robust ${link} allows brands to generate high-precision vector scan patterns for URLs, Wi-Fi details, and contact cards instantly. Let's delve into this under a ${toneDesc} analysis.`;
+      
+      section1Title = `1. The Mechanics of a High-Scannability QR Code`;
+      section1Content = `A successful QR code relies heavily on scan density, contrast, and error correction levels. If your QR code contains too much nested information, the scan pattern becomes overly dense, making it difficult for older mobile cameras to read. Optimizing your content and utilizing medium-high error correction ensures scannability even in low-light or outdoor environments.`;
+      
+      section2Title = `2. Effective Use-Cases for Modern Business`;
+      section2Content = `QR codes are highly versatile tools. Here are three major ways to utilize them today:\n\n- **Contactless Portals**: Guide restaurant guests to digital menus, or conference attendees to digital portfolios.\n- **WiFi Access Hubs**: Provide immediate network credentials to office visitors without disclosing complex alphanumeric passwords.\n- **Dynamic Product Labels**: Connect physical merchandise to warranty registration pages, promotional videos, or customer support lines.`;
+      
+      section3Title = `3. Creating High-Quality Scans Locally`;
+      section3Content = `With our high-contrast, client-side ${link}, you can design customized QR codes complete with custom colors, quiet zone margins, and custom sizes. Since everything is generated in your browser, your data remains completely private and secure.`;
+    } else if (lowerPrompt.includes("barcode") || lowerPrompt.includes("upc") || lowerPrompt.includes("ean")) {
+      link = "[Barcode Generator](/tools/barcode)";
+      intro = `Barcodes are the foundation of global supply chains, retail management, and inventory tracking. Implementing standard barcodes using our advanced ${link} ensures high-precision scanning redundancy and flawless product catalog sync. Let's analyze this using ${toneDesc} insights.`;
+      
+      section1Title = `1. Choosing the Right Barcode Symbology`;
+      section1Content = `Selecting the correct barcode format depends entirely on your target application. For retail and consumer products, standard **EAN-13** or **UPC-A** is mandatory. For internal inventory, tracking assets, and logistical shipments, high-density formats like **Code 128** provide the flexibility to encode alphanumeric characters in a highly compact visual format.`;
+      
+      section2Title = `2. Best Practices for Printing and Scanning Redundancy`;
+      section2Content = `To guarantee perfect scans every single time, follow these essential design rules:\n\n1. **Maintain Adequate Quiet Zones**: Ensure there is enough empty space to the left and right of the barcode lines so laser scanners can identify boundaries.\n2. **Optimize Print Contrast**: Always print dark bars on light backgrounds; avoid reverse-color barcodes as most scanners cannot decode them.\n3. **Test at Multiple Scale Options**: Print test labels at 100%, 80%, and 120% to check scanning speeds against your hardware.`;
+      
+      section3Title = `3. Elevating Inventory Control Offline`;
+      section3Content = `Our local-first ${link} enables you to generate bulk Code 128, EAN-13, and UPC barcodes instantly. This allows warehouse managers and retail staff to build custom catalogs and label merchandise locally without sending sensitive inventory logs to external servers.`;
+    } else if (lowerPrompt.includes("convert") || lowerPrompt.includes("unit") || lowerPrompt.includes("measure") || lowerPrompt.includes("currency")) {
+      link = "[Units Converter](/tools/converter)";
+      intro = `In a globalized economy, precision in measurements and conversions is paramount. Whether you are dealing with currencies, weights, data speeds, or engineering metrics, utilizing a comprehensive ${link} eliminates mathematical errors and ensures accuracy. Let's analyze this with ${toneDesc} depth.`;
+      
+      section1Title = `1. The Hidden Cost of Conversion Errors`;
+      section1Content = `From scientific research to commercial shipping, small conversion discrepancies can lead to major operational losses. Standardizing measurement protocols across international units (Metric and Imperial systems) ensures that cross-border logistics, recipe ratios, and architectural blueprints remain precise and compliant.`;
+      
+      section2Title = `2. Critical Units to Monitor in Operations`;
+      section2Content = `Depending on your sector, key metrics must be monitored closely:\n\n- **Digital Data Rates**: Essential for IT infrastructure planning, streaming setups, and cloud storage allocations.\n- **Currency Exchange**: Crucial for international e-commerce pricing, remote contractor payments, and cross-border invoicing.\n- **Mass and Volume**: Key for logistics, freight forwarding, and chemical compounding.`;
+      
+      section3Title = `3. Real-Time Conversion Tools in Your Workflow`;
+      section3Content = `By integrating our fully featured, responsive ${link} into your toolkit, you can execute instantaneous translations between dozens of technical dimensions. The tool operates perfectly offline and uses cached live rates for currency calculations, providing a highly reliable productivity center.`;
+    } else {
+      // General Business/Productivity
+      const linksList = [
+        "[Invoice Generator](/tools/invoice)",
+        "[QR Code Generator](/tools/qr)",
+        "[Barcode Generator](/tools/barcode)",
+        "[Units Converter](/tools/converter)"
+      ];
+      link = linksList[Math.floor(Math.random() * linksList.length)];
+      intro = `Achieving peak operational efficiency requires a careful blend of strategy and high-leverage tools. Across modern enterprises and creative workflows, utilizing decentralized, offline-first tools like our ${link} helps automate routine tasks. Let's outline a strategic roadmap under ${toneDesc} guidance.`;
+      
+      section1Title = `1. The Evolution of Local-First Business Utilities`;
+      section1Content = `Cloud-dependence often introduces latency, subscription bloat, and unexpected downtime. In contrast, local-first architectures run entirely in your web browser. This means your private files, scan codes, and billing documents are compiled instantly on your physical device, keeping your proprietary operational workflows fast and private.`;
+      
+      section2Title = `2. Three Pillars of Modern Digital Productivity`;
+      section2Content = `To build a resilient workflow, focus on these three core tenets:\n\n1. **Automation of Routine Documentation**: Auto-generate recurring contracts, QR scan codes, and labels rather than writing them by hand.\n2. **Offline-First Readiness**: Ensure your team remains productive even during network outages by hosting tools that don't depend on API servers.\n3. **Unified Workspaces**: Keep converters, planners, and templates within a single accessible tab to prevent content context-switching.`;
+      
+      section3Title = `3. Building a Smarter Workspace with Tooleefy`;
+      section3Content = `Tooleefy's collection of offline tools—ranging from our interactive ${link} to precise calculation utilities—empowers modern teams to work with agility. Explore our tools to discover how zero-dependency local utilities can revolutionize your operational velocity.`;
+    }
+
+    let content = `# ${title}\n\n`;
+    content += `${intro}\n\n`;
+    content += `## ${section1Title}\n\n`;
+    content += `${section1Content}\n\n`;
+    content += `## ${section2Title}\n\n`;
+    content += `${section2Content}\n\n`;
+    content += `## ${section3Title}\n\n`;
+    content += `${section3Content}\n\n`;
+    content += `*Disclaimer: This strategic guide is designed to serve as an operational template. For direct implementation, combine these guidelines with our suite of free tools to streamline daily performance.*`;
+
+    return {
+      title,
+      excerpt,
+      content,
+      seoTitle: `${title.substring(0, 50)} | Tooleefy Blog`,
+      seoDescription: `${excerpt.substring(0, 150)}...`,
+      seoKeywords: formattedKeywords,
+      unsplashKeyword: category ? category.toLowerCase() : "business"
+    };
+  }
+
   app.post("/api/ai/write", async (req, res) => {
     try {
       const { prompt, category, tone, targetLength, primaryKeywords } = req.body;
@@ -551,13 +779,17 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required parameter: prompt" });
       }
 
-      const client = getGeminiClient();
-      
       const keywordsList = Array.isArray(primaryKeywords) 
         ? primaryKeywords.join(", ") 
         : (primaryKeywords || "");
 
-      const systemInstruction = `You are an expert copywriter and SEO professional blog writer for Tooleefy, a premium local-first business offline utilities suite.
+      let articleJson = null;
+      let usedFallback = false;
+
+      try {
+        const client = getGeminiClient();
+        
+        const systemInstruction = `You are an expert copywriter and SEO professional blog writer for Tooleefy, a premium local-first business offline utilities suite.
 Your goal is to write a highly engaging, professional, human-written-like blog post that provides extreme value to our users (business owners, freelancers, operations managers).
 
 Here is a list of the actual pages and tools on our website:
@@ -587,28 +819,130 @@ CRITICAL RULES:
   "unsplashKeyword": "a single search keyword for Unsplash that best represents this article visually (e.g. 'accounting', 'invoice', 'barcode', 'qrcode', 'measurement')"
 }`;
 
-      const userPrompt = `Write a comprehensive blog article about: "${prompt}"
+        const userPrompt = `Write a comprehensive blog article about: "${prompt}"
 Category/Theme of the article: "${category || "Business"}"
 Tone: "${tone || "Professional"}"
 Target Length: ~${targetLength || 1000} words
 Primary SEO Keywords to include: "${keywordsList}"`;
 
-      const result = await client.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: userPrompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json"
-        }
-      });
+        const modelsToTry = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+        let lastError: any = null;
+        let result = null;
 
-      const responseText = result.text;
-      if (!responseText) {
-        throw new Error("No response text received from Gemini API");
+        for (const modelName of modelsToTry) {
+          let delay = 500; // start with 500ms delay
+          const maxRetries = 3;
+          
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              console.log(`Attempting blog generation using model: ${modelName} (attempt ${attempt}/${maxRetries})`);
+              result = await client.models.generateContent({
+                model: modelName,
+                contents: userPrompt,
+                config: {
+                  systemInstruction,
+                  responseMimeType: "application/json",
+                  responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                      title: {
+                        type: Type.STRING,
+                        description: "A highly clickable, SEO-friendly title under 65 characters"
+                      },
+                      excerpt: {
+                        type: Type.STRING,
+                        description: "A short, engaging 2-sentence summary of the article under 150 characters"
+                      },
+                      content: {
+                        type: Type.STRING,
+                        description: "The full blog article in Markdown format with headers, lists, bold terms, and natural internal links."
+                      },
+                      seoTitle: {
+                        type: Type.STRING,
+                        description: "A highly optimized meta title under 60 characters"
+                      },
+                      seoDescription: {
+                        type: Type.STRING,
+                        description: "A highly optimized meta description under 155 characters that includes the primary keywords naturally"
+                      },
+                      seoKeywords: {
+                        type: Type.STRING,
+                        description: "comma, separated, list, of, keywords"
+                      },
+                      unsplashKeyword: {
+                        type: Type.STRING,
+                        description: "a single search keyword for Unsplash that best represents this article visually (e.g. 'accounting', 'invoice', 'barcode', 'qrcode', 'measurement')"
+                      }
+                    },
+                    required: [
+                      "title",
+                      "excerpt",
+                      "content",
+                      "seoTitle",
+                      "seoDescription",
+                      "seoKeywords",
+                      "unsplashKeyword"
+                    ]
+                  }
+                }
+              });
+              if (result && result.text) {
+                console.log(`Generation succeeded with model: ${modelName}`);
+                break; // Success!
+              }
+            } catch (err: any) {
+              const errMsg = err?.message || "";
+              const errStatus = err?.status || err?.code || 0;
+              const isQuotaError = errStatus === 429 || errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("Quota exceeded") || errMsg.includes("quota");
+              const isAuthError = errStatus === 401 || errStatus === 403 || errMsg.includes("API_KEY_INVALID") || errMsg.includes("API key not valid") || errMsg.includes("not authorized");
+              
+              if (isQuotaError || isAuthError) {
+                const errorType = isQuotaError ? "quota/rate limit" : "authentication";
+                console.warn(`Model ${modelName} returned non-transient ${errorType} error. Aborting model loop immediately to use high-quality local fallback. Error: ${errMsg || err}`);
+                lastError = err;
+                throw err; // Escape both loops immediately and run the fallback
+              }
+
+              const isTransient = errStatus === 503 || 
+                                  errMsg.includes("503") || 
+                                  errMsg.includes("UNAVAILABLE") || 
+                                  errMsg.includes("Unexpected token '<'") || 
+                                  errMsg.includes("not valid JSON");
+              if (isTransient && attempt < maxRetries) {
+                console.warn(`Model ${modelName} returned transient error (attempt ${attempt}/${maxRetries}). Retrying in ${delay}ms... Error: ${errMsg || err}`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // exponential backoff
+                lastError = err;
+              } else {
+                console.warn(`Generation failed with model ${modelName} on attempt ${attempt}:`, errMsg || err);
+                lastError = err;
+                break; // move on to next model if it's not transient or we ran out of retries for this model
+              }
+            }
+          }
+          
+          if (result && result.text) {
+            break; // Success, exit the models loop
+          }
+        }
+
+        if (!result || !result.text) {
+          throw lastError || new Error("Failed to generate content with any model");
+        }
+
+        const responseText = result.text;
+        if (!responseText) {
+          throw new Error("No response text received from Gemini API");
+        }
+
+        articleJson = JSON.parse(responseText.trim());
+      } catch (geminiError: any) {
+        console.warn("Gemini AI generation failed or was bypassed. Generating custom high-quality fallback article:", geminiError?.message || geminiError);
+        articleJson = generateFallbackArticle(prompt, category, tone, targetLength, keywordsList);
+        usedFallback = true;
       }
 
-      const articleJson = JSON.parse(responseText.trim());
-      res.json({ success: true, article: articleJson });
+      res.json({ success: true, article: articleJson, fallback: usedFallback });
     } catch (err: any) {
       console.error("Gemini AI Writer error:", err);
       res.status(500).json({ 

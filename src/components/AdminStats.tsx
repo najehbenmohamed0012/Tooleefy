@@ -44,8 +44,11 @@ export function AdminStats() {
       try {
         const res = await fetch(getApiUrl("/api/analytics"));
         if (res.ok) {
-          const data = await res.json();
-          setAnalytics(data);
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            setAnalytics(data);
+          }
         }
       } catch (err) {
         console.warn("Failed to fetch server-side real analytics:", err);
