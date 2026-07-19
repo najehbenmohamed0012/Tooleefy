@@ -15,7 +15,8 @@ import {
   Zap, 
   Activity,
   Award,
-  BookOpen
+  BookOpen,
+  DollarSign
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export function AdminStats() {
   const [analytics, setAnalytics] = useState<AnalyticsData>(() => getAnalytics());
   const dataSource = "real";
   const [registeredAccountsCount, setRegisteredAccountsCount] = useState(1);
+  const [adsenseNiche, setAdsenseNiche] = useState<string>("utility");
 
   // Listen to live analytic updates
   useEffect(() => {
@@ -384,6 +386,68 @@ export function AdminStats() {
   const registeredVisits = scaledStats.registered;
   const guestVisits = scaledStats.guest;
 
+  // Google AdSense Dynamic Revenue Calculation Logic based on real traffic and telemetry splits
+  const niches = [
+    { id: "utility", name: "SaaS & Utilities", rpmBase: 6.50 },
+    { id: "finance", name: "Finance & Banking", rpmBase: 18.20 },
+    { id: "tech", name: "Tech & Software", rpmBase: 9.80 },
+    { id: "edu", name: "Education & Tutorials", rpmBase: 4.20 },
+    { id: "general", name: "General Entertainment", rpmBase: 2.80 },
+  ];
+
+  const selectedNiche = niches.find(n => n.id === adsenseNiche) || niches[0];
+  
+  // Calculate geographical multiplier based on regional traffic split
+  const adsenseUsVisits = scaledStats.geoCountries.US || 0;
+  const adsenseFrVisits = scaledStats.geoCountries.FR || 0;
+  const adsenseDeVisits = scaledStats.geoCountries.DE || 0;
+  const adsenseTnVisits = scaledStats.geoCountries.TN || 0;
+  const adsenseUkVisits = scaledStats.geoCountries.UK || 0;
+  const adsenseCaVisits = scaledStats.geoCountries.CA || 0;
+  const adsenseJpVisits = scaledStats.geoCountries.JP || 0;
+  const adsenseOtherVisits = scaledStats.geoCountries.Other || 0;
+  const adsenseGeoTotal = (adsenseUsVisits + adsenseFrVisits + adsenseDeVisits + adsenseTnVisits + adsenseUkVisits + adsenseCaVisits + adsenseJpVisits + adsenseOtherVisits) || 1;
+
+  // Geography RPM multiplier: US is premium (1.5x), EU/CA/JP are moderate-high (1.1x - 0.8x), TN and others are lower (0.3x)
+  const geoMultiplier = (
+    (adsenseUsVisits * 1.5) + 
+    (adsenseCaVisits * 1.1) + 
+    (adsenseUkVisits * 1.1) + 
+    (adsenseDeVisits * 1.0) + 
+    (adsenseFrVisits * 0.8) + 
+    (adsenseJpVisits * 0.8) + 
+    (adsenseTnVisits * 0.3) + 
+    (adsenseOtherVisits * 0.3)
+  ) / adsenseGeoTotal;
+
+  // Actual Page RPM adjusted dynamically based on visitor locations
+  const pageRPM = selectedNiche.rpmBase * geoMultiplier;
+
+  // AdSense equation: Revenue = (Page Views / 1000) * RPM
+  const estimatedRevenue = (totalVisits * pageRPM) / 1000;
+
+  // Ad impressions based on an average of 2.5 ad units per pageview
+  const adImpressions = Math.round(totalVisits * 2.5);
+
+  // Device-weighted CTR (Click-Through Rate) calculation
+  const adsenseDesktopVisits = scaledStats.devices.desktop || 0;
+  const adsenseMobileVisits = scaledStats.devices.mobile || 0;
+  const adsenseTabletVisits = scaledStats.devices.tablet || 0;
+  const adsenseDeviceTotal = (adsenseDesktopVisits + adsenseMobileVisits + adsenseTabletVisits) || 1;
+
+  const adsenseDesktopRatio = adsenseDesktopVisits / adsenseDeviceTotal;
+  const adsenseMobileRatio = adsenseMobileVisits / adsenseDeviceTotal;
+  const adsenseTabletRatio = adsenseTabletVisits / adsenseDeviceTotal;
+
+  // Mobile has a higher average AdSense CTR (approx 2.6%) vs Desktop (approx 1.8%) and Tablet (approx 1.5%)
+  const averageCTR = (adsenseDesktopRatio * 1.8) + (adsenseMobileRatio * 2.6) + (adsenseTabletRatio * 1.5);
+
+  // Estimated Clicks = impressions * CTR
+  const estimatedClicks = Math.round(adImpressions * (averageCTR / 100));
+
+  // Average CPC consistently derived from estimated revenue and clicks
+  const averageCPC = estimatedClicks > 0 ? (estimatedRevenue / estimatedClicks) : (pageRPM / 1000 / 0.02);
+
   const pageVisits: PageVisit[] = [
     { name: "Invoice Generator (/tools/invoice)", count: scaledStats.pageVisits.invoice, avgTime: "4m 12s", bounce: "12.4%" },
     { name: "Units Converter (/tools/converter)", count: scaledStats.pageVisits.converter, avgTime: "2m 45s", bounce: "18.1%" },
@@ -683,7 +747,7 @@ export function AdminStats() {
         </div>
 
         {/* Live Active Pulse KPI Indicator */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mt-8">
           <Card className="p-6 border border-border/20 rounded-2xl bg-muted/20">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-black uppercase text-slate-500 tracking-wider">Active Handshakes</span>
@@ -734,6 +798,57 @@ export function AdminStats() {
                 ? "Untracked session unique pageviews"
                 : "Ephemeral unique browser fingerprints"}
             </p>
+          </Card>
+
+          <Card className="p-6 border border-amber-500/20 hover:border-amber-500/40 rounded-2xl bg-amber-500/[0.03] transition-all duration-300 relative overflow-hidden group">
+            {/* Ambient golden glow background effect */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -mr-6 -mt-6 group-hover:bg-amber-500/20 transition-all duration-300 pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-2 relative z-10">
+              <span className="text-[10px] font-black uppercase text-amber-500/80 tracking-wider">Est. AdSense Revenue</span>
+              <div className="p-1 rounded-lg bg-amber-500/10 text-amber-500">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            
+            <p className="text-3xl font-black italic text-foreground relative z-10">
+              ${estimatedRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            
+            <div className="mt-3.5 space-y-2 relative z-10">
+              <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground font-semibold">
+                <span>Page RPM:</span>
+                <span className="text-amber-500 font-bold">${pageRPM.toFixed(2)}</span>
+              </div>
+              
+              {/* Dynamic Dropdown selector integrated inside card body */}
+              <div className="relative">
+                <select 
+                  value={adsenseNiche} 
+                  onChange={(e) => setAdsenseNiche(e.target.value)}
+                  className="w-full text-[10px] bg-muted/65 hover:bg-muted text-foreground font-extrabold py-1 px-2 pr-4 rounded-lg border border-border/25 focus:outline-none focus:border-amber-500/30 appearance-none cursor-pointer transition-colors"
+                >
+                  {niches.map(n => (
+                    <option key={n.id} value={n.id} className="bg-card text-foreground font-bold">
+                      {n.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-1.5 flex items-center pointer-events-none text-muted-foreground">
+                  <svg className="w-2 h-2 fill-current" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Interactive micro-stats */}
+              <div className="pt-1.5 border-t border-border/10 flex justify-between items-center text-[9px] text-muted-foreground font-bold">
+                <span className="flex items-center gap-0.5 text-slate-400">
+                  ⚡ {estimatedClicks} clicks
+                </span>
+                <span className="text-slate-400">CPC: ${averageCPC.toFixed(2)}</span>
+              </div>
+            </div>
           </Card>
         </div>
       </Card>
