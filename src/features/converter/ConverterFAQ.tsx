@@ -5,28 +5,24 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    question: "What is a Precision Units Converter?",
-    answer: "A Precision Units Converter is a sophisticated digital calculation tool designed to translate measurements between different systems of units with extreme mathematical accuracy. Our tool supports both Metric and Imperial systems, covering dimensions like length, weight, temperature, and advanced scientific units for engineering and business needs."
+    question: "What is the Business & Rate Converter?",
+    answer: "The Business & Rate Converter is a sophisticated digital calculation engine designed to convert currency exchange rates, cryptocurrencies, and standard business metrics with absolute precision. Our tool supports real-time market data alongside standard conversion indexes for corporate, legal, and banking requirements."
   },
   {
-    question: "How do I convert Metric to Imperial units accurately?",
-    answer: "To convert Metric to Imperial units accurately, our converter uses high-fidelity scaling factors defined by international standards. Simply select your input category (e.g., Length), choose the Metric unit (like Centimeters) in the 'From' field, and the Imperial unit (like Inches) in the 'To' field. The result is calculated instantly with zero latency."
+    question: "How do I calculate real-time exchange rates?",
+    answer: "To convert global currency or cryptocurrency assets, simply select the Currency or Crypto categories from the sidebar or dropdown list. Our system fetches the latest market mid-point rates dynamically to give you up-to-the-minute precision for business trade, pricing sheets, or travel budgets."
   },
   {
-    question: "Are these unit conversions suitable for engineering projects?",
-    answer: "Yes, our Precision Units Converter is engineered with the IEEE 754 standard for floating-point arithmetic, making it ideal for scientific research, engineering designs, and technical documentation. It handles complex conversions like Force, Torque, and Viscosity, ensuring that your enterprise-level calculations remain reliable."
+    question: "Are these conversion calculations secure for proprietary financial data?",
+    answer: "Yes, our Business & Rate Converter is built with total privacy. All calculation logic is processed locally inside your browser—no financial, banking, or transactional values are ever transmitted to external servers or logged in databases."
   },
   {
-    question: "Can I convert currency and cryptocurrency in real-time?",
-    answer: "Absolutely. Our multi-faceted converter integrates real-time exchange rates for global fiat currencies and top-tier cryptocurrencies. By fetching live market data, we provide up-to-the-minute conversion rates for business transactions, digital asset management, and international trade analysis."
+    question: "Does the rate converter support offline calculations?",
+    answer: "Yes, the tool caches essential algorithms and standard scaling ratios locally so you can calculate business dimensions, physical conversion factors, and key units even without an active internet connection. Dynamic market rates (currencies and crypto) require a live connection to refresh to current prices."
   },
   {
-    question: "Does this unit converter work offline?",
-    answer: "Our tool caches essential conversion algorithms and scaling factors locally, allowing you to perform standard physical unit conversions (like weight, area, and volume) without an active internet connection. Real-time data like currency and crypto rates require a momentary connection to refresh the latest market values."
-  },
-  {
-    question: "Why should I use a professional unit generator instead of basic math?",
-    answer: "A professional unit generator eliminates the human error associated with manual calculations and ensures consistency across different measurement standards. It provides a centralized ecosystem for over 40+ unit categories, saves time for professionals, and offers a polished user interface optimized for both desktop and mobile efficiency."
+    question: "Why should I use a professional business rate calculator?",
+    answer: "A professional business and rate engine eliminates rounding errors and manual calculation mistakes. It provides a clean, unified workflow for currencies, digital assets, and essential metrics, offering a highly responsive, streamlined layout designed for both desktop and mobile business environments."
   }
 ];
 
@@ -63,10 +59,10 @@ export const ConverterFAQ: React.FC = () => {
           <span>Technical Support</span>
         </div>
         <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-4">
-          Precision Conversion FAQ
+          Business & Rate Conversion FAQ
         </h2>
         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-          Get expert answers about unit systems, mathematical accuracy, and how to optimize your technical workflows with our universal scaling engine.
+          Get expert answers about exchange rates, secure computing, and how to optimize your financial workflows.
         </p>
       </div>
 

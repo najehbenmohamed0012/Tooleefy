@@ -28,7 +28,7 @@ import { AdSenseUnit } from "@/components/AdSenseUnit";
 const tools = [
   {
     title: "Invoice Generator",
-    desc: "Professional invoice templates with tax support and PDF export.",
+    desc: "Professional invoice templates with tax support and local PDF export.",
     icon: FileText,
     path: "/tools/invoice",
     color: "bg-emerald-50 text-emerald-600"
@@ -48,8 +48,8 @@ const tools = [
     color: "bg-purple-50 text-purple-600"
   },
   {
-    title: "Units Converter",
-    desc: "Real-time high-precision conversion for length, weight, volume and more.",
+    title: "Business & Rate Converter",
+    desc: "Real-time high-precision currency exchange, crypto rates, and finance calculations.",
     icon: RefreshCcw,
     path: "/tools/converter",
     color: "bg-orange-50 text-orange-600"
@@ -57,7 +57,7 @@ const tools = [
 ];
 
 export function Home() {
-  const animatedWords = ["Invoicing", "QR Codes", "Barcodes", "Conversions"];
+  const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business Exchange"];
   const [index, setIndex] = useState(0);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -155,7 +155,7 @@ export function Home() {
               transition={{ delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground font-medium max-w-3xl mb-12 leading-relaxed"
             >
-              Tooleefy is your premium localized business tools generator. Instantly design clean PDFs with the Invoice Suite, customize dynamic high-fidelity QR Codes, compile bulk Barcode Stickers, and compute precise metric and imperial Units Conversions with total privacy.
+              Tooleefy is your premium localized business tools generator. Instantly generate professional invoices with seamless PDF exports, customize dynamic high-fidelity business QR Codes, compile bulk Barcode Stickers, and compute real-time exchange rates & financial conversions with total privacy.
             </motion.p>
             
             <motion.div 
@@ -207,7 +207,7 @@ export function Home() {
               <div className="max-w-md relative z-10 mt-8 md:mt-0">
                 <h3 className="text-3xl md:text-5xl font-black mb-4 text-white leading-tight">Professional Invoicing</h3>
                 <p className="text-white/80 font-medium text-base md:text-lg leading-relaxed mb-8">
-                  Create beautiful, business-ready invoices with multiple templates, automatic calculations, and local PDF downloads.
+                  Create beautiful, business-ready invoices with multiple templates, automatic calculations, and local PDF exports.
                 </p>
                 <Link to="/tools/invoice">
                   <Button className="rounded-full bg-white text-primary font-black h-14 md:h-16 px-8 md:px-10 flex gap-2 hover:bg-white/90 transition-all border-none shadow-xl text-sm md:text-base">
@@ -278,8 +278,8 @@ export function Home() {
                   <RefreshCcw className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-white">Universal Units Converter</h3>
-                  <p className="text-white/80 text-sm font-medium">Science-grade accuracy for engineering and financial data.</p>
+                  <h3 className="text-2xl font-black text-white">Business & Rate Converter</h3>
+                  <p className="text-white/80 text-sm font-medium">High-fidelity calculations for financial exchange rates, interest, and crypto valuations.</p>
                 </div>
               </div>
               <Link to="/tools/converter" className="w-full md:w-auto">

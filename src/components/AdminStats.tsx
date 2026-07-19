@@ -38,7 +38,7 @@ export function AdminStats() {
   const [analytics, setAnalytics] = useState<AnalyticsData>(() => getAnalytics());
   const dataSource = "real";
   const [registeredAccountsCount, setRegisteredAccountsCount] = useState(1);
-  const [adsenseNiche, setAdsenseNiche] = useState<string>("utility");
+  const [adsenseNiche, setAdsenseNiche] = useState<string>("finance");
 
   // Listen to live analytic updates
   useEffect(() => {
@@ -388,11 +388,11 @@ export function AdminStats() {
 
   // Google AdSense Dynamic Revenue Calculation Logic based on real traffic and telemetry splits
   const niches = [
-    { id: "utility", name: "SaaS & Utilities", rpmBase: 6.50 },
     { id: "finance", name: "Finance & Banking", rpmBase: 18.20 },
-    { id: "tech", name: "Tech & Software", rpmBase: 9.80 },
-    { id: "edu", name: "Education & Tutorials", rpmBase: 4.20 },
-    { id: "general", name: "General Entertainment", rpmBase: 2.80 },
+    { id: "insurance", name: "Insurance & Risk", rpmBase: 15.40 },
+    { id: "business", name: "Business Consulting", rpmBase: 11.80 },
+    { id: "investment", name: "Investments & Wealth", rpmBase: 14.50 },
+    { id: "corporate", name: "Corporate Services", rpmBase: 9.60 },
   ];
 
   const selectedNiche = niches.find(n => n.id === adsenseNiche) || niches[0];

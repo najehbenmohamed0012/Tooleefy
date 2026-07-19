@@ -26,15 +26,15 @@ const categories = [
       { 
         name: "Invoice Generator", 
         path: "/tools/invoice", 
-        desc: "Professional PDF invoicing with local processing.",
+        desc: "Professional invoice and bill templates with local PDF export.",
         icon: FileText,
         color: "text-emerald-500",
         bg: "bg-emerald-500/10"
       },
       { 
-        name: "Units Converter", 
+        name: "Business & Rate Converter", 
         path: "/tools/converter", 
-        desc: "Scientific-grade universal unit transformations.",
+        desc: "High-precision calculations for currency and crypto exchange rates.",
         icon: RefreshCcw,
         color: "text-teal-500",
         bg: "bg-teal-500/10"

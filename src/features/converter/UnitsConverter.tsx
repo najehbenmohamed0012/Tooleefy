@@ -87,10 +87,10 @@ export function UnitsConverter() {
   const [dynamicRates, setDynamicRates] = useState<{ currency: any; crypto: any } | null>(null);
 
   useEffect(() => {
-    document.title = "Precision Units Converter | High-Accuracy Measurement Tool";
+    document.title = "Business & Rate Converter | High-Accuracy Exchange Tool";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute("content", "Convert between Metric and Imperial units with absolute precision. Our professional unit converter supports length, weight, temperature, area, currency, and crypto with high-fidelity scaling factors.");
+      metaDesc.setAttribute("content", "Convert real-time global currencies, cryptocurrencies, and standard business conversion values with high-fidelity, secure client-side calculation.");
     }
   }, []);
 
@@ -253,8 +253,8 @@ export function UnitsConverter() {
   return (
     <div className="container mx-auto px-6 py-4 max-w-7xl">
       <div className="flex flex-col gap-2 mb-4">
-        <h1 className="text-3xl font-black text-foreground tracking-tighter">Precision Units Converter.</h1>
-        <p className="text-muted-foreground text-sm font-medium">Modern high-fidelity conversion engine.</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tighter">Business & Rate Converter.</h1>
+        <p className="text-muted-foreground text-sm font-medium">High-fidelity conversion engine for financial currency, crypto, and dynamic rate evaluations.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start relative">
