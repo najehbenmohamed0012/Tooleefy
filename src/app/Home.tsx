@@ -130,10 +130,10 @@ export function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-6xl md:text-8xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-8 flex flex-col items-center justify-center gap-1 sm:gap-2"
+              className="text-3xl sm:text-6xl md:text-8xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-8 flex flex-col items-center justify-center gap-1 sm:gap-2"
             >
               <span>Ultimate Suite For</span>
-              <span className="relative inline-block h-[1.2em] w-full min-w-[250px] overflow-hidden">
+              <span className="relative inline-block h-[1.3em] w-full min-w-[280px] max-w-full overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={index}
@@ -141,7 +141,7 @@ export function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex items-center justify-center text-primary italic select-none"
+                    className="absolute inset-0 flex items-center justify-center text-primary italic select-none whitespace-nowrap text-2xl xs:text-3xl sm:text-6xl md:text-8xl"
                   >
                     {animatedWords[index]}
                   </motion.span>
