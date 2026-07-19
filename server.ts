@@ -955,7 +955,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
   // Dynamic Server-Side HTML meta tags tag replacement for Search Engines and Social Platforms
   let indexHtmlCache = "";
   
-  function getIndexHtml(reqPath: string, hostHeader: string | undefined): string {
+  async function getIndexHtml(reqPath: string, hostHeader: string | undefined): Promise<string> {
     const host = hostHeader || "tooleefy.com";
     const protocol = host.includes("localhost") || host.includes("3000") ? "http" : "https";
     const absoluteUrl = `${protocol}://${host}${reqPath}`;
@@ -1056,7 +1056,76 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       ? '<meta name="robots" content="noindex, nofollow" />'
       : '<meta name="robots" content="index, follow" />';
 
-    const routeMeta = isProfilePage ? defMeta : (metaMap[reqPath] || defMeta);
+    let routeMeta = isProfilePage ? defMeta : (metaMap[reqPath] || defMeta);
+
+    // Dynamic SEO injector for individual blog posts
+    if (!isProfilePage && reqPath.startsWith("/blog/") && reqPath !== "/blog") {
+      const postId = reqPath.split("/blog/")[1]?.split("?")[0];
+      if (postId) {
+        let foundPost: any = null;
+        const client = getSupabaseClient();
+        if (client) {
+          try {
+            const { data, error } = await client
+              .from("blog_posts")
+              .select("title, excerpt, seoTitle, seoDesc, seoKeywords, coverImage, category")
+              .eq("id", postId)
+              .maybeSingle();
+            if (!error && data) {
+              foundPost = data;
+            }
+          } catch (err) {
+            console.warn("Sitemap/SEO dynamic route metadata fetch failed, using defaultArticles fallback:", err);
+          }
+        }
+        
+        if (!foundPost) {
+          const defaults = [
+            {
+              id: "art-1",
+              title: "Why Client-Side Processing is the Future of B2B SaaS",
+              excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+              seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
+              seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+              seoKeywords: "client-side, local-first, decentralized, SaaS, WASM",
+              coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+              category: "Business"
+            },
+            {
+              id: "art-2",
+              title: "5 Common Invoicing Mistakes Every Freelancer Makes",
+              excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+              seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes",
+              seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+              seoKeywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
+              coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+              category: "Invoice Generator"
+            },
+            {
+              id: "art-3",
+              title: "Mastering Custom QR Code Architecture for Retail",
+              excerpt: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+              seoTitle: "Mastering Custom QR Code Architecture for Retail",
+              seoDesc: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+              seoKeywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
+              coverImage: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80",
+              category: "QR Code Generator"
+            }
+          ];
+          foundPost = defaults.find(p => p.id === postId);
+        }
+
+        if (foundPost) {
+          routeMeta = {
+            title: `${foundPost.seoTitle || foundPost.title} | Tooleefy Insights`,
+            desc: foundPost.seoDesc || foundPost.excerpt,
+            keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
+            ogImageParam: "blog"
+          };
+        }
+      }
+    }
+
     const ogImgUrl = `${protocol}://${host}/api/og-image?tool=${routeMeta.ogImageParam}`;
     
     // Generate dynamic Structured JSON-LD Schema Markup for Google rich search results
@@ -1199,7 +1268,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       }
     }));
 
-    app.get("*", (req, res) => {
+    app.get("*", async (req, res) => {
       try {
         const indexPath = path.join(distPath, "index.html");
         if (fs.existsSync(indexPath)) {
@@ -1212,7 +1281,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
             const rawRoute = req.query._route_ as string;
             reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
           }
-          const htmlOutput = getIndexHtml(reqPath, req.headers.host);
+          const htmlOutput = await getIndexHtml(reqPath, req.headers.host);
           res.setHeader("Content-Type", "text/html");
           res.status(200).send(htmlOutput);
         } else {
