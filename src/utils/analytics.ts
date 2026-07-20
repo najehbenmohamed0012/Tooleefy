@@ -144,11 +144,15 @@ export function trackPageView(path: string) {
   const userStr = localStorage.getItem("user");
   const isRegistered = !!userStr;
   let userEmail = "";
+  let gender = "";
+  let ageGroup = "";
   if (isRegistered) {
     data.registeredVisits += 1;
     try {
       const parsed = JSON.parse(userStr!);
       userEmail = parsed.email || parsed.name || "";
+      gender = parsed.gender || localStorage.getItem("profile_gender") || "";
+      ageGroup = parsed.ageGroup || localStorage.getItem("profile_age_group") || "";
     } catch {}
   } else {
     data.guestVisits += 1;
@@ -200,7 +204,9 @@ export function trackPageView(path: string) {
       userEmail,
       geo,
       device,
-      browser
+      browser,
+      gender,
+      ageGroup
     })
   })
   .then(res => {

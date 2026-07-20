@@ -40,57 +40,6 @@ export function AdminStats() {
   const [registeredAccountsCount, setRegisteredAccountsCount] = useState(1);
   const [adsenseNiche, setAdsenseNiche] = useState<string>("finance");
 
-  // Hostinger Traffic Sync & Backfilling state
-  const [isCalibrating, setIsCalibrating] = useState(false);
-  const [calibVisitsInput, setCalibVisitsInput] = useState("");
-  const [calibHitsInput, setCalibHitsInput] = useState("");
-  const [calibSuccess, setCalibSuccess] = useState(false);
-
-  // Dynamic backfill baseline calculation (since June 1, 2026 launch)
-  const daysSinceLaunch = Math.max(1, Math.floor((Date.now() - new Date("2026-06-01").getTime()) / (1000 * 60 * 60 * 24)));
-  const suggestedVisits = daysSinceLaunch * 48; // ~48 human sessions daily
-  const suggestedHits = daysSinceLaunch * 86;   // ~86 raw web requests daily
-
-  const handleCalibrateSubmit = async (e?: React.FormEvent, customVisits?: number, customHits?: number) => {
-    if (e) e.preventDefault();
-    setIsCalibrating(true);
-    setCalibSuccess(false);
-
-    const targetVisits = customVisits !== undefined ? customVisits : (Number(calibVisitsInput) || 0);
-    const targetHits = customHits !== undefined ? customHits : (Number(calibHitsInput) || Math.round(targetVisits * 1.8));
-
-    if (targetVisits <= 0) {
-      alert("Please enter a valid visit count greater than 0");
-      setIsCalibrating(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(getApiUrl("/api/analytics/calibrate"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetTotalVisits: targetVisits, targetRawHits: targetHits })
-      });
-
-      if (res.ok) {
-        const resData = await res.json();
-        if (resData && resData.analytics) {
-          setAnalytics(resData.analytics);
-          setCalibSuccess(true);
-          setCalibVisitsInput("");
-          setCalibHitsInput("");
-          setTimeout(() => setCalibSuccess(false), 5000);
-        }
-      } else {
-        console.error("Calibration request failed");
-      }
-    } catch (err) {
-      console.error("Failed to submit calibration:", err);
-    } finally {
-      setIsCalibrating(false);
-    }
-  };
-
   // Listen to live analytic updates
   useEffect(() => {
     const fetchServerAnalytics = async () => {
@@ -261,18 +210,30 @@ export function AdminStats() {
     // Generate beautifully distributed, organic trend curves matching the period
     let chartData: Array<{ label: string; value: number }> = [];
     if (timeRange === "live") {
-      const todayStr = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const now = new Date();
       const weightsLive = [0.08, 0.12, 0.15, 0.20, 0.18, 0.17, 0.10];
       const sumWeights = weightsLive.reduce((s, w) => s + w, 0);
-      chartData = [
-        { label: `00:00 (${todayStr})`, value: Math.round(total * (weightsLive[0] / sumWeights)) },
-        { label: `04:00 (${todayStr})`, value: Math.round(total * (weightsLive[1] / sumWeights)) },
-        { label: `08:00 (${todayStr})`, value: Math.round(total * (weightsLive[2] / sumWeights)) },
-        { label: `12:00 (${todayStr})`, value: Math.round(total * (weightsLive[3] / sumWeights)) },
-        { label: `16:00 (${todayStr})`, value: Math.round(total * (weightsLive[4] / sumWeights)) },
-        { label: `20:00 (${todayStr})`, value: Math.round(total * (weightsLive[5] / sumWeights)) },
-        { label: `Live (${todayStr})`, value: total },
-      ];
+      
+      chartData = [];
+      // Generate 6 historical intervals spaced by 4 hours
+      for (let i = 6; i >= 1; i--) {
+        const d = new Date(now.getTime() - i * 4 * 60 * 60 * 1000);
+        const hourStr = `${String(d.getHours()).padStart(2, "0")}:00`;
+        const dayStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        chartData.push({
+          label: `${hourStr} (${dayStr})`,
+          value: Math.round(total * (weightsLive[6 - i] / sumWeights))
+        });
+      }
+      
+      // Add the final "Live" point representing the exact current hour and minutes
+      const currentHour = String(now.getHours()).padStart(2, "0");
+      const currentMinutes = String(now.getMinutes()).padStart(2, "0");
+      const todayStr = now.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      chartData.push({
+        label: `Live (${currentHour}:${currentMinutes} ${todayStr})`,
+        value: total
+      });
     } else if (timeRange === "7d") {
       const days = [];
       const weights7d = [0.13, 0.15, 0.17, 0.14, 0.16, 0.11, 0.14];
@@ -324,8 +285,9 @@ export function AdminStats() {
       const monthlyWeights = activeMonthsList.map((_, idx) => 0.8 + idx * 0.1);
       const sumMonthlyWeights = monthlyWeights.reduce((s, w) => s + w, 0);
 
+      const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
       chartData = activeMonthsList.map((dateObj, idx) => {
-        const label = dateObj.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+        const label = `${dateObj.getDate()} ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
         const share = sumMonthlyWeights > 0 ? (monthlyWeights[idx] / sumMonthlyWeights) : 0;
         const val = Math.round(total * share);
         return { label, value: val };
@@ -442,7 +404,8 @@ export function AdminStats() {
   const sumMonthlyWeights = monthlyWeights.reduce((s, w) => s + w, 0);
 
   const monthlyBreakdown = activeMonthsList.map((dateObj, idx) => {
-    const label = dateObj.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const label = `${dateObj.getDate()} ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
     const share = sumMonthlyWeights > 0 ? (monthlyWeights[idx] / sumMonthlyWeights) : 0;
     const val = Math.round(rawTotalForMonthly * share);
     const estRevenue = ((val * pageRPM) / 1000).toFixed(2);
@@ -800,84 +763,7 @@ export function AdminStats() {
           </div>
         )}
 
-        {/* Hostinger Log Sync & Calibration Center */}
-        <div className="bg-slate-900/60 border border-blue-500/20 rounded-2xl p-6 mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-6 justify-between items-start">
-            <div className="space-y-2 max-w-2xl">
-              <h4 className="text-base font-black text-blue-400 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-400 animate-pulse" />
-                Hostinger Log Sync & Calibration Center
-              </h4>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Hostinger logs traffic at the <strong>HTTP server level</strong> (which records raw file, bot, and crawler requests), whereas browser analytics only trigger when client-side JavaScript runs without being blocked by adblockers or privacy extensions.
-              </p>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                By calibrating your dashboard below, we calculate elapsed uptime starting from your publishing date (<strong>June 1, 2026</strong>), then apply standard organic geographic, device, and demographic splits to populate all sections (geographic, devices, gender, and estimated revenue) with real, correct values matching your Hostinger performance reports.
-              </p>
-              
-              {calibSuccess && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-3 py-2 rounded-xl mt-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                  Successfully synchronized with Hostinger servers! Your dashboard now reflects high-precision logs since June 2026.
-                </div>
-              )}
-            </div>
 
-            <div className="w-full lg:w-96 bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-4 self-center">
-              <div className="space-y-1">
-                <h5 className="text-xs font-black text-slate-200 uppercase tracking-wider">Option A: Quick Backfill & Calibration</h5>
-                <p className="text-[10px] text-slate-400 leading-relaxed">
-                  Automatically estimate and backfill your correct organic traffic history for the {daysSinceLaunch} days elapsed since launch.
-                </p>
-                <div className="pt-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full text-xs font-bold border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                    disabled={isCalibrating}
-                    onClick={() => handleCalibrateSubmit(undefined, suggestedVisits, suggestedHits)}
-                  >
-                    {isCalibrating ? "Synchronizing..." : `Auto-Calibrate (~${suggestedVisits.toLocaleString()} Views)`}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-800/60 my-2" />
-
-              <form onSubmit={handleCalibrateSubmit} className="space-y-3">
-                <h5 className="text-xs font-black text-slate-200 uppercase tracking-wider">Option B: Set Custom Hostinger Metrics</h5>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Unique Visitors</label>
-                    <input 
-                      type="number" 
-                      placeholder="e.g. 2500" 
-                      value={calibVisitsInput}
-                      onChange={e => setCalibVisitsInput(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Raw Server Hits</label>
-                    <input 
-                      type="number" 
-                      placeholder="e.g. 4500" 
-                      value={calibHitsInput}
-                      onChange={e => setCalibHitsInput(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
-                    />
-                  </div>
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 h-auto rounded-lg"
-                  disabled={isCalibrating}
-                >
-                  {isCalibrating ? "Applying..." : "Apply Custom Calibration"}
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
 
         {/* Live Active Pulse KPI Indicator */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mt-8">

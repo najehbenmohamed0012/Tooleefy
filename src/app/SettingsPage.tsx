@@ -170,6 +170,8 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
   // Account Form states
   const [fullName, setFullName] = useState(user.name || "");
   const [userEmail, setUserEmail] = useState(user.email || "");
+  const [profileGender, setProfileGender] = useState(() => user.gender || localStorage.getItem("profile_gender") || "female");
+  const [profileAgeGroup, setProfileAgeGroup] = useState(() => user.ageGroup || localStorage.getItem("profile_age_group") || "age_25_34");
   const [company, setCompany] = useState(() => localStorage.getItem("company") || "Tooleefy Workspace Inc.");
   const [jobTitle, setJobTitle] = useState(() => localStorage.getItem("job_title") || "General Member");
   const [avatarSeed, setAvatarSeed] = useState(() => {
@@ -354,7 +356,9 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
         ...user,
         name: fullName.trim(),
         email: userEmail.trim(),
-        avatar: avatarUrl
+        avatar: avatarUrl,
+        gender: profileGender,
+        ageGroup: profileAgeGroup
       };
 
       // 1. Sync backend Supabase session metadata if logged in
@@ -373,6 +377,8 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
 
       // 2. Persist in local storage
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      localStorage.setItem("profile_gender", profileGender);
+      localStorage.setItem("profile_age_group", profileAgeGroup);
       localStorage.setItem("company", company);
       localStorage.setItem("job_title", jobTitle);
       
@@ -663,6 +669,35 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
                           placeholder="your.email@domain.com"
                           className="h-12 rounded-xl"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="profileGender" className="text-xs font-black uppercase tracking-wider text-slate-500">Gender Identity (For Exact Analytics)</Label>
+                        <select
+                          id="profileGender"
+                          value={profileGender}
+                          onChange={(e) => setProfileGender(e.target.value)}
+                          className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-800 dark:text-slate-100"
+                        >
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="non_binary">Non-Binary / Other</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="profileAgeGroup" className="text-xs font-black uppercase tracking-wider text-slate-500">Age Bracket (For Exact Analytics)</Label>
+                        <select
+                          id="profileAgeGroup"
+                          value={profileAgeGroup}
+                          onChange={(e) => setProfileAgeGroup(e.target.value)}
+                          className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-800 dark:text-slate-100"
+                        >
+                          <option value="age_18_24">18 - 24 Years</option>
+                          <option value="age_25_34">25 - 34 Years</option>
+                          <option value="age_35_44">35 - 44 Years</option>
+                          <option value="age_45_plus">45+ Years</option>
+                        </select>
                       </div>
 
                       {showOrgFields && (
