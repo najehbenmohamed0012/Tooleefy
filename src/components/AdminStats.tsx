@@ -157,228 +157,73 @@ export function AdminStats() {
     const rawReg = analytics.registeredVisits || 0;
     const rawGuest = analytics.guestVisits || 0;
 
-    // Define multipliers and minimum limits for professional, active baseline view
-    let multiplier = 1.0;
-    let baseMinTotal = 24;
-    let total = 0;
+    const total = rawTotal;
+    const registered = rawReg;
+    const guest = rawGuest;
 
-    if (timeRange === "monthly") {
-      const total30d = Math.max(854, Math.round(rawTotal * 32.5 + 685));
-      
-      const startYear = 2026;
-      const startMonth = 5; // June is 5 in JS Date
-      const todayDate = new Date();
-      const currentYear = todayDate.getFullYear();
-      const currentMonth = todayDate.getMonth();
-      
-      let tempYear = startYear;
-      let tempMonth = startMonth;
-      const activeMonthsList: Date[] = [];
-      
-      while (tempYear < currentYear || (tempYear === currentYear && tempMonth <= currentMonth)) {
-        activeMonthsList.push(new Date(tempYear, tempMonth, 1));
-        tempMonth++;
-        if (tempMonth > 11) {
-          tempMonth = 0;
-          tempYear++;
-        }
-      }
-      
-      total = activeMonthsList.reduce((acc, dateObj) => {
-        const isCurrent = dateObj.getFullYear() === currentYear && dateObj.getMonth() === currentMonth;
-        const factor = isCurrent ? 1.00 : 0.82;
-        return acc + Math.round(total30d * factor);
-      }, 0);
-    } else {
-      if (timeRange === "live") {
-        multiplier = 1.0;
-        baseMinTotal = 24;
-      } else if (timeRange === "7d") {
-        multiplier = 7.4;
-        baseMinTotal = 186;
-      } else { // 30d
-        multiplier = 32.5;
-        baseMinTotal = 854;
-      }
-      total = Math.max(baseMinTotal, Math.round(rawTotal * multiplier + (timeRange === "7d" ? 148 : timeRange === "30d" ? 685 : 12)));
-    }
-
-    // Prior-blended registered vs guest visits
-    const realRegRatio = rawReg / Math.max(1, rawTotal);
-    const blendedRegRatio = rawTotal > 0 ? (realRegRatio * 0.4 + 0.20 * 0.6) : 0.20;
-    const registered = Math.round(total * blendedRegRatio);
-    const guest = Math.max(0, total - registered);
-
-    // Prior-blended page visits distribution
-    const pageBaselines: Record<string, number> = {
-      invoice: 0.28,
-      converter: 0.22,
-      qr: 0.18,
-      barcode: 0.14,
-      blog: 0.10,
-      home: 0.06,
-      about: 0.02,
+    const pageVisits: Record<string, number> = {
+      invoice: analytics.pageVisits?.invoice || 0,
+      converter: analytics.pageVisits?.converter || 0,
+      qr: analytics.pageVisits?.qr || 0,
+      barcode: analytics.pageVisits?.barcode || 0,
+      blog: analytics.pageVisits?.blog || 0,
+      home: analytics.pageVisits?.home || 0,
+      about: analytics.pageVisits?.about || 0,
     };
 
-    const pageVisits: Record<string, number> = {};
-    let pageSum = 0;
-    const pages = Object.keys(pageBaselines);
-    
-    pages.forEach((p, idx) => {
-      const realRatio = (analytics.pageVisits?.[p] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + pageBaselines[p] * 0.6) : pageBaselines[p];
-      
-      if (idx === pages.length - 1) {
-        pageVisits[p] = Math.max(0, total - pageSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        pageVisits[p] = val;
-        pageSum += val;
-      }
-    });
-
-    // Prior-blended geographic countries distribution
-    const geoBaselines: Record<string, number> = {
-      US: 0.38,
-      FR: 0.16,
-      DE: 0.14,
-      TN: 0.12,
-      UK: 0.08,
-      CA: 0.06,
-      JP: 0.04,
-      Other: 0.02,
+    const geoCountries: Record<string, number> = {
+      US: analytics.geoCountries?.US || 0,
+      FR: analytics.geoCountries?.FR || 0,
+      DE: analytics.geoCountries?.DE || 0,
+      TN: analytics.geoCountries?.TN || 0,
+      UK: analytics.geoCountries?.UK || 0,
+      CA: analytics.geoCountries?.CA || 0,
+      JP: analytics.geoCountries?.JP || 0,
+      Other: analytics.geoCountries?.Other || 0,
     };
 
-    const geoCountries: Record<string, number> = {};
-    let geoSum = 0;
-    const geos = Object.keys(geoBaselines);
-
-    geos.forEach((g, idx) => {
-      const realRatio = (analytics.geoCountries?.[g] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + geoBaselines[g] * 0.6) : geoBaselines[g];
-      
-      if (idx === geos.length - 1) {
-        geoCountries[g] = Math.max(0, total - geoSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        geoCountries[g] = val;
-        geoSum += val;
-      }
-    });
-
-    // Prior-blended devices distribution
-    const deviceBaselines: Record<string, number> = {
-      desktop: 0.55,
-      mobile: 0.38,
-      tablet: 0.07,
+    const devices: Record<string, number> = {
+      desktop: analytics.devices?.desktop || 0,
+      mobile: analytics.devices?.mobile || 0,
+      tablet: analytics.devices?.tablet || 0,
     };
 
-    const devices: Record<string, number> = {};
-    let deviceSum = 0;
-    const devs = Object.keys(deviceBaselines);
-
-    devs.forEach((d, idx) => {
-      const realRatio = (analytics.devices?.[d] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + deviceBaselines[d] * 0.6) : deviceBaselines[d];
-
-      if (idx === devs.length - 1) {
-        devices[d] = Math.max(0, total - deviceSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        devices[d] = val;
-        deviceSum += val;
-      }
-    });
-
-    // Prior-blended browsers distribution
-    const browserBaselines: Record<string, number> = {
-      chrome: 0.64,
-      safari: 0.18,
-      firefox: 0.12,
-      other: 0.06,
+    const browsers: Record<string, number> = {
+      chrome: analytics.browsers?.chrome || 0,
+      safari: analytics.browsers?.safari || 0,
+      firefox: analytics.browsers?.firefox || 0,
+      other: analytics.browsers?.other || 0,
     };
 
-    const browsers: Record<string, number> = {};
-    let browserSum = 0;
-    const brows = Object.keys(browserBaselines);
-
-    brows.forEach((b, idx) => {
-      const realRatio = (analytics.browsers?.[b] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + browserBaselines[b] * 0.6) : browserBaselines[b];
-
-      if (idx === brows.length - 1) {
-        browsers[b] = Math.max(0, total - browserSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        browsers[b] = val;
-        browserSum += val;
-      }
-    });
-
-    // Prior-blended demographics (age) distribution
-    const ageBaselines: Record<string, number> = {
-      age_25_34: 0.42,
-      age_35_44: 0.28,
-      age_18_24: 0.20,
-      age_45_plus: 0.10,
+    const demographics: Record<string, number> = {
+      age_18_24: analytics.demographics?.age_18_24 || 0,
+      age_25_34: analytics.demographics?.age_25_34 || 0,
+      age_35_44: analytics.demographics?.age_35_44 || 0,
+      age_45_plus: analytics.demographics?.age_45_plus || 0,
+      male: analytics.demographics?.male || 0,
+      female: analytics.demographics?.female || 0,
+      non_binary: analytics.demographics?.non_binary || 0,
     };
-
-    const demographics: Record<string, number> = {};
-    let ageSum = 0;
-    const ages = Object.keys(ageBaselines);
-
-    ages.forEach((a, idx) => {
-      const realRatio = (analytics.demographics?.[a] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + ageBaselines[a] * 0.6) : ageBaselines[a];
-
-      if (idx === ages.length - 1) {
-        demographics[a] = Math.max(0, total - ageSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        demographics[a] = val;
-        ageSum += val;
-      }
-    });
-
-    // Prior-blended demographics (gender) distribution
-    const genderBaselines: Record<string, number> = {
-      male: 0.52,
-      female: 0.44,
-      non_binary: 0.04,
-    };
-
-    let genderSum = 0;
-    const genders = Object.keys(genderBaselines);
-
-    genders.forEach((g, idx) => {
-      const realRatio = (analytics.demographics?.[g] || 0) / Math.max(1, rawTotal);
-      const blendedRatio = rawTotal > 0 ? (realRatio * 0.4 + genderBaselines[g] * 0.6) : genderBaselines[g];
-
-      if (idx === genders.length - 1) {
-        demographics[g] = Math.max(0, total - genderSum);
-      } else {
-        const val = Math.round(total * blendedRatio);
-        demographics[g] = val;
-        genderSum += val;
-      }
-    });
 
     // Generate beautifully distributed, organic trend curves matching the period
     let chartData: Array<{ label: string; value: number }> = [];
     if (timeRange === "live") {
       const todayStr = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const weightsLive = [0.08, 0.12, 0.15, 0.20, 0.18, 0.17, 0.10];
+      const sumWeights = weightsLive.reduce((s, w) => s + w, 0);
       chartData = [
-        { label: `00:00 (${todayStr})`, value: Math.round(total * 0.12) },
-        { label: `04:00 (${todayStr})`, value: Math.round(total * 0.28) },
-        { label: `08:00 (${todayStr})`, value: Math.round(total * 0.45) },
-        { label: `12:00 (${todayStr})`, value: Math.round(total * 0.62) },
-        { label: `16:00 (${todayStr})`, value: Math.round(total * 0.78) },
-        { label: `20:00 (${todayStr})`, value: Math.round(total * 0.90) },
+        { label: `00:00 (${todayStr})`, value: Math.round(total * (weightsLive[0] / sumWeights)) },
+        { label: `04:00 (${todayStr})`, value: Math.round(total * (weightsLive[1] / sumWeights)) },
+        { label: `08:00 (${todayStr})`, value: Math.round(total * (weightsLive[2] / sumWeights)) },
+        { label: `12:00 (${todayStr})`, value: Math.round(total * (weightsLive[3] / sumWeights)) },
+        { label: `16:00 (${todayStr})`, value: Math.round(total * (weightsLive[4] / sumWeights)) },
+        { label: `20:00 (${todayStr})`, value: Math.round(total * (weightsLive[5] / sumWeights)) },
         { label: `Live (${todayStr})`, value: total },
       ];
     } else if (timeRange === "7d") {
       const days = [];
-      const multipliers7d = [0.13, 0.15, 0.17, 0.14, 0.16, 0.11, 0.14];
+      const weights7d = [0.13, 0.15, 0.17, 0.14, 0.16, 0.11, 0.14];
+      const sum7d = weights7d.reduce((s, w) => s + w, 0);
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -388,24 +233,22 @@ export function AdminStats() {
       }
       chartData = days.map((dayLabel, idx) => ({
         label: dayLabel,
-        value: Math.round(total * (multipliers7d[idx] || 0.14))
+        value: Math.round(total * (weights7d[idx] / sum7d))
       }));
     } else if (timeRange === "30d") {
       const intervals = [25, 20, 15, 10, 5, 0];
-      const multipliers30d = [0.14, 0.32, 0.51, 0.68, 0.84, 1.00];
+      const weights30d = [0.10, 0.15, 0.20, 0.25, 0.18, 0.12];
+      const sum30d = weights30d.reduce((s, w) => s + w, 0);
       chartData = intervals.map((daysAgo, idx) => {
         const d = new Date();
         d.setDate(d.getDate() - daysAgo);
         const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-        const factor = multipliers30d[idx];
-        const val = idx === 5 ? total : Math.round(total * factor * 0.8);
         return {
           label: dateStr,
-          value: val
+          value: Math.round(total * (weights30d[idx] / sum30d))
         };
       });
-    } else { // monthly
-      const total30d = Math.max(854, Math.round(rawTotal * 32.5 + 685));
+    } else { // monthly (since June 2026)
       const startYear = 2026;
       const startMonth = 5; // June is 5 in JS Date
       const todayDate = new Date();
@@ -425,11 +268,13 @@ export function AdminStats() {
         }
       }
       
-      chartData = activeMonthsList.map((dateObj) => {
+      const monthlyWeights = activeMonthsList.map((_, idx) => 0.8 + idx * 0.1);
+      const sumMonthlyWeights = monthlyWeights.reduce((s, w) => s + w, 0);
+
+      chartData = activeMonthsList.map((dateObj, idx) => {
         const label = dateObj.toLocaleDateString(undefined, { month: "short", year: "numeric" });
-        const isCurrent = dateObj.getFullYear() === currentYear && dateObj.getMonth() === currentMonth;
-        const factor = isCurrent ? 1.00 : 0.82;
-        const val = Math.round(total30d * factor);
+        const share = sumMonthlyWeights > 0 ? (monthlyWeights[idx] / sumMonthlyWeights) : 0;
+        const val = Math.round(total * share);
         return { label, value: val };
       });
     }
@@ -516,7 +361,6 @@ export function AdminStats() {
 
   // Dynamic Month-by-Month ledger dataset since launch (June 2026)
   const rawTotalForMonthly = analytics.totalVisits || 0;
-  const total30dForMonthly = Math.max(854, Math.round(rawTotalForMonthly * 32.5 + 685));
   
   const startYear = 2026;
   const startMonth = 5; // June is 5 in JS Date
@@ -537,11 +381,13 @@ export function AdminStats() {
     }
   }
 
-  const monthlyBreakdown = activeMonthsList.map((dateObj) => {
+  const monthlyWeights = activeMonthsList.map((_, idx) => 0.8 + idx * 0.1);
+  const sumMonthlyWeights = monthlyWeights.reduce((s, w) => s + w, 0);
+
+  const monthlyBreakdown = activeMonthsList.map((dateObj, idx) => {
     const label = dateObj.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-    const isCurrent = dateObj.getFullYear() === currentYear && dateObj.getMonth() === currentMonth;
-    const factor = isCurrent ? 1.00 : 0.82;
-    const val = Math.round(total30dForMonthly * factor);
+    const share = sumMonthlyWeights > 0 ? (monthlyWeights[idx] / sumMonthlyWeights) : 0;
+    const val = Math.round(rawTotalForMonthly * share);
     const estRevenue = ((val * pageRPM) / 1000).toFixed(2);
     return { label, value: val, estRevenue };
   });
