@@ -1265,13 +1265,15 @@ Primary SEO Keywords to include: "${keywordsList}"`;
             title: `${foundPost.seoTitle || foundPost.title} | Tooleefy Insights`,
             desc: foundPost.seoDesc || foundPost.excerpt,
             keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
-            ogImageParam: "blog"
+            ogImageParam: foundPost.coverImage || "blog"
           };
         }
       }
     }
 
-    const ogImgUrl = `${protocol}://${host}/api/og-image?tool=${routeMeta.ogImageParam}`;
+    const ogImgUrl = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
+      ? routeMeta.ogImageParam
+      : `${protocol}://${host}/images/og-default.jpg`;
     
     // Generate dynamic Structured JSON-LD Schema Markup for Google rich search results
     let jsonLdSchema: any = null;

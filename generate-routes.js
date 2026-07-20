@@ -115,16 +115,22 @@ console.log("Generating pre-rendered physical HTML routes for SEO and Hostinger 
 
 // Generate public routes
 Object.entries(metaMap).forEach(([route, meta]) => {
-  if (route === "/") return; // Root index.html is already built by Vite
-
-  const normalizedRoute = route.startsWith("/") ? route.substring(1) : route;
-  const routeDir = path.join(distDir, normalizedRoute);
-  
-  // Create folder recursive
-  fs.mkdirSync(routeDir, { recursive: true });
+  let targetHtmlPath;
+  if (route === "/") {
+    targetHtmlPath = path.join(distDir, "index.html");
+  } else {
+    const normalizedRoute = route.startsWith("/") ? route.substring(1) : route;
+    const routeDir = path.join(distDir, normalizedRoute);
+    
+    // Create folder recursive
+    fs.mkdirSync(routeDir, { recursive: true });
+    targetHtmlPath = path.join(routeDir, "index.html");
+  }
   
   const absoluteUrl = `${protocol}://${host}${route}`;
-  const ogImgUrl = `${protocol}://${host}/api/og-image?tool=${meta.ogImageParam}`;
+  const ogImgUrl = meta.ogImageParam && meta.ogImageParam.startsWith("http")
+    ? meta.ogImageParam
+    : `${protocol}://${host}/images/og-default.jpg`;
   
   // Build clean SEO meta tags block
   const seoTags = `
@@ -166,9 +172,13 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   // Inject SEO blocks before </head>
   pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
   
-  const targetHtmlPath = path.join(routeDir, "index.html");
   fs.writeFileSync(targetHtmlPath, pageHtml, "utf-8");
-  console.log(`- Created public SEO route: ${normalizedRoute}/index.html`);
+  if (route === "/") {
+    console.log("- Pre-rendered main landing page: dist/index.html");
+  } else {
+    const normalizedRoute = route.startsWith("/") ? route.substring(1) : route;
+    console.log(`- Created public SEO route: ${normalizedRoute}/index.html`);
+  }
 });
 
 // Generate private routes with noindex
