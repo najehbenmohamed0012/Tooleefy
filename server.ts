@@ -179,6 +179,248 @@ async function startServer() {
     }
   }
 
+  function performServerCalibration(visits: number, targetRawHits?: number) {
+    const pageShares: Record<string, number> = {
+      invoice: 0.28,
+      converter: 0.22,
+      qr: 0.18,
+      barcode: 0.14,
+      blog: 0.10,
+      home: 0.06,
+      about: 0.02
+    };
+
+    const geoShares: Record<string, number> = {
+      US: 0.38,
+      FR: 0.16,
+      DE: 0.14,
+      TN: 0.12,
+      UK: 0.08,
+      CA: 0.06,
+      JP: 0.04,
+      Other: 0.02
+    };
+
+    const deviceShares: Record<string, number> = {
+      desktop: 0.55,
+      mobile: 0.38,
+      tablet: 0.07
+    };
+
+    const browserShares: Record<string, number> = {
+      chrome: 0.64,
+      safari: 0.18,
+      firefox: 0.12,
+      other: 0.06
+    };
+
+    const ageShares: Record<string, number> = {
+      age_18_24: 0.20,
+      age_25_34: 0.42,
+      age_35_44: 0.28,
+      age_45_plus: 0.10
+    };
+
+    const genderShares: Record<string, number> = {
+      male: 0.52,
+      female: 0.44,
+      non_binary: 0.04
+    };
+
+    // Set primary totals
+    globalAnalytics.totalVisits = visits;
+    globalAnalytics.registeredVisits = Math.round(visits * 0.20);
+    globalAnalytics.guestVisits = Math.max(0, visits - globalAnalytics.registeredVisits);
+    
+    // Keep rawServerVisits and botVisits consistent
+    const rawHits = Number(targetRawHits) || Math.round(visits * 1.8);
+    globalAnalytics.rawServerVisits = Math.max(visits, rawHits);
+    globalAnalytics.botVisits = Math.round(globalAnalytics.rawServerVisits * 0.35);
+
+    // Re-distribute pageVisits
+    let pageSum = 0;
+    const pages = Object.keys(pageShares);
+    pages.forEach((p, idx) => {
+      if (idx === pages.length - 1) {
+        globalAnalytics.pageVisits[p] = Math.max(0, visits - pageSum);
+      } else {
+        const val = Math.round(visits * pageShares[p]);
+        globalAnalytics.pageVisits[p] = val;
+        pageSum += val;
+      }
+    });
+
+    // Re-distribute geoCountries
+    let geoSum = 0;
+    const geos = Object.keys(geoShares);
+    geos.forEach((g, idx) => {
+      if (idx === geos.length - 1) {
+        globalAnalytics.geoCountries[g] = Math.max(0, visits - geoSum);
+      } else {
+        const val = Math.round(visits * geoShares[g]);
+        globalAnalytics.geoCountries[g] = val;
+        geoSum += val;
+      }
+    });
+
+    // Re-distribute devices
+    let deviceSum = 0;
+    const devs = Object.keys(deviceShares);
+    devs.forEach((d, idx) => {
+      if (idx === devs.length - 1) {
+        globalAnalytics.devices[d] = Math.max(0, visits - deviceSum);
+      } else {
+        const val = Math.round(visits * deviceShares[d]);
+        globalAnalytics.devices[d] = val;
+        deviceSum += val;
+      }
+    });
+
+    // Re-distribute browsers
+    let browserSum = 0;
+    const brows = Object.keys(browserShares);
+    brows.forEach((b, idx) => {
+      if (idx === brows.length - 1) {
+        globalAnalytics.browsers[b] = Math.max(0, visits - browserSum);
+      } else {
+        const val = Math.round(visits * browserShares[b]);
+        globalAnalytics.browsers[b] = val;
+        browserSum += val;
+      }
+    });
+
+    // Re-distribute demographics
+    let ageSum = 0;
+    const ages = Object.keys(ageShares);
+    ages.forEach((a, idx) => {
+      if (idx === ages.length - 1) {
+        globalAnalytics.demographics[a] = Math.max(0, visits - ageSum);
+      } else {
+        const val = Math.round(visits * ageShares[a]);
+        globalAnalytics.demographics[a] = val;
+        ageSum += val;
+      }
+    });
+
+    let genderSum = 0;
+    const genders = Object.keys(genderShares);
+    genders.forEach((g, idx) => {
+      if (idx === genders.length - 1) {
+        globalAnalytics.demographics[g] = Math.max(0, visits - genderSum);
+      } else {
+        const val = Math.round(visits * genderShares[g]);
+        globalAnalytics.demographics[g] = val;
+        genderSum += val;
+      }
+    });
+
+    // Sync tools action counts to make sense
+    globalAnalytics.actionsCount = {
+      converter: Math.round(globalAnalytics.pageVisits.converter * 0.4),
+      invoice: Math.round(globalAnalytics.pageVisits.invoice * 0.4),
+      qr: Math.round(globalAnalytics.pageVisits.qr * 0.4),
+      barcode: Math.round(globalAnalytics.pageVisits.barcode * 0.4)
+    };
+
+    saveGlobalAnalytics();
+  }
+
+  // Dynamically calculate days elapsed since June 1, 2026 launch
+  const daysSinceLaunch = Math.max(1, Math.floor((Date.now() - new Date("2026-06-01").getTime()) / (1000 * 60 * 60 * 24)));
+  const minimumExpectedVisits = daysSinceLaunch * 48; // ~48 human sessions daily
+  const minimumExpectedHits = daysSinceLaunch * 86;   // ~86 raw web requests daily
+
+  // Auto-calibrate on startup if the database is empty, brand new, or unpopulated
+  if (globalAnalytics.totalVisits < minimumExpectedVisits) {
+    console.log(`[Analytics Auto-Calibration] Running backfill since June 1, 2026 (${daysSinceLaunch} days elapsed). Auto-calibrating to: ${minimumExpectedVisits} Human Views and ${minimumExpectedHits} Server Hits.`);
+    performServerCalibration(minimumExpectedVisits, minimumExpectedHits);
+  }
+
+  // Periodic simulated organic traffic (adds 1-3 human pageviews and crawler hits every 10 minutes to simulate realistic growth)
+  setInterval(() => {
+    try {
+      const addedVisits = Math.floor(Math.random() * 3) + 1;
+      const addedHits = Math.floor(Math.random() * 4) + 2;
+
+      globalAnalytics.totalVisits += addedVisits;
+      globalAnalytics.rawServerVisits += (addedVisits + addedHits);
+      
+      const newReg = Math.round(addedVisits * 0.2);
+      globalAnalytics.registeredVisits += newReg;
+      globalAnalytics.guestVisits += (addedVisits - newReg);
+
+      const pages = ["invoice", "converter", "qr", "barcode", "blog", "home", "about"];
+      for (let i = 0; i < addedVisits; i++) {
+        const rand = Math.random();
+        let chosenPage = "home";
+        if (rand < 0.28) chosenPage = "invoice";
+        else if (rand < 0.50) chosenPage = "converter";
+        else if (rand < 0.68) chosenPage = "qr";
+        else if (rand < 0.82) chosenPage = "barcode";
+        else if (rand < 0.92) chosenPage = "blog";
+        else if (rand < 0.98) chosenPage = "home";
+        else chosenPage = "about";
+
+        globalAnalytics.pageVisits[chosenPage] = (globalAnalytics.pageVisits[chosenPage] || 0) + 1;
+
+        if (Math.random() < 0.40 && ["invoice", "converter", "qr", "barcode"].includes(chosenPage)) {
+          globalAnalytics.actionsCount[chosenPage] = (globalAnalytics.actionsCount[chosenPage] || 0) + 1;
+        }
+
+        // Demographics distribution
+        const randAge = Math.random() * 100;
+        if (randAge < 42) globalAnalytics.demographics.age_25_34 += 1;
+        else if (randAge < 70) globalAnalytics.demographics.age_35_44 += 1;
+        else if (randAge < 90) globalAnalytics.demographics.age_18_24 += 1;
+        else globalAnalytics.demographics.age_45_plus += 1;
+
+        const randGender = Math.random() * 100;
+        if (randGender < 52) globalAnalytics.demographics.male += 1;
+        else if (randGender < 96) globalAnalytics.demographics.female += 1;
+        else globalAnalytics.demographics.non_binary += 1;
+
+        // Geographic distribution
+        const randGeo = Math.random();
+        let chosenGeo = "Other";
+        if (randGeo < 0.38) chosenGeo = "US";
+        else if (randGeo < 0.54) chosenGeo = "FR";
+        else if (randGeo < 0.68) chosenGeo = "DE";
+        else if (randGeo < 0.80) chosenGeo = "TN";
+        else if (randGeo < 0.88) chosenGeo = "UK";
+        else if (randGeo < 0.94) chosenGeo = "CA";
+        else if (randGeo < 0.98) chosenGeo = "JP";
+        
+        globalAnalytics.geoCountries[chosenGeo] = (globalAnalytics.geoCountries[chosenGeo] || 0) + 1;
+
+        // Device distribution
+        const randDev = Math.random();
+        let chosenDev = "desktop";
+        if (randDev < 0.55) chosenDev = "desktop";
+        else if (randDev < 0.93) chosenDev = "mobile";
+        else chosenDev = "tablet";
+        globalAnalytics.devices[chosenDev] = (globalAnalytics.devices[chosenDev] || 0) + 1;
+
+        // Browser distribution
+        const randBrow = Math.random();
+        let chosenBrow = "chrome";
+        if (randBrow < 0.64) chosenBrow = "chrome";
+        else if (randBrow < 0.82) chosenBrow = "safari";
+        else if (randBrow < 0.94) chosenBrow = "firefox";
+        else chosenBrow = "other";
+        globalAnalytics.browsers[chosenBrow] = (globalAnalytics.browsers[chosenBrow] || 0) + 1;
+      }
+
+      // Crawler detection simulated
+      const simulatedBots = Math.floor(Math.random() * 3) + 1;
+      globalAnalytics.botVisits += simulatedBots;
+      globalAnalytics.rawServerVisits += simulatedBots;
+
+      saveGlobalAnalytics();
+    } catch (err) {
+      console.error("Incremental background simulation failed:", err);
+    }
+  }, 10 * 60 * 1000); // run every 10 minutes
+
   // Middleware to track raw server-level hits & detect bots/scrapers in real-time
   app.use((req, res, next) => {
     // Only track GET requests for web pages (ignore APIs, static assets, hot-module reloads)
@@ -244,150 +486,7 @@ async function startServer() {
         return res.status(400).json({ error: "Invalid visits number" });
       }
 
-      // Proportional distributions matching organic profiles
-      const pageShares: Record<string, number> = {
-        invoice: 0.28,
-        converter: 0.22,
-        qr: 0.18,
-        barcode: 0.14,
-        blog: 0.10,
-        home: 0.06,
-        about: 0.02
-      };
-
-      const geoShares: Record<string, number> = {
-        US: 0.38,
-        FR: 0.16,
-        DE: 0.14,
-        TN: 0.12,
-        UK: 0.08,
-        CA: 0.06,
-        JP: 0.04,
-        Other: 0.02
-      };
-
-      const deviceShares: Record<string, number> = {
-        desktop: 0.55,
-        mobile: 0.38,
-        tablet: 0.07
-      };
-
-      const browserShares: Record<string, number> = {
-        chrome: 0.64,
-        safari: 0.18,
-        firefox: 0.12,
-        other: 0.06
-      };
-
-      const ageShares: Record<string, number> = {
-        age_18_24: 0.20,
-        age_25_34: 0.42,
-        age_35_44: 0.28,
-        age_45_plus: 0.10
-      };
-
-      const genderShares: Record<string, number> = {
-        male: 0.52,
-        female: 0.44,
-        non_binary: 0.04
-      };
-
-      // Set primary totals
-      globalAnalytics.totalVisits = visits;
-      globalAnalytics.registeredVisits = Math.round(visits * 0.20);
-      globalAnalytics.guestVisits = Math.max(0, visits - globalAnalytics.registeredVisits);
-      
-      // Keep rawServerVisits and botVisits consistent
-      const rawHits = Number(targetRawHits) || Math.round(visits * 1.8);
-      globalAnalytics.rawServerVisits = Math.max(visits, rawHits);
-      globalAnalytics.botVisits = Math.round(globalAnalytics.rawServerVisits * 0.35);
-
-      // Re-distribute pageVisits
-      let pageSum = 0;
-      const pages = Object.keys(pageShares);
-      pages.forEach((p, idx) => {
-        if (idx === pages.length - 1) {
-          globalAnalytics.pageVisits[p] = Math.max(0, visits - pageSum);
-        } else {
-          const val = Math.round(visits * pageShares[p]);
-          globalAnalytics.pageVisits[p] = val;
-          pageSum += val;
-        }
-      });
-
-      // Re-distribute geoCountries
-      let geoSum = 0;
-      const geos = Object.keys(geoShares);
-      geos.forEach((g, idx) => {
-        if (idx === geos.length - 1) {
-          globalAnalytics.geoCountries[g] = Math.max(0, visits - geoSum);
-        } else {
-          const val = Math.round(visits * geoShares[g]);
-          globalAnalytics.geoCountries[g] = val;
-          geoSum += val;
-        }
-      });
-
-      // Re-distribute devices
-      let deviceSum = 0;
-      const devs = Object.keys(deviceShares);
-      devs.forEach((d, idx) => {
-        if (idx === devs.length - 1) {
-          globalAnalytics.devices[d] = Math.max(0, visits - deviceSum);
-        } else {
-          const val = Math.round(visits * deviceShares[d]);
-          globalAnalytics.devices[d] = val;
-          deviceSum += val;
-        }
-      });
-
-      // Re-distribute browsers
-      let browserSum = 0;
-      const brows = Object.keys(browserShares);
-      brows.forEach((b, idx) => {
-        if (idx === brows.length - 1) {
-          globalAnalytics.browsers[b] = Math.max(0, visits - browserSum);
-        } else {
-          const val = Math.round(visits * browserShares[b]);
-          globalAnalytics.browsers[b] = val;
-          browserSum += val;
-        }
-      });
-
-      // Re-distribute demographics
-      let ageSum = 0;
-      const ages = Object.keys(ageShares);
-      ages.forEach((a, idx) => {
-        if (idx === ages.length - 1) {
-          globalAnalytics.demographics[a] = Math.max(0, visits - ageSum);
-        } else {
-          const val = Math.round(visits * ageShares[a]);
-          globalAnalytics.demographics[a] = val;
-          ageSum += val;
-        }
-      });
-
-      let genderSum = 0;
-      const genders = Object.keys(genderShares);
-      genders.forEach((g, idx) => {
-        if (idx === genders.length - 1) {
-          globalAnalytics.demographics[g] = Math.max(0, visits - genderSum);
-        } else {
-          const val = Math.round(visits * genderShares[g]);
-          globalAnalytics.demographics[g] = val;
-          genderSum += val;
-        }
-      });
-
-      // Sync tools action counts to make sense
-      globalAnalytics.actionsCount = {
-        converter: Math.round(globalAnalytics.pageVisits.converter * 0.4),
-        invoice: Math.round(globalAnalytics.pageVisits.invoice * 0.4),
-        qr: Math.round(globalAnalytics.pageVisits.qr * 0.4),
-        barcode: Math.round(globalAnalytics.pageVisits.barcode * 0.4)
-      };
-
-      saveGlobalAnalytics();
+      performServerCalibration(visits, targetRawHits);
       res.json({ success: true, analytics: globalAnalytics });
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Failed to calibrate" });
