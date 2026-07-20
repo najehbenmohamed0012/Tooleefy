@@ -109,6 +109,8 @@ async function startServer() {
           totalVisits: Number(parsed.totalVisits) || 0,
           registeredVisits: Number(parsed.registeredVisits) || 0,
           guestVisits: Number(parsed.guestVisits) || 0,
+          rawServerVisits: Number(parsed.rawServerVisits) || Number(parsed.totalVisits) || 0,
+          botVisits: Number(parsed.botVisits) || 0,
           actionsCount: {
             converter: Number(parsed.actionsCount?.converter) || 0,
             invoice: Number(parsed.actionsCount?.invoice) || 0,
@@ -156,6 +158,8 @@ async function startServer() {
       totalVisits: 0,
       registeredVisits: 0,
       guestVisits: 0,
+      rawServerVisits: 0,
+      botVisits: 0,
       actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
       tickerEvents: [],
       geoCountries: { US: 0, FR: 0, DE: 0, TN: 0, UK: 0, CA: 0, JP: 0, Other: 0 },
@@ -175,6 +179,36 @@ async function startServer() {
     }
   }
 
+  // Middleware to track raw server-level hits & detect bots/scrapers in real-time
+  app.use((req, res, next) => {
+    // Only track GET requests for web pages (ignore APIs, static assets, hot-module reloads)
+    const isGet = req.method === "GET";
+    const isApi = req.path.startsWith("/api");
+    const isAsset = req.path.match(/\.(js|css|woff2?|png|jpg|jpeg|svg|webp|ico|map|txt|xml|json)$/i);
+    
+    if (isGet && !isApi && !isAsset) {
+      const ua = (req.headers["user-agent"] || "").toLowerCase();
+      // Expanded regex to catch all crawlers, checkers, audits, and bots
+      const isBot = /bot|crawl|spider|slurp|yahoo|yandex|semrush|ahrefs|google|bing|duckduck|lighthouse|scan|curl|wget|python|php|zgrab|headless|agent|pagepeeker/i.test(ua);
+      
+      if (globalAnalytics) {
+        if (typeof globalAnalytics.rawServerVisits !== "number") {
+          globalAnalytics.rawServerVisits = globalAnalytics.totalVisits || 0;
+        }
+        if (typeof globalAnalytics.botVisits !== "number") {
+          globalAnalytics.botVisits = 0;
+        }
+        
+        globalAnalytics.rawServerVisits += 1;
+        if (isBot) {
+          globalAnalytics.botVisits += 1;
+        }
+        saveGlobalAnalytics();
+      }
+    }
+    next();
+  });
+
   // Get current global analytics
   app.get("/api/analytics", (req, res) => {
     res.json(globalAnalytics);
@@ -187,6 +221,8 @@ async function startServer() {
       totalVisits: 0,
       registeredVisits: 0,
       guestVisits: 0,
+      rawServerVisits: 0,
+      botVisits: 0,
       actionsCount: { converter: 0, invoice: 0, qr: 0, barcode: 0 },
       tickerEvents: [],
       geoCountries: { US: 0, FR: 0, DE: 0, TN: 0, UK: 0, CA: 0, JP: 0, Other: 0 },
@@ -209,6 +245,13 @@ async function startServer() {
 
         globalAnalytics.pageVisits[key] = (globalAnalytics.pageVisits[key] || 0) + 1;
         globalAnalytics.totalVisits += 1;
+
+        // Ensure rawServerVisits keeps pace with totalVisits
+        if (typeof globalAnalytics.rawServerVisits !== "number") {
+          globalAnalytics.rawServerVisits = globalAnalytics.totalVisits;
+        } else if (globalAnalytics.rawServerVisits < globalAnalytics.totalVisits) {
+          globalAnalytics.rawServerVisits = globalAnalytics.totalVisits;
+        }
 
         if (isRegistered) {
           globalAnalytics.registeredVisits += 1;

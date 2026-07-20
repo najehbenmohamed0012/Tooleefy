@@ -6,6 +6,8 @@ export interface AnalyticsData {
   totalVisits: number;
   registeredVisits: number;
   guestVisits: number;
+  rawServerVisits?: number;
+  botVisits?: number;
   actionsCount: {
     converter: number;
     invoice: number;
@@ -40,6 +42,8 @@ const DEFAULT_ANALYTICS: AnalyticsData = {
   totalVisits: 0,
   registeredVisits: 0,
   guestVisits: 0,
+  rawServerVisits: 0,
+  botVisits: 0,
   actionsCount: {
     converter: 0,
     invoice: 0,
@@ -65,6 +69,8 @@ export function getAnalytics(): AnalyticsData {
       totalVisits: Number(parsed.totalVisits) || 0,
       registeredVisits: Number(parsed.registeredVisits) || 0,
       guestVisits: Number(parsed.guestVisits) || 0,
+      rawServerVisits: Number(parsed.rawServerVisits) || 0,
+      botVisits: Number(parsed.botVisits) || 0,
       actionsCount: { ...DEFAULT_ANALYTICS.actionsCount, ...parsed.actionsCount },
       tickerEvents: Array.isArray(parsed.tickerEvents) ? parsed.tickerEvents : []
     };
