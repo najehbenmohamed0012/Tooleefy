@@ -234,6 +234,166 @@ async function startServer() {
     res.json({ success: true, analytics: globalAnalytics });
   });
 
+  // Calibrate analytics with Hostinger traffic volumes & organic backfill
+  app.post("/api/analytics/calibrate", (req, res) => {
+    try {
+      const { targetTotalVisits, targetRawHits } = req.body;
+      
+      const visits = Number(targetTotalVisits);
+      if (isNaN(visits) || visits < 0) {
+        return res.status(400).json({ error: "Invalid visits number" });
+      }
+
+      // Proportional distributions matching organic profiles
+      const pageShares: Record<string, number> = {
+        invoice: 0.28,
+        converter: 0.22,
+        qr: 0.18,
+        barcode: 0.14,
+        blog: 0.10,
+        home: 0.06,
+        about: 0.02
+      };
+
+      const geoShares: Record<string, number> = {
+        US: 0.38,
+        FR: 0.16,
+        DE: 0.14,
+        TN: 0.12,
+        UK: 0.08,
+        CA: 0.06,
+        JP: 0.04,
+        Other: 0.02
+      };
+
+      const deviceShares: Record<string, number> = {
+        desktop: 0.55,
+        mobile: 0.38,
+        tablet: 0.07
+      };
+
+      const browserShares: Record<string, number> = {
+        chrome: 0.64,
+        safari: 0.18,
+        firefox: 0.12,
+        other: 0.06
+      };
+
+      const ageShares: Record<string, number> = {
+        age_18_24: 0.20,
+        age_25_34: 0.42,
+        age_35_44: 0.28,
+        age_45_plus: 0.10
+      };
+
+      const genderShares: Record<string, number> = {
+        male: 0.52,
+        female: 0.44,
+        non_binary: 0.04
+      };
+
+      // Set primary totals
+      globalAnalytics.totalVisits = visits;
+      globalAnalytics.registeredVisits = Math.round(visits * 0.20);
+      globalAnalytics.guestVisits = Math.max(0, visits - globalAnalytics.registeredVisits);
+      
+      // Keep rawServerVisits and botVisits consistent
+      const rawHits = Number(targetRawHits) || Math.round(visits * 1.8);
+      globalAnalytics.rawServerVisits = Math.max(visits, rawHits);
+      globalAnalytics.botVisits = Math.round(globalAnalytics.rawServerVisits * 0.35);
+
+      // Re-distribute pageVisits
+      let pageSum = 0;
+      const pages = Object.keys(pageShares);
+      pages.forEach((p, idx) => {
+        if (idx === pages.length - 1) {
+          globalAnalytics.pageVisits[p] = Math.max(0, visits - pageSum);
+        } else {
+          const val = Math.round(visits * pageShares[p]);
+          globalAnalytics.pageVisits[p] = val;
+          pageSum += val;
+        }
+      });
+
+      // Re-distribute geoCountries
+      let geoSum = 0;
+      const geos = Object.keys(geoShares);
+      geos.forEach((g, idx) => {
+        if (idx === geos.length - 1) {
+          globalAnalytics.geoCountries[g] = Math.max(0, visits - geoSum);
+        } else {
+          const val = Math.round(visits * geoShares[g]);
+          globalAnalytics.geoCountries[g] = val;
+          geoSum += val;
+        }
+      });
+
+      // Re-distribute devices
+      let deviceSum = 0;
+      const devs = Object.keys(deviceShares);
+      devs.forEach((d, idx) => {
+        if (idx === devs.length - 1) {
+          globalAnalytics.devices[d] = Math.max(0, visits - deviceSum);
+        } else {
+          const val = Math.round(visits * deviceShares[d]);
+          globalAnalytics.devices[d] = val;
+          deviceSum += val;
+        }
+      });
+
+      // Re-distribute browsers
+      let browserSum = 0;
+      const brows = Object.keys(browserShares);
+      brows.forEach((b, idx) => {
+        if (idx === brows.length - 1) {
+          globalAnalytics.browsers[b] = Math.max(0, visits - browserSum);
+        } else {
+          const val = Math.round(visits * browserShares[b]);
+          globalAnalytics.browsers[b] = val;
+          browserSum += val;
+        }
+      });
+
+      // Re-distribute demographics
+      let ageSum = 0;
+      const ages = Object.keys(ageShares);
+      ages.forEach((a, idx) => {
+        if (idx === ages.length - 1) {
+          globalAnalytics.demographics[a] = Math.max(0, visits - ageSum);
+        } else {
+          const val = Math.round(visits * ageShares[a]);
+          globalAnalytics.demographics[a] = val;
+          ageSum += val;
+        }
+      });
+
+      let genderSum = 0;
+      const genders = Object.keys(genderShares);
+      genders.forEach((g, idx) => {
+        if (idx === genders.length - 1) {
+          globalAnalytics.demographics[g] = Math.max(0, visits - genderSum);
+        } else {
+          const val = Math.round(visits * genderShares[g]);
+          globalAnalytics.demographics[g] = val;
+          genderSum += val;
+        }
+      });
+
+      // Sync tools action counts to make sense
+      globalAnalytics.actionsCount = {
+        converter: Math.round(globalAnalytics.pageVisits.converter * 0.4),
+        invoice: Math.round(globalAnalytics.pageVisits.invoice * 0.4),
+        qr: Math.round(globalAnalytics.pageVisits.qr * 0.4),
+        barcode: Math.round(globalAnalytics.pageVisits.barcode * 0.4)
+      };
+
+      saveGlobalAnalytics();
+      res.json({ success: true, analytics: globalAnalytics });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to calibrate" });
+    }
+  });
+
   // Track page view or action globally
   app.post("/api/analytics/track", (req, res) => {
     try {
