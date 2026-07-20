@@ -1,5 +1,29 @@
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
+
+// Load environment variables
+dotenv.config();
+
+// Secure permission helpers for Hostinger / cPanel deployment
+const ensureDir = (dirPath) => {
+  fs.mkdirSync(dirPath, { recursive: true });
+  try {
+    fs.chmodSync(dirPath, 0o755);
+  } catch (e) {
+    // Ignore chmod issues on platforms that don't support or allow it
+  }
+};
+
+const writeFileSafe = (filePath, content) => {
+  fs.writeFileSync(filePath, content, "utf-8");
+  try {
+    fs.chmodSync(filePath, 0o644);
+  } catch (e) {
+    // Ignore chmod issues on platforms that don't support or allow it
+  }
+};
 
 // Define the metadata map exactly as in server.ts
 const metaMap = {
@@ -123,7 +147,7 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     const routeDir = path.join(distDir, normalizedRoute);
     
     // Create folder recursive
-    fs.mkdirSync(routeDir, { recursive: true });
+    ensureDir(routeDir);
     targetHtmlPath = path.join(routeDir, "index.html");
   }
   
@@ -172,7 +196,7 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   // Inject SEO blocks before </head>
   pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
   
-  fs.writeFileSync(targetHtmlPath, pageHtml, "utf-8");
+  writeFileSafe(targetHtmlPath, pageHtml);
   if (route === "/") {
     console.log("- Pre-rendered main landing page: dist/index.html");
   } else {
@@ -181,10 +205,124 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   }
 });
 
+// Define default articles for offline fallback/offline builds
+const defaults = [
+  {
+    id: "art-1",
+    title: "Why Client-Side Processing is the Future of B2B SaaS",
+    excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+    seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
+    seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+    seoKeywords: "client-side, local-first, decentralized, SaaS, WASM",
+    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    category: "Business"
+  },
+  {
+    id: "art-2",
+    title: "5 Common Invoicing Mistakes Every Freelancer Makes",
+    excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+    seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes",
+    seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+    seoKeywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
+    coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+    category: "Invoice Generator"
+  },
+  {
+    id: "art-3",
+    title: "Mastering Custom QR Code Architecture for Retail",
+    excerpt: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+    seoTitle: "Mastering Custom QR Code Architecture for Retail",
+    seoDesc: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+    seoKeywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
+    coverImage: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80",
+    category: "QR Code Generator"
+  }
+];
+
+// Fetch posts from Supabase or fallback
+let blogPostsToPreRender = [...defaults];
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (supabaseUrl && supabaseAnonKey) {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("id, title, excerpt, seoTitle, seoDesc, seoKeywords, coverImage, category");
+    
+    if (!error && data && data.length > 0) {
+      console.log(`Fetched ${data.length} blog posts from Supabase for pre-rendering.`);
+      // Merge fetched posts with defaults, ensuring no duplicate IDs
+      const fetchedIds = new Set(data.map(p => p.id));
+      const uniqueDefaults = defaults.filter(p => !fetchedIds.has(p.id));
+      blogPostsToPreRender = [...data, ...uniqueDefaults];
+    } else if (error) {
+      console.warn("Supabase fetch returned error, using fallback defaults:", error.message);
+    }
+  } catch (err) {
+    console.warn("Could not fetch from Supabase, using defaults:", err);
+  }
+} else {
+  console.log("No Supabase configuration found in environment. Pre-rendering offline defaults.");
+}
+
+// Generate pre-rendered physical HTML files for every blog post
+blogPostsToPreRender.forEach((post) => {
+  const route = `/blog/${post.id}`;
+  const routeDir = path.join(distDir, "blog", post.id);
+  ensureDir(routeDir);
+  
+  const absoluteUrl = `${protocol}://${host}${route}`;
+  const title = `${post.seoTitle || post.title} | Tooleefy Insights`;
+  const desc = post.seoDesc || post.excerpt;
+  const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
+  const ogImgUrl = post.coverImage && post.coverImage.startsWith("http")
+    ? post.coverImage
+    : `${protocol}://${host}/images/og-default.jpg`;
+    
+  const seoTags = `
+    <!-- General SEO tags for ${post.title} -->
+    <meta name="description" content="${desc}" />
+    <meta name="keywords" content="${keywords}" />
+    <meta name="author" content="Tooleefy" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="${absoluteUrl}" />
+
+    <!-- Open Graph tags -->
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Tooleefy" />
+    <meta property="og:url" content="${absoluteUrl}" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${desc}" />
+    <meta property="og:image" content="${ogImgUrl}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${title}" />
+
+    <!-- Twitter Card metadata -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="${absoluteUrl}" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${desc}" />
+    <meta name="twitter:image" content="${ogImgUrl}" />
+  `;
+
+  let pageHtml = baseHtml;
+  pageHtml = pageHtml.replace(/<title>.*?<\/title>/gi, `<title>${title}</title>`);
+  pageHtml = pageHtml.replace(/<meta name="description" content=".*?" \/>/gi, "");
+  pageHtml = pageHtml.replace(/<meta name="keywords" content=".*?" \/>/gi, "");
+  pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
+  
+  const targetHtmlPath = path.join(routeDir, "index.html");
+  writeFileSafe(targetHtmlPath, pageHtml);
+  console.log(`- Pre-rendered blog article route: blog/${post.id}/index.html`);
+});
+
 // Generate private routes with noindex
 privateRoutes.forEach((route) => {
   const routeDir = path.join(distDir, route);
-  fs.mkdirSync(routeDir, { recursive: true });
+  ensureDir(routeDir);
   
   const absoluteUrl = `${protocol}://${host}/${route}`;
   const title = `Portal | Tooleefy`;
@@ -203,7 +341,7 @@ privateRoutes.forEach((route) => {
   pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
   
   const targetHtmlPath = path.join(routeDir, "index.html");
-  fs.writeFileSync(targetHtmlPath, pageHtml, "utf-8");
+  writeFileSafe(targetHtmlPath, pageHtml);
   console.log(`- Created private route: ${route}/index.html`);
 });
 

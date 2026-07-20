@@ -267,16 +267,20 @@ async function startServer() {
         const ua = (req.headers["user-agent"] || "").toLowerCase();
 
         // 1. Geography: Resolve country via reverse proxy headers or background GeoIP lookup
-        let resolvedGeo = (
+        let resolvedGeo = "Other";
+        const rawGeoHeader = (
           req.headers["cf-ipcountry"] ||
           req.headers["x-country-code"] ||
           req.headers["x-appengine-country"] ||
           req.headers["x-visitor-country"]
         );
-        if (resolvedGeo && typeof resolvedGeo === "string" && resolvedGeo.length === 2) {
-          resolvedGeo = resolvedGeo.toUpperCase();
-        } else {
-          resolvedGeo = geo || "Other";
+        if (rawGeoHeader) {
+          const geoStr = Array.isArray(rawGeoHeader) ? rawGeoHeader[0] : rawGeoHeader;
+          if (typeof geoStr === "string" && geoStr.length === 2) {
+            resolvedGeo = geoStr.toUpperCase();
+          }
+        } else if (geo) {
+          resolvedGeo = geo;
         }
 
         // Trigger asynchronous real-world background geo-lookup for non-local visitor IPs
