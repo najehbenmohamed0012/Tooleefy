@@ -15,10 +15,9 @@ async function startServer() {
   
   const rawPort = process.env.PORT;
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
-  // If in development (AI Studio) and not on a socket path, we MUST bind to port 3000.
-  // This guarantees the dev server is accessible via the reverse proxy while preserving live Hostinger settings.
-  const isDev = process.env.NODE_ENV !== "production";
-  const PORT = (isDev && !isSocket) ? 3000 : (isSocket ? rawPort : (Number(rawPort) || 3000));
+  // Use the platform-assigned port/socket from process.env.PORT when available (required for Hostinger Passenger).
+  // Otherwise, default to port 3000 for AI Studio development.
+  const PORT = rawPort ? (isSocket ? rawPort : Number(rawPort)) : 3000;
 
   // Disable X-Powered-By header to prevent tech stack fingerprinting
   app.disable("x-powered-by");
