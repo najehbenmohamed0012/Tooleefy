@@ -1101,6 +1101,17 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     }
   });
 
+  // Cleanly strip existing SEO and social meta tags from index HTML template
+  function stripExistingSeoTags(html: string): string {
+    let cleaned = html;
+    cleaned = cleaned.replace(/<title>.*?<\/title>/gi, "");
+    cleaned = cleaned.replace(/<link rel="canonical" href=".*?" \/?>/gi, "");
+    cleaned = cleaned.replace(/<meta name="(description|keywords|author|robots)" content=".*?" \/?>/gi, "");
+    cleaned = cleaned.replace(/<meta property="og:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+    cleaned = cleaned.replace(/<meta name="twitter:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+    return cleaned;
+  }
+
   // Dynamic Server-Side HTML meta tags tag replacement for Search Engines and Social Platforms
   let indexHtmlCache = "";
   
@@ -1376,13 +1387,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
     `;
 
-    // Strip default fallback values dynamically to avoid double insertions
-    html = html.replace(/<title>.*?<\/title>/gi, `<title>${routeMeta.title}</title>`);
-    html = html.replace(/<meta name="description" content=".*?" \/>/gi, "");
-    html = html.replace(/<meta name="keywords" content=".*?" \/>/gi, "");
-    
-    // Inject custom compiled meta blocks cleanly nested before </head>
-    html = html.replace("</head>", `${seoTags}\n</head>`);
+    // Inject Title and custom compiled meta blocks cleanly nested before </head>
+    html = html.replace("</head>", `<title>${routeMeta.title}</title>\n${seoTags}\n</head>`);
     
     return html;
   }
@@ -1424,7 +1430,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
         const indexPath = path.join(distPath, "index.html");
         if (fs.existsSync(indexPath)) {
           if (!indexHtmlCache) {
-            indexHtmlCache = fs.readFileSync(indexPath, "utf-8");
+            const rawHtml = fs.readFileSync(indexPath, "utf-8");
+            indexHtmlCache = stripExistingSeoTags(rawHtml);
           }
           // Detect original virtual path passed by Apache/Passenger rewrite
           let reqPath = req.path;

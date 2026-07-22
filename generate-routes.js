@@ -133,7 +133,25 @@ if (!fs.existsSync(sourceHtml)) {
   process.exit(1);
 }
 
-const baseHtml = fs.readFileSync(sourceHtml, "utf-8");
+const rawHtml = fs.readFileSync(sourceHtml, "utf-8");
+
+// Helper function to cleanly strip any existing SEO and Social meta tags from the base HTML template
+const stripExistingSeoTags = (html) => {
+  let cleaned = html;
+  // Strip existing Title
+  cleaned = cleaned.replace(/<title>.*?<\/title>/gi, "");
+  // Strip existing Canonical Link
+  cleaned = cleaned.replace(/<link rel="canonical" href=".*?" \/?>/gi, "");
+  // Strip standard SEO Meta tags
+  cleaned = cleaned.replace(/<meta name="(description|keywords|author|robots)" content=".*?" \/?>/gi, "");
+  // Strip Open Graph tags
+  cleaned = cleaned.replace(/<meta property="og:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+  // Strip Twitter Card tags
+  cleaned = cleaned.replace(/<meta name="twitter:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+  return cleaned;
+};
+
+const baseHtml = stripExistingSeoTags(rawHtml);
 
 console.log("Generating pre-rendered physical HTML routes for SEO and Hostinger 404 compatibility...");
 
@@ -186,15 +204,8 @@ Object.entries(metaMap).forEach(([route, meta]) => {
 
   let pageHtml = baseHtml;
   
-  // Replace Title
-  pageHtml = pageHtml.replace(/<title>.*?<\/title>/gi, `<title>${meta.title}</title>`);
-  
-  // Strip default description and keywords to avoid duplicates
-  pageHtml = pageHtml.replace(/<meta name="description" content=".*?" \/>/gi, "");
-  pageHtml = pageHtml.replace(/<meta name="keywords" content=".*?" \/>/gi, "");
-  
-  // Inject SEO blocks before </head>
-  pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
+  // Inject Title and SEO blocks cleanly nested before </head>
+  pageHtml = pageHtml.replace("</head>", `<title>${meta.title}</title>\n${seoTags}\n</head>`);
   
   writeFileSafe(targetHtmlPath, pageHtml);
   if (route === "/") {
@@ -309,10 +320,7 @@ blogPostsToPreRender.forEach((post) => {
   `;
 
   let pageHtml = baseHtml;
-  pageHtml = pageHtml.replace(/<title>.*?<\/title>/gi, `<title>${title}</title>`);
-  pageHtml = pageHtml.replace(/<meta name="description" content=".*?" \/>/gi, "");
-  pageHtml = pageHtml.replace(/<meta name="keywords" content=".*?" \/>/gi, "");
-  pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
+  pageHtml = pageHtml.replace("</head>", `<title>${title}</title>\n${seoTags}\n</head>`);
   
   const targetHtmlPath = path.join(routeDir, "index.html");
   writeFileSafe(targetHtmlPath, pageHtml);
@@ -335,10 +343,7 @@ privateRoutes.forEach((route) => {
   `;
 
   let pageHtml = baseHtml;
-  pageHtml = pageHtml.replace(/<title>.*?<\/title>/gi, `<title>${title}</title>`);
-  pageHtml = pageHtml.replace(/<meta name="description" content=".*?" \/>/gi, "");
-  pageHtml = pageHtml.replace(/<meta name="keywords" content=".*?" \/>/gi, "");
-  pageHtml = pageHtml.replace("</head>", `${seoTags}\n</head>`);
+  pageHtml = pageHtml.replace("</head>", `<title>${title}</title>\n${seoTags}\n</head>`);
   
   const targetHtmlPath = path.join(routeDir, "index.html");
   writeFileSafe(targetHtmlPath, pageHtml);
