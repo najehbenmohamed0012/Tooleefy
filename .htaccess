@@ -19,32 +19,32 @@
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # 2. Static File Performance Optimization:
-    # Let Apache serve critical static assets directly from dist/ to bypass Node.js entirely.
+    # If the requested asset exists inside the dist/ build folder,
+    # let Apache serve it directly to bypass Node.js entirely.
+    # This prevents triggering Hostinger's concurrent connection limits (Entry Processes).
     RewriteRule ^(assets/.*)$ dist/$1 [L]
     RewriteRule ^(images/.*)$ dist/$1 [L]
     RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ dist/$1 [L]
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ dist/$1 [L]
 
-    # 3. Explicit Virtual-to-Physical Route Mapping (Zero-dependency, avoids %{DOCUMENT_ROOT} bugs)
-    # Direct mappings for all pre-rendered paths ensure Apache/LiteSpeed serves them natively
-    # as physical index.html files, preserving query parameters (such as Twitter tracking tokens) perfectly.
+    # 3. Clean URL Virtual-to-Physical Route Mapping (SEO & Hostinger 404 Resolution)
+    # If the user visits a path that has a pre-rendered folder inside dist/ containing index.html,
+    # rewrite to that specific index.html directly. This allows Apache/Hostinger to serve the
+    # correct page static files natively, enabling full multi-page indexing and zero refresh 404s.
+    # We include query string append [QSA] to preserve social tracking parameters (?fbclid, etc.).
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f
+    RewriteRule ^(.*)$ dist/$1/index.html [QSA,L]
 
-    # Main Landing Page
-    RewriteRule ^$ dist/index.html [L]
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f
+    RewriteRule ^(.*)$ dist/$1index.html [QSA,L]
 
-    # Specific Productivity Tools
-    RewriteRule ^tools/(invoice|qr|barcode|converter)/?$ dist/tools/$1/index.html [L]
-
-    # General Static Information Pages
-    RewriteRule ^(categories|blog|about|faq|contact|value-our-tools|privacy|terms|cookies)/?$ dist/$1/index.html [L]
-
-    # Blog Articles Deep Links
-    RewriteRule ^blog/([^/]+)/?$ dist/blog/$1/index.html [L]
-
-    # Private User Profiles and Auth States
-    RewriteRule ^(dashboard|admin|settings/account|settings/preferences|login|register)/?$ dist/$1/index.html [L]
-
-    # 4. Dynamic API Routing & SPA Fallback
-    # Fallback unmatched virtual routes (such as API paths or virtual dynamics) to our Express entrypoint
+    # 4. Dynamic Routes & SPA Routing Fallback:
+    # Rewrite all virtual paths (not physical files or folders)
+    # to the startup file index.js with a query parameter preserving the original route path.
+    # On Hostinger and cPanel, removing the leading slash from index.js is critical 
+    # to let Apache resolve the file relative to the current directory (avoiding 404s).
+    # We exclude /api/ routes so they are processed natively by Phusion Passenger, preserving POST payloads.
     RewriteRule ^index\.js$ - [L]
     RewriteCond %{REQUEST_URI} !/api/
     RewriteCond %{REQUEST_FILENAME} !-f
