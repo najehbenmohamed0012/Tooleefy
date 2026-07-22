@@ -25,7 +25,9 @@
     RewriteRule ^(assets/.*)$ dist/$1 [L]
     RewriteRule ^(images/.*)$ dist/$1 [L]
     RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ dist/$1 [L]
-    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
+    RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI} -f
     RewriteRule ^(.*)$ dist/$1 [L]
 
     # 3. Clean URL Virtual-to-Physical Route Mapping (SEO & Hostinger 404 Resolution)
@@ -33,10 +35,15 @@
     # rewrite to that specific index.html directly. This allows Apache/Hostinger to serve the
     # correct page static files natively, enabling full multi-page indexing and zero refresh 404s.
     # We include query string append [QSA] to preserve social tracking parameters (?fbclid, etc.).
-    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f
+    # We check standard DOCUMENT_ROOT, CONTEXT_DOCUMENT_ROOT, and explicit addon domain folder paths.
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f [OR]
+    RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI}/index.html -f
     RewriteRule ^(.*)$ dist/$1/index.html [QSA,L]
 
-    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f
+    RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f [OR]
+    RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI}index.html -f
     RewriteRule ^(.*)$ dist/$1index.html [QSA,L]
 
     # 4. Dynamic Routes & SPA Routing Fallback:
