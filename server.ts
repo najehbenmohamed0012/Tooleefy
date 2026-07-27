@@ -1426,17 +1426,47 @@ Primary SEO Keywords to include: "${keywordsList}"`;
 
     app.get("*", async (req, res) => {
       try {
+        // Detect original virtual path passed by Apache/Passenger rewrite
+        let reqPath = req.path;
+        if (req.query._route_) {
+          const rawRoute = req.query._route_ as string;
+          reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
+        }
+
+        // Clean up the path for physical mapping
+        let cleanPath = reqPath;
+        if (cleanPath.endsWith("/") && cleanPath.length > 1) {
+          cleanPath = cleanPath.slice(0, -1);
+        }
+
+        // Check if there is a pre-rendered static index.html file for this specific route
+        // (e.g., /blog/some-article -> dist/blog/some-article/index.html)
+        if (cleanPath !== "/" && cleanPath !== "/index.html" && !cleanPath.startsWith("/api/")) {
+          const staticFileCandidates = [
+            path.join(distPath, cleanPath, "index.html"),
+            path.join(distPath, cleanPath + ".html")
+          ];
+
+          let matchedStaticFile = "";
+          for (const candidate of staticFileCandidates) {
+            if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+              matchedStaticFile = candidate;
+              break;
+            }
+          }
+
+          if (matchedStaticFile) {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            res.setHeader("Content-Type", "text/html");
+            return res.sendFile(matchedStaticFile);
+          }
+        }
+
         const indexPath = path.join(distPath, "index.html");
         if (fs.existsSync(indexPath)) {
           if (!indexHtmlCache) {
             const rawHtml = fs.readFileSync(indexPath, "utf-8");
             indexHtmlCache = stripExistingSeoTags(rawHtml);
-          }
-          // Detect original virtual path passed by Apache/Passenger rewrite
-          let reqPath = req.path;
-          if (req.query._route_) {
-            const rawRoute = req.query._route_ as string;
-            reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
           }
           const htmlOutput = await getIndexHtml(reqPath, req.headers.host);
           res.setHeader("Content-Type", "text/html");
