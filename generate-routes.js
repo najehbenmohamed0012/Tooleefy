@@ -141,13 +141,13 @@ const stripExistingSeoTags = (html) => {
   // Strip existing Title
   cleaned = cleaned.replace(/<title>.*?<\/title>/gi, "");
   // Strip existing Canonical Link
-  cleaned = cleaned.replace(/<link rel="canonical" href=".*?" \/?>/gi, "");
+  cleaned = cleaned.replace(/<link[^>]*rel=["']canonical["'][^>]*>/gi, "");
   // Strip standard SEO Meta tags
-  cleaned = cleaned.replace(/<meta name="(description|keywords|author|robots)" content=".*?" \/?>/gi, "");
+  cleaned = cleaned.replace(/<meta[^>]*name=["'](description|keywords|author|robots)["'][^>]*>/gi, "");
   // Strip Open Graph tags
-  cleaned = cleaned.replace(/<meta property="og:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+  cleaned = cleaned.replace(/<meta[^>]*property=["']og:[a-zA-Z0-9:_]+["'][^>]*>/gi, "");
   // Strip Twitter Card tags
-  cleaned = cleaned.replace(/<meta name="twitter:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+  cleaned = cleaned.replace(/<meta[^>]*name=["']twitter:[a-zA-Z0-9:_]+["'][^>]*>/gi, "");
   return cleaned;
 };
 
@@ -174,6 +174,9 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     ? meta.ogImageParam
     : `${protocol}://${host}/images/og-default.jpg`;
   
+  const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
+  const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
+  
   // Build clean SEO meta tags block
   const seoTags = `
     <!-- General SEO tags -->
@@ -190,6 +193,8 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     <meta property="og:title" content="${meta.title}" />
     <meta property="og:description" content="${meta.desc}" />
     <meta property="og:image" content="${ogImgUrl}" />
+    ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
+    <meta property="og:image:type" content="${ogImgType}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${meta.title}" />
@@ -292,6 +297,9 @@ blogPostsToPreRender.forEach((post) => {
     ? post.coverImage
     : `${protocol}://${host}/images/og-default.jpg`;
     
+  const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
+  const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
+    
   const seoTags = `
     <!-- General SEO tags for ${post.title} -->
     <meta name="description" content="${desc}" />
@@ -307,6 +315,8 @@ blogPostsToPreRender.forEach((post) => {
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${desc}" />
     <meta property="og:image" content="${ogImgUrl}" />
+    ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
+    <meta property="og:image:type" content="${ogImgType}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${title}" />

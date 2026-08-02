@@ -1113,10 +1113,10 @@ Primary SEO Keywords to include: "${keywordsList}"`;
   function stripExistingSeoTags(html: string): string {
     let cleaned = html;
     cleaned = cleaned.replace(/<title>.*?<\/title>/gi, "");
-    cleaned = cleaned.replace(/<link rel="canonical" href=".*?" \/?>/gi, "");
-    cleaned = cleaned.replace(/<meta name="(description|keywords|author|robots)" content=".*?" \/?>/gi, "");
-    cleaned = cleaned.replace(/<meta property="og:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
-    cleaned = cleaned.replace(/<meta name="twitter:[a-zA-Z0-9:_]+" content=".*?" \/?>/gi, "");
+    cleaned = cleaned.replace(/<link[^>]*rel=["']canonical["'][^>]*>/gi, "");
+    cleaned = cleaned.replace(/<meta[^>]*name=["'](description|keywords|author|robots)["'][^>]*>/gi, "");
+    cleaned = cleaned.replace(/<meta[^>]*property=["']og:[a-zA-Z0-9:_]+["'][^>]*>/gi, "");
+    cleaned = cleaned.replace(/<meta[^>]*name=["']twitter:[a-zA-Z0-9:_]+["'][^>]*>/gi, "");
     return cleaned;
   }
 
@@ -1298,6 +1298,9 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       ? routeMeta.ogImageParam
       : `${protocol}://${host}/images/og-default.jpg`;
     
+    const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
+    const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
+    
     // Generate dynamic Structured JSON-LD Schema Markup for Google rich search results
     let jsonLdSchema: any = null;
     if (reqPath === "/") {
@@ -1383,6 +1386,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta property="og:title" content="${routeMeta.title}" />
     <meta property="og:description" content="${routeMeta.desc}" />
     <meta property="og:image" content="${ogImgUrl}" />
+    ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
+    <meta property="og:image:type" content="${ogImgType}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${routeMeta.title}" />
