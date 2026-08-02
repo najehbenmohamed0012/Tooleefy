@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import compression from "compression";
 import fs from "fs";
 import dotenv from "dotenv";
@@ -1415,6 +1414,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
 
   // Vite development vs production router configurations
   if (!isProduction) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
