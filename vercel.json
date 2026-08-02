@@ -1,15 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "dist/**"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/assets/(.*)",
@@ -25,15 +20,15 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "index.js"
+      "dest": "api/index.js"
     },
     {
       "src": "/blog/(.*)",
-      "dest": "index.js"
+      "dest": "api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "index.js"
+      "dest": "api/index.js"
     }
   ]
 }

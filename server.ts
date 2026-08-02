@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import compression from "compression";
 import fs from "fs";
 import dotenv from "dotenv";
@@ -10,9 +9,9 @@ import { createClient } from "@supabase/supabase-js";
 // Load environment variables early from .env or Hostinger platform variables
 dotenv.config();
 
+const app = express();
+
 async function startServer() {
-  const app = express();
-  
   const rawPort = process.env.PORT;
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
   // Use the platform-assigned port/socket from process.env.PORT when available (required for Hostinger Passenger).
@@ -1415,6 +1414,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
 
   // Vite development vs production router configurations
   if (!isProduction) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -1491,14 +1491,18 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     });
   }
 
-  if (isSocket) {
-    app.listen(PORT, () => {
-      console.log(`Tooleefy server running on Hostinger socket path: ${PORT}`);
-    });
+  if (!process.env.VERCEL) {
+    if (isSocket) {
+      app.listen(PORT, () => {
+        console.log(`Tooleefy server running on Hostinger socket path: ${PORT}`);
+      });
+    } else {
+      app.listen(Number(PORT), "0.0.0.0", () => {
+        console.log(`Tooleefy server running at http://0.0.0.0:${PORT}`);
+      });
+    }
   } else {
-    app.listen(Number(PORT), "0.0.0.0", () => {
-      console.log(`Tooleefy server running at http://0.0.0.0:${PORT}`);
-    });
+    console.log("Vercel environment detected. Skipping direct listen and exporting app handler.");
   }
 }
 
@@ -1506,3 +1510,6 @@ startServer().catch((err) => {
   console.error("Failed to start server node:", err);
   process.exit(1);
 });
+
+export { app };
+export default app;
