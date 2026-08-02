@@ -1425,6 +1425,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     app.use(express.static(distPath, {
       maxAge: "1d",
       index: false, // Prevents default index.html from overriding the dyn seo star controller
+      redirect: false, // Prevents express.static from redirecting directory paths to trailing slashes (fixes Vercel redirect loops)
       setHeaders: (res, filePath) => {
         if (filePath.endsWith(".html")) {
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");

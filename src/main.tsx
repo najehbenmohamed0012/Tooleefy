@@ -1,14 +1,13 @@
 import './polyfills';
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import {inject} from '@vercel/analytics';
 import App from './App.tsx';
 import './index.css';
-
-inject();
+import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+    <Analytics />
   </StrictMode>,
 );
