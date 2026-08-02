@@ -57,7 +57,7 @@ const tools = [
 ];
 
 export function Home() {
-  const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business Exchange"];
+  const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business\nExchange"];
   const [index, setIndex] = useState(0);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -130,10 +130,10 @@ export function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-3xl sm:text-6xl md:text-8xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-8 flex flex-col items-center justify-center gap-1 sm:gap-2"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-8 flex flex-col items-center justify-center gap-1 sm:gap-2"
             >
               <span>Ultimate Suite For</span>
-              <span className="relative inline-block h-[1.3em] w-full min-w-[280px] max-w-full overflow-hidden">
+              <span className={`relative inline-block w-full min-w-[240px] sm:min-w-[280px] max-w-full overflow-hidden transition-all duration-300 ${index === 3 ? "h-[2.3em]" : "h-[1.3em]"}`}>
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={index}
@@ -141,7 +141,7 @@ export function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex items-center justify-center text-primary italic select-none whitespace-nowrap text-2xl xs:text-3xl sm:text-6xl md:text-8xl"
+                    className="absolute inset-0 flex flex-col items-center justify-center text-primary italic select-none text-2xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-center whitespace-pre-line leading-[1.05]"
                   >
                     {animatedWords[index]}
                   </motion.span>
