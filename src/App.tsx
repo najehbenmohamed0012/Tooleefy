@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { trackPageView } from "@/utils/analytics";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -136,6 +137,7 @@ export default function App() {
         </div>
         <Footer />
         <Toaster />
+        <SpeedInsights />
       </div>
     </BrowserRouter>
     </ThemeProvider>
