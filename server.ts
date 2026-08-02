@@ -1455,6 +1455,43 @@ Primary SEO Keywords to include: "${keywordsList}"`;
           cleanPath = cleanPath.slice(0, -1);
         }
 
+        // If the path looks like a static asset/image, try to resolve and serve it, or return 404 (NEVER return HTML)
+        const isStaticAsset = cleanPath.match(/\.(js|css|woff2?|png|jpg|jpeg|gif|svg|webp|ico|json|map|txt|xml)$/i);
+        if (isStaticAsset) {
+          // Determine the physical file path. Strip leading '/dist' if present since distPath is already the root of our built assets.
+          let assetSubPath = cleanPath;
+          if (assetSubPath.startsWith("/dist/")) {
+            assetSubPath = assetSubPath.slice(5);
+          } else if (assetSubPath === "/dist") {
+            assetSubPath = "/";
+          }
+          
+          const physicalPath = path.join(distPath, assetSubPath);
+          if (fs.existsSync(physicalPath) && fs.statSync(physicalPath).isFile()) {
+            // Set correct Content-Type and caching headers
+            const ext = path.extname(physicalPath).toLowerCase();
+            let contentType = "application/octet-stream";
+            if (ext === ".js") contentType = "application/javascript";
+            else if (ext === ".css") contentType = "text/css";
+            else if (ext === ".png") contentType = "image/png";
+            else if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
+            else if (ext === ".svg") contentType = "image/svg+xml";
+            else if (ext === ".webp") contentType = "image/webp";
+            else if (ext === ".gif") contentType = "image/gif";
+            else if (ext === ".ico") contentType = "image/x-icon";
+            else if (ext === ".json") contentType = "application/json";
+            else if (ext === ".txt") contentType = "text/plain";
+            else if (ext === ".xml") contentType = "application/xml";
+            
+            res.setHeader("Content-Type", contentType);
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+            return res.sendFile(physicalPath);
+          } else {
+            // Static asset does not exist on disk, return 404 to avoid feeding HTML slop to the crawler/debugger
+            return res.status(404).send(`Asset ${cleanPath} not found`);
+          }
+        }
+
         // Check if there is a pre-rendered static index.html file for this specific route
         // (e.g., /blog/some-article -> dist/blog/some-article/index.html)
         if (cleanPath !== "/" && cleanPath !== "/index.html" && !cleanPath.startsWith("/api/")) {
