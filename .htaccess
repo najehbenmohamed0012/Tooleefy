@@ -22,13 +22,13 @@
     # If the requested asset exists inside the dist/ build folder,
     # let Apache serve it directly to bypass Node.js entirely.
     # This prevents triggering Hostinger's concurrent connection limits (Entry Processes).
-    RewriteRule ^(assets/.*)$ dist/$1 [L]
-    RewriteRule ^(images/.*)$ dist/$1 [L]
-    RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ dist/$1 [L]
+    RewriteRule ^(assets/.*)$ /dist/$1 [L]
+    RewriteRule ^(images/.*)$ /dist/$1 [L]
+    RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ /dist/$1 [L]
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
     RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI} -f
-    RewriteRule ^(.*)$ dist/$1 [L]
+    RewriteRule ^(.*)$ /dist/$1 [L]
 
     # 3. Clean URL Virtual-to-Physical Route Mapping (SEO & Hostinger 404 Resolution)
     # If the user visits a path that has a pre-rendered folder inside dist/ containing index.html,
@@ -39,12 +39,12 @@
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f [OR]
     RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI}/index.html -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI}/index.html -f
-    RewriteRule ^(.*)$ dist/$1/index.html [QSA,L]
+    RewriteRule ^(.*)$ /dist/$1/index.html [QSA,L]
 
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f [OR]
     RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI}index.html -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI}index.html -f
-    RewriteRule ^(.*)$ dist/$1index.html [QSA,L]
+    RewriteRule ^(.*)$ /dist/$1index.html [QSA,L]
 
     # 4. Dynamic Routes & SPA Routing Fallback:
     # Rewrite all virtual paths (not physical files or folders)

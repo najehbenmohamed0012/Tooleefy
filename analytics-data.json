@@ -1,0 +1,53 @@
+{
+  "pageVisits": {
+    "invoice": 0,
+    "converter": 0,
+    "qr": 0,
+    "barcode": 0,
+    "blog": 0,
+    "home": 6,
+    "about": 0
+  },
+  "totalVisits": 6,
+  "registeredVisits": 6,
+  "guestVisits": 0,
+  "rawServerVisits": 76,
+  "botVisits": 1,
+  "actionsCount": {
+    "converter": 0,
+    "invoice": 0,
+    "qr": 0,
+    "barcode": 0
+  },
+  "tickerEvents": [],
+  "geoCountries": {
+    "US": 0,
+    "FR": 0,
+    "DE": 0,
+    "TN": 6,
+    "UK": 0,
+    "CA": 0,
+    "JP": 0,
+    "Other": 0
+  },
+  "devices": {
+    "desktop": 0,
+    "mobile": 6,
+    "tablet": 0
+  },
+  "browsers": {
+    "chrome": 6,
+    "safari": 0,
+    "firefox": 0,
+    "other": 0
+  },
+  "demographics": {
+    "age_18_24": 1,
+    "age_25_34": 2,
+    "age_35_44": 3,
+    "age_45_plus": 0,
+    "male": 2,
+    "female": 4,
+    "non_binary": 0
+  }
+}

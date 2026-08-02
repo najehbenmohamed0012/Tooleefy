@@ -25,9 +25,13 @@ async function startServer() {
   // Debug request logging to help diagnose routing issues in production
   app.use((req, res, next) => {
     try {
-      const logFile = path.join(process.cwd(), "passenger-debug.log");
       const logLine = `[${new Date().toISOString()}] ${req.method} URL:${req.url} PATH:${req.path} QUERY:${JSON.stringify(req.query)} IP:${req.ip} HOST:${req.headers.host}\n`;
-      fs.appendFileSync(logFile, logLine, "utf-8");
+      if (!process.env.VERCEL) {
+        const logFile = path.join(process.cwd(), "passenger-debug.log");
+        fs.appendFileSync(logFile, logLine, "utf-8");
+      } else {
+        console.log(logLine.trim());
+      }
     } catch (err) {
       console.error("Debug logger error:", err);
     }
@@ -172,7 +176,13 @@ async function startServer() {
 
   function saveGlobalAnalytics() {
     try {
-      fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(globalAnalytics, null, 2), "utf-8");
+      if (!process.env.VERCEL) {
+        fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(globalAnalytics, null, 2), "utf-8");
+      } else {
+        // Under Vercel (Serverless), state is held in-memory during single-container lifecycles.
+        // We output log metrics so they are captured by Vercel's logging engine.
+        console.log(`[Vercel Serverless Analytics Update] Total visits recorded in-memory: ${globalAnalytics.totalVisits}`);
+      }
     } catch (err) {
       console.error("Failed to save global analytics to file:", err);
     }
