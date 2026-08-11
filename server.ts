@@ -1485,7 +1485,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
             
             res.setHeader("Content-Type", contentType);
             res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-            return res.sendFile(physicalPath);
+            const assetBuffer = fs.readFileSync(physicalPath);
+            return res.send(assetBuffer);
           } else {
             // Static asset does not exist on disk, return 404 to avoid feeding HTML slop to the crawler/debugger
             return res.status(404).send(`Asset ${cleanPath} not found`);

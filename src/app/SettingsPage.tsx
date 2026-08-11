@@ -132,6 +132,72 @@ function drawLogoPreview(
   ctx.fillText(textVal, textX, textY);
 }
 
+// Helper to draw standalone brand icon only directly on HTML5 Canvas
+function drawIconOnly(
+  canvas: HTMLCanvasElement, 
+  size: number, 
+  iconBg: string, 
+  iconSym: string
+) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Background Box (Rounded Rectangle with high compatibility)
+  ctx.fillStyle = iconBg;
+  const r = size * 0.25; // 25% corner radius for standard modern app squircle
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(0, 0, w, h, r);
+  } else {
+    ctx.moveTo(r, 0);
+    ctx.lineTo(w - r, 0);
+    ctx.quadraticCurveTo(w, 0, w, r);
+    ctx.lineTo(w, h - r);
+    ctx.quadraticCurveTo(w, h, w - r, h);
+    ctx.lineTo(r, h);
+    ctx.quadraticCurveTo(0, h, 0, h - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+  }
+  ctx.fill();
+
+  // Decorative inner line (subtle border inlay)
+  ctx.strokeStyle = iconSym;
+  ctx.lineWidth = size * 0.018;
+  ctx.globalAlpha = 0.25;
+  const pad = size * 0.1;
+  const padR = r - pad * 0.2;
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(pad, pad, w - pad * 2, h - pad * 2, padR);
+  } else {
+    ctx.rect(pad, pad, w - pad * 2, h - pad * 2);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1.0;
+
+  // Draw T Glyph from Logo.tsx path
+  ctx.save();
+  ctx.scale(size / 100, size / 100);
+  ctx.fillStyle = iconSym;
+  
+  // High accuracy vector rendering
+  const tPath = new Path2D("M22 20 H78 L74 35 H56 L46 80 H30 L40 35 H22 Z");
+  ctx.fill(tPath);
+
+  // High accuracy dot rendering
+  ctx.beginPath();
+  ctx.arc(78, 74, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "preferences" | "analytics" | "blog" }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -233,6 +299,10 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
   const [logoCustomText, setLogoCustomText] = useState<string>("Tooleefy");
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
+  // App Icon Exporter states
+  const [iconExportMode, setIconExportMode] = useState<'light' | 'dark'>('light');
+  const [iconExportSize, setIconExportSize] = useState<number>(512);
+
   // Logo Redraw Engine hook
   useEffect(() => {
     if (activeTab !== "preferences") return;
@@ -310,6 +380,39 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
       toast.success("Prinstine Tooleefy logo asset converted and downloaded successfully!");
     } catch (e: any) {
       toast.error("Canvas export failed: " + e.message);
+    }
+  };
+
+  // High-Resolution Standalone App Icon Exporter download trigger
+  const handleDownloadIcon = () => {
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = iconExportSize;
+    tempCanvas.height = iconExportSize;
+
+    let iconBg = "#006241"; // Light mode app icon: Solid Emerald Background
+    let iconSym = "#FFFFFF"; // White Glyph
+
+    if (iconExportMode === "dark") {
+      iconBg = "#FFFFFF"; // Dark mode app icon: Solid White Background
+      iconSym = "#006241"; // Emerald Glyph
+    }
+
+    drawIconOnly(tempCanvas, iconExportSize, iconBg, iconSym);
+
+    try {
+      const dataUrl = tempCanvas.toDataURL("image/png");
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataUrl);
+      downloadAnchor.setAttribute(
+        "download", 
+        `tooleefy_icon_${iconExportMode}_${iconExportSize}x${iconExportSize}.png`
+      );
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success(`Pristine Tooleefy high-res App Icon (${iconExportSize}x${iconExportSize} px) downloaded successfully!`);
+    } catch (e: any) {
+      toast.error("Icon export failed: " + e.message);
     }
   };
 
@@ -1169,6 +1272,85 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
                         >
                           <Download className="w-4 h-4" /> Export Brand PNG Logo
                         </Button>
+
+                        <div className="border-t border-slate-100 dark:border-white/5 pt-6 mt-2 space-y-4">
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-black uppercase tracking-wider text-foreground flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-primary animate-pulse" /> Standalone App Icon Exporter
+                            </h4>
+                            <p className="text-[10px] text-muted-foreground">
+                              Generate standalone high-res brand icons for device home screens, favicons, or app store recommendations.
+                            </p>
+                          </div>
+
+                          {/* Style selection */}
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Icon Theme Context</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setIconExportMode("light")}
+                                className={`py-2.5 px-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
+                                  iconExportMode === "light"
+                                    ? "border-primary bg-primary/5 ring-1 ring-primary/25 font-bold text-primary"
+                                    : "border-border hover:bg-muted/50 text-muted-foreground"
+                                }`}
+                              >
+                                <span className="block text-foreground font-black text-xs">Light Mode Icon</span>
+                                <span className="text-[9px] text-muted-foreground mt-0.5 block">Solid Green, White Glyph</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setIconExportMode("dark")}
+                                className={`py-2.5 px-3 rounded-xl border text-left transition-all text-xs cursor-pointer ${
+                                  iconExportMode === "dark"
+                                    ? "border-primary bg-primary/5 ring-1 ring-primary/25 font-bold text-primary"
+                                    : "border-border hover:bg-muted/50 text-muted-foreground"
+                                }`}
+                              >
+                                <span className="block text-foreground font-black text-xs">Dark Mode Icon</span>
+                                <span className="text-[9px] text-muted-foreground mt-0.5 block">Solid White, Green Glyph</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Dimensions Selector */}
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Standard Web Dimensions</Label>
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {[
+                                { val: 512, label: "512px", desc: "PWA/Android" },
+                                { val: 192, label: "192px", desc: "Homescreen" },
+                                { val: 180, label: "180px", desc: "Apple Touch" },
+                                { val: 32, label: "32px", desc: "Favicon" }
+                              ].map((opt) => (
+                                <button
+                                  key={opt.val}
+                                  type="button"
+                                  onClick={() => setIconExportSize(opt.val)}
+                                  className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                                    iconExportSize === opt.val
+                                      ? "border-primary bg-primary/5 ring-1 ring-primary/25 font-black text-primary"
+                                      : "border-border hover:bg-muted/50 text-muted-foreground"
+                                  }`}
+                                >
+                                  <span className="block text-[11px] font-black">{opt.label}</span>
+                                  <span className="text-[7.5px] opacity-75 block whitespace-nowrap mt-0.5">{opt.desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Download Standalone Button */}
+                          <Button
+                            type="button"
+                            onClick={handleDownloadIcon}
+                            className="w-full h-11 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold uppercase tracking-wider text-[11px] rounded-xl border border-slate-950/20 active:translate-y-[1px] transition-all gap-1.5 cursor-pointer shadow-sm"
+                          >
+                            <Download className="w-3.5 h-3.5" /> Download standalone app icon
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
