@@ -340,14 +340,42 @@ Understanding how to isolate QR code generation inside client environments ensur
 ];
 
 export function Blog() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [copied, setCopied] = useState<boolean>(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const articleIdParam = id || searchParams.get("article");
+
+  // Synchronous, instant load from cache or default fallback
+  const [posts, setPosts] = useState<BlogPost[]>(() => {
+    const raw = safeStorage.getItem("blog_posts");
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {}
+    }
+    return defaultArticles;
+  });
+
+  // Synchronously resolve the selected post on mount to avoid page flash
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(() => {
+    const initialPosts = (() => {
+      const raw = safeStorage.getItem("blog_posts");
+      if (raw) {
+        try {
+          return JSON.parse(raw);
+        } catch (e) {}
+      }
+      return defaultArticles;
+    })();
+
+    if (articleIdParam && initialPosts.length > 0) {
+      return initialPosts.find(p => String(p.id) === String(articleIdParam)) || null;
+    }
+    return null;
+  });
+
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [copied, setCopied] = useState<boolean>(false);
 
   const categories = [
     "All",
@@ -360,47 +388,30 @@ export function Blog() {
     "Insurance"
   ];
 
-  // Load from Supabase (or local storage fallback) and sync
+  // Load from Supabase (or local storage fallback) once on mount to keep cache in sync
   useEffect(() => {
     const loadPosts = async () => {
-      const dbPosts = await fetchBlogPosts();
-      let loadedPosts: BlogPost[] = [];
-
-      if (dbPosts && dbPosts.length > 0) {
-        loadedPosts = dbPosts;
-        setPosts(dbPosts);
-        safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
-      } else {
-        const raw = localStorage.getItem("blog_posts");
-        if (!raw) {
-          safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
-          loadedPosts = defaultArticles;
-          setPosts(defaultArticles);
-        } else {
-          try {
-            loadedPosts = JSON.parse(raw);
-            setPosts(loadedPosts);
-          } catch {
-            loadedPosts = defaultArticles;
-            setPosts(defaultArticles);
+      try {
+        const dbPosts = await fetchBlogPosts();
+        if (dbPosts && dbPosts.length > 0) {
+          setPosts(dbPosts);
+          safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+          
+          // Refresh selected post if data has updated on server
+          if (articleIdParam) {
+            const match = dbPosts.find(p => String(p.id) === String(articleIdParam));
+            if (match) {
+              setSelectedPost(match);
+            }
           }
         }
-      }
-
-      // Direct land / deep link support from shared URL params
-      if (articleIdParam && loadedPosts.length > 0) {
-        const match = loadedPosts.find(p => String(p.id) === String(articleIdParam));
-        if (match) {
-          setSelectedPost(match);
-          if (!id) {
-            navigate(`/blog/${match.id}`, { replace: true });
-          }
-        }
+      } catch (err) {
+        console.warn("Error fetching latest blog posts from database:", err);
       }
     };
 
     loadPosts();
-  }, [articleIdParam, id, navigate]);
+  }, []);
 
   // Update URL if deep linked article changes
   useEffect(() => {
