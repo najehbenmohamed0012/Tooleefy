@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { trackToolAction } from "@/utils/analytics";
 import type { BlogPost } from "@/app/Articles";
+import { safeStorage } from "@/utils/safeStorage";
 
 export interface Activity {
   id?: string;
@@ -37,7 +38,7 @@ export async function logActivity(activity: Activity) {
         metadata: activity.metadata,
         created_at: new Date().toISOString()
       };
-      localStorage.setItem("local_activities", JSON.stringify([localAct, ...localActivities].slice(0, 50)));
+      safeStorage.setItem("local_activities", JSON.stringify([localAct, ...localActivities].slice(0, 50)));
       window.dispatchEvent(new CustomEvent("activity-logged", { detail: localAct }));
       return;
     }
@@ -65,7 +66,7 @@ export async function logActivity(activity: Activity) {
         metadata: activity.metadata,
         created_at: new Date().toISOString()
       };
-      localStorage.setItem("local_activities", JSON.stringify([localAct, ...localActivities].slice(0, 50)));
+      safeStorage.setItem("local_activities", JSON.stringify([localAct, ...localActivities].slice(0, 50)));
       window.dispatchEvent(new CustomEvent("activity-logged", { detail: localAct }));
       return;
     }
@@ -93,7 +94,7 @@ export async function logActivity(activity: Activity) {
         console.warn("Table sync failed. Storing locally. Errors: ", error.message, error2.message);
         const localActivities = JSON.parse(localStorage.getItem("local_activities") || "[]");
         const fallbackAct = { ...activity, created_at: new Date().toISOString() };
-        localStorage.setItem(
+        safeStorage.setItem(
           "local_activities", 
           JSON.stringify([fallbackAct, ...localActivities].slice(0, 50))
         );

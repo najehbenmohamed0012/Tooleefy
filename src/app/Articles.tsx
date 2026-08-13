@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
+import { safeStorage } from "@/utils/safeStorage";
 
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -368,11 +369,11 @@ export function Blog() {
       if (dbPosts && dbPosts.length > 0) {
         loadedPosts = dbPosts;
         setPosts(dbPosts);
-        localStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+        safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
       } else {
         const raw = localStorage.getItem("blog_posts");
         if (!raw) {
-          localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+          safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
           loadedPosts = defaultArticles;
           setPosts(defaultArticles);
         } else {
@@ -388,7 +389,7 @@ export function Blog() {
 
       // Direct land / deep link support from shared URL params
       if (articleIdParam && loadedPosts.length > 0) {
-        const match = loadedPosts.find(p => p.id === articleIdParam);
+        const match = loadedPosts.find(p => String(p.id) === String(articleIdParam));
         if (match) {
           setSelectedPost(match);
           if (!id) {
@@ -404,9 +405,9 @@ export function Blog() {
   // Update URL if deep linked article changes
   useEffect(() => {
     if (posts.length > 0 && articleIdParam) {
-      const match = posts.find(p => p.id === articleIdParam);
+      const match = posts.find(p => String(p.id) === String(articleIdParam));
       if (match) {
-        if (!selectedPost || selectedPost.id !== match.id) {
+        if (!selectedPost || String(selectedPost.id) !== String(match.id)) {
           setSelectedPost(match);
         }
         if (!id) {
@@ -479,13 +480,13 @@ export function Blog() {
     
     // Increment view locally and update state
     const updated = posts.map(p => {
-      if (p.id === post.id) {
+      if (String(p.id) === String(post.id)) {
         return updatedPost;
       }
       return p;
     });
     setPosts(updated);
-    localStorage.setItem("blog_posts", JSON.stringify(updated));
+    safeStorage.setItem("blog_posts", JSON.stringify(updated));
     setSelectedPost(updatedPost);
     navigate(`/blog/${post.id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -498,7 +499,7 @@ export function Blog() {
       const stats = JSON.parse(localStorage.getItem("admin_stats_cache") || "{}");
       const pageVisits = stats.pageVisits || {};
       pageVisits[`blog_post_${post.id}`] = (pageVisits[`blog_post_${post.id}`] || 0) + 1;
-      localStorage.setItem("admin_stats_cache", JSON.stringify({ ...stats, pageVisits }));
+      safeStorage.setItem("admin_stats_cache", JSON.stringify({ ...stats, pageVisits }));
     } catch {
       // ignore
     }
@@ -509,7 +510,7 @@ export function Blog() {
     
     let updatedPostObj: BlogPost | null = null;
     const updatedPosts = posts.map(p => {
-      if (p.id === selectedPost.id) {
+      if (String(p.id) === String(selectedPost.id)) {
         const reactions = p.reactions || { heart: 0, fire: 0, thumbsUp: 0 };
         updatedPostObj = {
           ...p,
@@ -524,7 +525,7 @@ export function Blog() {
     });
 
     setPosts(updatedPosts);
-    localStorage.setItem("blog_posts", JSON.stringify(updatedPosts));
+    safeStorage.setItem("blog_posts", JSON.stringify(updatedPosts));
     
     if (updatedPostObj) {
       setSelectedPost(updatedPostObj);
@@ -554,7 +555,7 @@ export function Blog() {
 
   const relatedArticles = selectedPost 
     ? posts
-        .filter((p) => p.published && p.id !== selectedPost.id)
+        .filter((p) => p.published && String(p.id) !== String(selectedPost.id))
         .sort((a, b) => {
           // Prioritize different categories for maximum diversity and engagement
           const aDiff = a.category !== selectedPost.category ? 1 : 0;

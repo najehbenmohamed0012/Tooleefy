@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
 import { fetchBlogPosts, upsertBlogPost, deleteBlogPost } from "@/supabase/db";
 import { getApiUrl } from "@/lib/utils";
+import { safeStorage } from "@/utils/safeStorage";
 
 // Standard cover presets for quick, premium choosing
 const COVER_PRESETS_BY_CATEGORY: Record<string, { name: string; url: string }[]> = {
@@ -254,7 +255,7 @@ export function AdminBlogManager() {
       const dbPosts = await fetchBlogPosts();
       if (dbPosts && dbPosts.length > 0) {
         setPosts(dbPosts);
-        localStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+        safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
       } else {
         const raw = localStorage.getItem("blog_posts");
         if (raw) {
@@ -264,7 +265,7 @@ export function AdminBlogManager() {
             setPosts(defaultArticles);
           }
         } else {
-          localStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+          safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
           setPosts(defaultArticles);
         }
       }
@@ -283,7 +284,7 @@ export function AdminBlogManager() {
   // Sync to database / localstorage helper
   const syncPosts = (newPosts: BlogPost[]) => {
     setPosts(newPosts);
-    localStorage.setItem("blog_posts", JSON.stringify(newPosts));
+    safeStorage.setItem("blog_posts", JSON.stringify(newPosts));
     window.dispatchEvent(new Event("storage"));
   };
 
@@ -352,7 +353,7 @@ export function AdminBlogManager() {
   // Toggle publish state directly from list
   const handleTogglePublish = (postId: string) => {
     const updated = posts.map(p => {
-      if (p.id === postId) {
+      if (String(p.id) === String(postId)) {
         const nextState = !p.published;
         const updatedPost = { ...p, published: nextState };
         // Upsert to Supabase
@@ -367,11 +368,11 @@ export function AdminBlogManager() {
 
   // Delete article with verification
   const handleDeletePost = (postId: string) => {
-    const target = posts.find(p => p.id === postId);
+    const target = posts.find(p => String(p.id) === String(postId));
     if (!target) return;
 
     if (window.confirm(`Are you sure you want to permanently delete "${target.title}"? This action cannot be undone.`)) {
-      const filtered = posts.filter(p => p.id !== postId);
+      const filtered = posts.filter(p => String(p.id) !== String(postId));
       // Delete from Supabase
       deleteBlogPost(postId);
       syncPosts(filtered);
@@ -480,8 +481,8 @@ export function AdminBlogManager() {
       date: date || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
       author: author.trim() || "Tooleefy Team",
       category: category,
-      views: selectedPostId ? (posts.find(p => p.id === selectedPostId)?.views || 0) : 0,
-      reactions: selectedPostId ? (posts.find(p => p.id === selectedPostId)?.reactions || { heart: 0, fire: 0, thumbsUp: 0 }) : { heart: 0, fire: 0, thumbsUp: 0 },
+      views: selectedPostId ? (posts.find(p => String(p.id) === String(selectedPostId))?.views || 0) : 0,
+      reactions: selectedPostId ? (posts.find(p => String(p.id) === String(selectedPostId))?.reactions || { heart: 0, fire: 0, thumbsUp: 0 }) : { heart: 0, fire: 0, thumbsUp: 0 },
       published: published,
       coverImage: coverImage.trim() || COVER_PRESETS[0].url,
       coverImageAlt: coverImageAlt.trim() || title.trim(),
@@ -497,7 +498,7 @@ export function AdminBlogManager() {
       updatedList = [compiledPost, ...posts];
       toast.success(`Successfully published new article: "${compiledPost.title}"!`);
     } else {
-      updatedList = posts.map(p => p.id === selectedPostId ? compiledPost : p);
+      updatedList = posts.map(p => String(p.id) === String(selectedPostId) ? compiledPost : p);
       toast.success(`Updated article alterations for "${compiledPost.title}" successfully.`);
     }
 

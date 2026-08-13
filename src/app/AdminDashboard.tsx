@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/supabase/client";
 import { fetchActivities } from "@/supabase/db";
+import { safeStorage } from "@/utils/safeStorage";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Users, 
@@ -66,7 +67,7 @@ export function AdminDashboard() {
   const handleToggleHideBanners = () => {
     const newVal = !hideBanners;
     setHideBanners(newVal);
-    localStorage.setItem("tooleefy_hide_banners", String(newVal));
+    safeStorage.setItem("tooleefy_hide_banners", String(newVal));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("tooleefy_preferences_changed"));
     if (newVal) {
@@ -79,7 +80,7 @@ export function AdminDashboard() {
   const handleToggleHideValuePage = () => {
     const newVal = !hideValuePage;
     setHideValuePage(newVal);
-    localStorage.setItem("tooleefy_hide_value_page", String(newVal));
+    safeStorage.setItem("tooleefy_hide_value_page", String(newVal));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("tooleefy_preferences_changed"));
     if (newVal) {
@@ -213,7 +214,7 @@ export function AdminDashboard() {
       }
     }
 
-    localStorage.setItem("registered_users_cache", JSON.stringify(cachedUsersList));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(cachedUsersList));
     setUsers(cachedUsersList);
 
     // B. Fetch Real-Time Activity Metrics
@@ -245,7 +246,7 @@ export function AdminDashboard() {
   const handleToggleMaintenance = () => {
     const newVal = !maintenanceActive;
     setMaintenanceActive(newVal);
-    localStorage.setItem("tooleefy_maintenance", String(newVal));
+    safeStorage.setItem("tooleefy_maintenance", String(newVal));
     if (newVal) {
       toast.warning("High-Alert: Production node is locked. Public endpoints are now serving Maintenance warnings.");
     } else {
@@ -307,7 +308,7 @@ export function AdminDashboard() {
 
     const updated = [newUser, ...users];
     setUsers(updated);
-    localStorage.setItem("registered_users_cache", JSON.stringify(updated));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(updated));
     setShowAddModal(false);
     setNewUserForm({ name: "", email: "", role: "Regular", status: "Active" });
     toast.success(`User object for '${newUser.name}' registration initiated.`);
@@ -320,7 +321,7 @@ export function AdminDashboard() {
 
     const updated = users.map(u => u.id === editingUser.id ? editingUser : u);
     setUsers(updated);
-    localStorage.setItem("registered_users_cache", JSON.stringify(updated));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(updated));
     setEditingUser(null);
     toast.success("User credentials and level attributes saved successfully.");
   };
@@ -333,7 +334,7 @@ export function AdminDashboard() {
     };
     const updated = users.map(u => u.id === user.id ? updatedUser : u);
     setUsers(updated);
-    localStorage.setItem("registered_users_cache", JSON.stringify(updated));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(updated));
     setActiveMenuUserId(null);
     toast.info(`Status updated for ${user.name} to ${updatedUser.status}.`);
   };
@@ -349,7 +350,7 @@ export function AdminDashboard() {
     };
     const updated = users.map(u => u.id === user.id ? updatedUser : u);
     setUsers(updated);
-    localStorage.setItem("registered_users_cache", JSON.stringify(updated));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(updated));
     setActiveMenuUserId(null);
     toast.success(`Role upgraded for ${user.name} to ${nextRole}.`);
   };
@@ -357,7 +358,7 @@ export function AdminDashboard() {
   const handleDeleteUser = (userId: string, userName: string) => {
     const remaining = users.filter(u => u.id !== userId);
     setUsers(remaining);
-    localStorage.setItem("registered_users_cache", JSON.stringify(remaining));
+    safeStorage.setItem("registered_users_cache", JSON.stringify(remaining));
     setActiveMenuUserId(null);
     toast.error(`Entity purged: Cleared standard and auth tokens for ${userName}.`);
   };
