@@ -7,15 +7,19 @@
   },
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "api/index.js"
     },
     {
-      "src": "/blog/(.*)",
+      "src": "^/(tools/invoice|tools/qr|tools/barcode|tools/converter|categories|blog.*|about|faq|contact|value-our-tools|privacy|terms|cookies|dashboard|admin|settings|login|register)/?$",
       "dest": "api/index.js"
+    },
+    {
+      "src": "^/$",
+      "dest": "api/index.js"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",

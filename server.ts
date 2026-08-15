@@ -1507,9 +1507,21 @@ Primary SEO Keywords to include: "${keywordsList}"`;
           }
         }
 
+        const isDynamicPage = cleanPath === "/" || 
+                             cleanPath === "/index.html" || 
+                             cleanPath.startsWith("/tools/") || 
+                             cleanPath === "/categories" || 
+                             cleanPath === "/about" || 
+                             cleanPath === "/faq" || 
+                             cleanPath === "/contact" || 
+                             cleanPath === "/value-our-tools" || 
+                             cleanPath === "/privacy" || 
+                             cleanPath === "/terms" || 
+                             cleanPath === "/cookies";
+
         // Check if there is a pre-rendered static index.html file for this specific route
         // (e.g., /blog/some-article -> dist/blog/some-article/index.html)
-        if (cleanPath !== "/" && cleanPath !== "/index.html" && !cleanPath.startsWith("/api/")) {
+        if (!isDynamicPage && cleanPath !== "/" && cleanPath !== "/index.html" && !cleanPath.startsWith("/api/")) {
           const staticFileCandidates = [
             path.join(distPath, cleanPath, "index.html"),
             path.join(distPath, cleanPath + ".html")
