@@ -489,6 +489,18 @@ async function startServer() {
   app.get("/llms.txt", serveCrawlFile("llms.txt", "text/plain; charset=utf-8"));
   app.get("/robots.txt", serveCrawlFile("robots.txt", "text/plain; charset=utf-8"));
 
+  // Google AdSense ads.txt crawler support
+  app.get("/ads.txt", (req, res) => {
+    const rawClient = process.env.VITE_ADSENSE_CLIENT || "";
+    const pubId = rawClient.replace(/^ca-/, "");
+    if (pubId && pubId.startsWith("pub-")) {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      return res.send(`google.com, ${pubId}, DIRECT, f08c47fec0942fa0\n`);
+    }
+    // Fallback to reading the physical static file from disk
+    serveCrawlFile("ads.txt", "text/plain; charset=utf-8")(req, res);
+  });
+
   // Ideal Dynamic Sitemap Generator allowing Google Search Console to index every page including dynamic blog posts
   app.get("/sitemap.xml", async (req, res) => {
     try {
