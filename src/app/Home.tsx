@@ -57,10 +57,44 @@ const tools = [
   }
 ];
 
+const HomeBlogSkeleton = () => (
+  <>
+    {[1, 2, 3].map((idx) => (
+      <div key={idx} className="w-[300px] sm:w-[380px] shrink-0 snap-start snap-always bg-card border border-border/40 shadow-premium rounded-[2rem] overflow-hidden p-4 animate-pulse space-y-4">
+        <div className="relative h-48 sm:h-56 rounded-[1.5rem] bg-slate-200 dark:bg-slate-800" />
+        <div className="p-4 space-y-3">
+          <div className="w-24 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="w-full h-6 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="w-3/4 h-6 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="space-y-1.5 pt-2">
+            <div className="w-full h-4 bg-slate-100 dark:bg-slate-900 rounded" />
+            <div className="w-2/3 h-4 bg-slate-100 dark:bg-slate-900 rounded" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </>
+);
+
 export function Home() {
   const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business\nExchange"];
   const [index, setIndex] = useState(0);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
+    const stored = safeStorage.getItem("blog_posts");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const published = parsed.filter((p: any) => p.published);
+        if (published.length > 0) {
+          return [...published].sort((a, b) => b.views - a.views);
+        }
+      } catch {}
+    }
+    return []; // Start empty, avoiding stale test articles flash
+  });
+  const [loading, setLoading] = useState(() => {
+    return !safeStorage.getItem("blog_posts");
+  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,6 +106,7 @@ export function Home() {
           if (published.length > 0) {
             const sorted = [...published].sort((a, b) => b.views - a.views);
             setBlogPosts(sorted);
+            safeStorage.setItem("blog_posts", JSON.stringify(posts));
             return;
           }
         }
@@ -91,14 +126,10 @@ export function Home() {
             // ignore
           }
         }
-        
-        // Fallback to default articles
-        const sorted = [...defaultArticles].filter(p => p.published).sort((a, b) => b.views - a.views);
-        setBlogPosts(sorted);
       } catch (err) {
         console.error("Failed to load blog posts in Home", err);
-        const sorted = [...defaultArticles].filter(p => p.published).sort((a, b) => b.views - a.views);
-        setBlogPosts(sorted);
+      } finally {
+        setLoading(false);
       }
     };
     loadBlogPosts();
@@ -384,94 +415,102 @@ export function Home() {
             className="flex gap-8 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {blogPosts.map((post) => {
-              const getCategoryStyle = (category: string) => {
-                const lower = (category || "").toLowerCase();
-                if (lower.includes("invoice")) return "bg-emerald-500 text-white";
-                if (lower.includes("qr")) return "bg-blue-500 text-white";
-                if (lower.includes("barcode")) return "bg-purple-500 text-white";
-                if (lower.includes("converter")) return "bg-orange-500 text-white";
-                return "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900";
-              };
+            {loading ? (
+              <HomeBlogSkeleton />
+            ) : blogPosts.length === 0 ? (
+              <div className="w-full text-center py-12 text-muted-foreground font-semibold">
+                No active insights available right now. Stay tuned!
+              </div>
+            ) : (
+              blogPosts.map((post) => {
+                const getCategoryStyle = (category: string) => {
+                  const lower = (category || "").toLowerCase();
+                  if (lower.includes("invoice")) return "bg-emerald-500 text-white";
+                  if (lower.includes("qr")) return "bg-blue-500 text-white";
+                  if (lower.includes("barcode")) return "bg-purple-500 text-white";
+                  if (lower.includes("converter")) return "bg-orange-500 text-white";
+                  return "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900";
+                };
 
-              return (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="w-[300px] sm:w-[380px] shrink-0 snap-start snap-always group"
-                >
-                  <Card className="h-full bg-card hover:bg-card/90 border border-border/40 hover:border-primary/30 shadow-premium hover:shadow-2xl transition-all duration-500 rounded-[2rem] overflow-hidden flex flex-col p-4">
-                    {/* Cover Image */}
-                    <div className="relative h-48 sm:h-56 rounded-[1.5rem] overflow-hidden bg-muted mb-6">
-                      <img
-                        src={post.coverImage || "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?auto=format&fit=crop&w=800&q=80"}
-                        alt={post.coverImageAlt || post.title}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                        id={`home-blog-img-${post.id}`}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
-                      
-                      {/* Badge overlay */}
-                      <span className={`absolute top-4 left-4 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg ${getCategoryStyle(post.category)}`}>
-                        {post.category}
-                      </span>
-                    </div>
-
-                    {/* Metadata line */}
-                    <div className="flex items-center gap-4 text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
-                      <span>{post.date}</span>
-                      <span>&bull;</span>
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        5 min read
-                      </span>
-                    </div>
-
-                    {/* Title & Excerpt */}
-                    <div className="space-y-3 flex-grow">
-                      <h3 className="text-xl font-extrabold text-foreground tracking-tight line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
-                        {post.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-3">
-                        {post.excerpt}
-                      </p>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="h-px bg-border/40 my-5" />
-
-                    {/* Footer Row (Reactions / CTA) */}
-                    <div className="flex items-center justify-between">
-                      {/* Social Metrics */}
-                      <div className="flex items-center gap-3 text-muted-foreground text-[11px] font-black uppercase tracking-wider">
-                        <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg">
-                          <Eye className="w-3.5 h-3.5 text-primary/70" />
-                          {post.views}
+                return (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="w-[300px] sm:w-[380px] shrink-0 snap-start snap-always group"
+                  >
+                    <Card className="h-full bg-card hover:bg-card/90 border border-border/40 hover:border-primary/30 shadow-premium hover:shadow-2xl transition-all duration-500 rounded-[2rem] overflow-hidden flex flex-col p-4">
+                      {/* Cover Image */}
+                      <div className="relative h-48 sm:h-56 rounded-[1.5rem] overflow-hidden bg-muted mb-6">
+                        <img
+                          src={post.coverImage || "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?auto=format&fit=crop&w=800&q=80"}
+                          alt={post.coverImageAlt || post.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                          id={`home-blog-img-${post.id}`}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
+                        
+                        {/* Badge overlay */}
+                        <span className={`absolute top-4 left-4 px-3.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg ${getCategoryStyle(post.category)}`}>
+                          {post.category}
                         </span>
-                        {(post.reactions?.heart > 0 || post.reactions?.fire > 0) && (
-                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg text-red-500 dark:text-red-400">
-                            <Flame className="w-3.5 h-3.5 fill-current" />
-                            {(post.reactions?.heart || 0) + (post.reactions?.fire || 0)}
-                          </span>
-                        )}
                       </div>
 
-                      {/* Action trigger */}
-                      <Link
-                        to={`/blog/${post.id}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-black text-primary uppercase tracking-widest group-hover:gap-2.5 transition-all duration-300"
-                      >
-                        Read Article
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                      {/* Metadata line */}
+                      <div className="flex items-center gap-4 text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-3">
+                        <span>{post.date}</span>
+                        <span>&bull;</span>
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          5 min read
+                        </span>
+                      </div>
+
+                      {/* Title & Excerpt */}
+                      <div className="space-y-3 flex-grow">
+                        <h3 className="text-xl font-extrabold text-foreground tracking-tight line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-3">
+                          {post.excerpt}
+                        </p>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px bg-border/40 my-5" />
+
+                      {/* Footer Row (Reactions / CTA) */}
+                      <div className="flex items-center justify-between">
+                        {/* Social Metrics */}
+                        <div className="flex items-center gap-3 text-muted-foreground text-[11px] font-black uppercase tracking-wider">
+                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg">
+                            <Eye className="w-3.5 h-3.5 text-primary/70" />
+                            {post.views}
+                          </span>
+                          {(post.reactions?.heart > 0 || post.reactions?.fire > 0) && (
+                            <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-1 rounded-lg text-red-500 dark:text-red-400">
+                              <Flame className="w-3.5 h-3.5 fill-current" />
+                              {(post.reactions?.heart || 0) + (post.reactions?.fire || 0)}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Action trigger */}
+                        <Link
+                          to={`/blog/${post.id}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-black text-primary uppercase tracking-widest group-hover:gap-2.5 transition-all duration-300"
+                        >
+                          Read Article
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </Card>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>

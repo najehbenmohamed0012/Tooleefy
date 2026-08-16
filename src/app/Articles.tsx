@@ -339,13 +339,49 @@ Understanding how to isolate QR code generation inside client environments ensur
   }
 ];
 
+const BlogSkeletonGrid = () => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+    {[1, 2, 3, 4, 5, 6].map((idx) => (
+      <div key={idx} className="bg-card rounded-[2.5rem] overflow-hidden border border-border/20 shadow-sm animate-pulse">
+        <div className="aspect-[16/10] bg-muted relative overflow-hidden flex items-center justify-center">
+          <div className="absolute top-6 left-6 w-24 h-6 bg-slate-200 dark:bg-slate-800 rounded-full" />
+        </div>
+        <div className="p-8 space-y-4">
+          <div className="flex gap-4">
+            <div className="w-20 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+          </div>
+          <div className="space-y-2">
+            <div className="w-full h-6 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="w-4/5 h-6 bg-slate-200 dark:bg-slate-800 rounded" />
+          </div>
+          <div className="space-y-2 pt-2">
+            <div className="w-full h-4 bg-slate-100 dark:bg-slate-900 rounded" />
+            <div className="w-full h-4 bg-slate-100 dark:bg-slate-900 rounded" />
+            <div className="w-2/3 h-4 bg-slate-100 dark:bg-slate-900 rounded" />
+          </div>
+          <div className="flex justify-between items-center pt-4 border-t border-border/40">
+            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="w-16 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 export function Blog() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const articleIdParam = id || searchParams.get("article");
 
-  // Synchronous, instant load from cache or default fallback
+  // Track asynchronous DB query load state
+  const [loading, setLoading] = useState(() => {
+    return !safeStorage.getItem("blog_posts");
+  });
+
+  // Synchronous, instant load from cache or default fallback (strictly empty if live)
   const [posts, setPosts] = useState<BlogPost[]>(() => {
     const raw = safeStorage.getItem("blog_posts");
     if (raw) {
@@ -353,7 +389,7 @@ export function Blog() {
         return JSON.parse(raw);
       } catch (e) {}
     }
-    return defaultArticles;
+    return []; // No defaultArticles fallback to prevent flashing stale test data
   });
 
   // Synchronously resolve the selected post on mount to avoid page flash
@@ -365,7 +401,7 @@ export function Blog() {
           return JSON.parse(raw);
         } catch (e) {}
       }
-      return defaultArticles;
+      return [];
     })();
 
     if (articleIdParam && initialPosts.length > 0) {
@@ -407,6 +443,8 @@ export function Blog() {
         }
       } catch (err) {
         console.warn("Error fetching latest blog posts from database:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -628,7 +666,9 @@ export function Blog() {
                   </div>
                 </div>
 
-                {filteredPosts.length === 0 ? (
+                {loading ? (
+                  <BlogSkeletonGrid />
+                ) : filteredPosts.length === 0 ? (
                   <div className="text-center py-20 bg-card rounded-[2.5rem] p-12 shadow-premium border border-border/20">
                     <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
                     <p className="text-lg font-black text-foreground uppercase tracking-wider">No Articles Found</p>
