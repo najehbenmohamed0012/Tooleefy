@@ -181,9 +181,10 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   
   const absoluteUrl = `${protocol}://${host}${route}`;
   const relativeOgPath = getOgImagePath(meta.ogImageParam);
-  const ogImgUrl = meta.ogImageParam && meta.ogImageParam.startsWith("http")
+  const ogImgUrlBase = meta.ogImageParam && meta.ogImageParam.startsWith("http")
     ? meta.ogImageParam
     : `${protocol}://${host}/${relativeOgPath}`;
+  const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
   
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -306,9 +307,10 @@ blogPostsToPreRender.forEach((post) => {
   const title = `${post.seoTitle || post.title} | Tooleefy Insights`;
   const desc = post.seoDesc || post.excerpt;
   const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
-  const ogImgUrl = post.coverImage && post.coverImage.startsWith("http")
+  const ogImgUrlBase = post.coverImage && post.coverImage.startsWith("http")
     ? post.coverImage
     : `${protocol}://${host}/og/default.jpg`;
+  const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
     
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";

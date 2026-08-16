@@ -1353,9 +1353,10 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     }
 
     const relativeOgPath = getOgImagePath(routeMeta.ogImageParam);
-    const ogImgUrl = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
+    const ogImgUrlBase = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
       ? routeMeta.ogImageParam
       : `${protocol}://${host}/${relativeOgPath}`;
+    const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
