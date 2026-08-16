@@ -1309,8 +1309,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     const ogImgUrl = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
       ? routeMeta.ogImageParam
       : (routeMeta.ogImageParam 
-          ? `${protocol}://${host}/images/og-${routeMeta.ogImageParam}.jpg`
-          : `${protocol}://${host}/images/og-default.jpg`);
+          ? `${protocol}://${host}/images/og-${routeMeta.ogImageParam}-v1.jpg`
+          : `${protocol}://${host}/images/og-default-v1.jpg`);
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
