@@ -6,17 +6,18 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { safeStorage } from "@/utils/safeStorage";
 
 export function ValueTools() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem("tooleefy_hide_value_page") === "true") {
+    if (safeStorage.getItem("tooleefy_hide_value_page") === "true") {
       navigate("/", { replace: true });
     }
   }, [navigate]);
 
-  if (localStorage.getItem("tooleefy_hide_value_page") === "true") {
+  if (safeStorage.getItem("tooleefy_hide_value_page") === "true") {
     return null;
   }
 

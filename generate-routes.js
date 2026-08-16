@@ -270,11 +270,13 @@ if (supabaseUrl && supabaseAnonKey) {
       .select("id, title, excerpt, seoTitle, seoDesc, seoKeywords, coverImage, category");
     
     if (!error && data && data.length > 0) {
-      console.log(`Fetched ${data.length} blog posts from Supabase for pre-rendering.`);
+      // Filter out system configuration rows
+      const filteredData = data.filter(p => p.id !== "tooleefy_system_settings_v1");
+      console.log(`Fetched ${filteredData.length} blog posts from Supabase for pre-rendering.`);
       // Merge fetched posts with defaults, ensuring no duplicate IDs
-      const fetchedIds = new Set(data.map(p => p.id));
+      const fetchedIds = new Set(filteredData.map(p => p.id));
       const uniqueDefaults = defaults.filter(p => !fetchedIds.has(p.id));
-      blogPostsToPreRender = [...data, ...uniqueDefaults];
+      blogPostsToPreRender = [...filteredData, ...uniqueDefaults];
     } else if (error) {
       console.warn("Supabase fetch returned error, using fallback defaults:", error.message);
     }

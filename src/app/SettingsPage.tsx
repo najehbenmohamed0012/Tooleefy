@@ -34,6 +34,8 @@ import { useTheme } from "@/components/ThemeContext";
 import { supabase } from "@/supabase/client";
 import { AdminStats } from "@/components/AdminStats";
 import { AdminBlogManager } from "@/components/AdminBlogManager";
+import { safeStorage } from "@/utils/safeStorage";
+import { fetchSiteSettings, upsertSiteSetting } from "@/supabase/db";
 
 // Helper to draw brand logo + text directly on HTML5 Canvas
 function drawLogoPreview(
@@ -265,30 +267,34 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
   const [qrColor, setQrColor] = useState(() => localStorage.getItem("pref_qr_color") || "#0F172A");
 
   // Admin Platform Override states
-  const [hideBanners, setHideBanners] = useState(() => localStorage.getItem("tooleefy_hide_banners") === "true");
-  const [hideValuePage, setHideValuePage] = useState(() => localStorage.getItem("tooleefy_hide_value_page") === "true");
+  const [hideBanners, setHideBanners] = useState(() => safeStorage.getItem("tooleefy_hide_banners") === "true");
+  const [hideValuePage, setHideValuePage] = useState(() => safeStorage.getItem("tooleefy_hide_value_page") === "true");
 
-  const handleToggleHideBanners = (val: boolean) => {
+  const handleToggleHideBanners = async (val: boolean) => {
     setHideBanners(val);
-    localStorage.setItem("tooleefy_hide_banners", String(val));
-    window.dispatchEvent(new Event("storage"));
-    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
-    if (val) {
-      toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+    const success = await upsertSiteSetting("tooleefy_hide_banners", String(val));
+    if (success) {
+      if (val) {
+        toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+      } else {
+        toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+      }
     } else {
-      toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+      toast.error("Database Issue: Local preferences updated but cloud synchronization failed.");
     }
   };
 
-  const handleToggleHideValuePage = (val: boolean) => {
+  const handleToggleHideValuePage = async (val: boolean) => {
     setHideValuePage(val);
-    localStorage.setItem("tooleefy_hide_value_page", String(val));
-    window.dispatchEvent(new Event("storage"));
-    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
-    if (val) {
-      toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+    const success = await upsertSiteSetting("tooleefy_hide_value_page", String(val));
+    if (success) {
+      if (val) {
+        toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+      } else {
+        toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+      }
     } else {
-      toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+      toast.error("Database Issue: Local preferences updated but cloud synchronization failed.");
     }
   };
 
@@ -416,7 +422,7 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
     }
   };
 
-  // Load latest user details
+  // Load latest user details and sync site settings
   useEffect(() => {
     const saved = localStorage.getItem("user");
     if (saved) {
@@ -429,6 +435,22 @@ export function SettingsPage({ defaultTab }: { defaultTab?: "account" | "prefere
         console.error("Error reading stored user sessions", e);
       }
     }
+
+    const syncSettings = async () => {
+      try {
+        const cloudSettings = await fetchSiteSettings();
+        if (cloudSettings) {
+          setHideBanners(cloudSettings.tooleefy_hide_banners === "true");
+          setHideValuePage(cloudSettings.tooleefy_hide_value_page === "true");
+          safeStorage.setItem("tooleefy_hide_banners", cloudSettings.tooleefy_hide_banners);
+          safeStorage.setItem("tooleefy_hide_value_page", cloudSettings.tooleefy_hide_value_page);
+          window.dispatchEvent(new Event("storage"));
+        }
+      } catch (err) {
+        console.warn("Could not sync settings in SettingsPage:", err);
+      }
+    };
+    syncSettings();
   }, []);
 
   // Update DiceBear Avatar Seed on demand

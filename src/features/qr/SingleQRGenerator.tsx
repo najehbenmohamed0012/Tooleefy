@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "motion/react";
 import QRCodeStyling from "qr-code-styling";
 import { Logo } from "@/components/Logo";
 import { logActivity } from "@/supabase/db";
+import { safeStorage } from "@/utils/safeStorage";
 
 export function SingleQRGenerator() {
   const navigate = useNavigate();
@@ -851,7 +852,7 @@ export function SingleQRGenerator() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
-                  {localStorage.getItem("tooleefy_hide_value_page") !== "true" && (
+                  {safeStorage.getItem("tooleefy_hide_value_page") !== "true" && (
                     <Button 
                       onClick={() => navigate("/value-our-tools")}
                       className="h-14 rounded-2xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground border-b-[6px] border-primary/40 hover:border-b-[4px] active:border-b-0 active:translate-y-[4px] transition-all flex items-center justify-center gap-2 group shadow-lg"

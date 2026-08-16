@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/supabase/client";
-import { fetchActivities } from "@/supabase/db";
+import { fetchActivities, fetchSiteSettings, upsertSiteSetting } from "@/supabase/db";
 import { safeStorage } from "@/utils/safeStorage";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -54,39 +54,43 @@ export function AdminDashboard() {
 
   // States for system controls & dynamics
   const [maintenanceActive, setMaintenanceActive] = useState<boolean>(() => {
-    return localStorage.getItem("tooleefy_maintenance") === "true";
+    return safeStorage.getItem("tooleefy_maintenance") === "true";
   });
   
   const [hideBanners, setHideBanners] = useState<boolean>(() => {
-    return localStorage.getItem("tooleefy_hide_banners") === "true";
+    return safeStorage.getItem("tooleefy_hide_banners") === "true";
   });
   const [hideValuePage, setHideValuePage] = useState<boolean>(() => {
-    return localStorage.getItem("tooleefy_hide_value_page") === "true";
+    return safeStorage.getItem("tooleefy_hide_value_page") === "true";
   });
 
-  const handleToggleHideBanners = () => {
+  const handleToggleHideBanners = async () => {
     const newVal = !hideBanners;
     setHideBanners(newVal);
-    safeStorage.setItem("tooleefy_hide_banners", String(newVal));
-    window.dispatchEvent(new Event("storage"));
-    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
-    if (newVal) {
-      toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+    const success = await upsertSiteSetting("tooleefy_hide_banners", String(newVal));
+    if (success) {
+      if (newVal) {
+        toast.success("Banners Disabled: All 'Value our Tools' promotion banners are now hidden globally.");
+      } else {
+        toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+      }
     } else {
-      toast.success("Banners Enabled: Promotion banners restored to all utility modules.");
+      toast.error("Database Issue: Local preferences updated but cloud synchronization failed.");
     }
   };
 
-  const handleToggleHideValuePage = () => {
+  const handleToggleHideValuePage = async () => {
     const newVal = !hideValuePage;
     setHideValuePage(newVal);
-    safeStorage.setItem("tooleefy_hide_value_page", String(newVal));
-    window.dispatchEvent(new Event("storage"));
-    window.dispatchEvent(new Event("tooleefy_preferences_changed"));
-    if (newVal) {
-      toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+    const success = await upsertSiteSetting("tooleefy_hide_value_page", String(newVal));
+    if (success) {
+      if (newVal) {
+        toast.warning("Supporter Page Disabled: Access to '/value-our-tools' is now locked & hidden.");
+      } else {
+        toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+      }
     } else {
-      toast.success("Supporter Page Enabled: Access restored to '/value-our-tools'.");
+      toast.error("Database Issue: Local preferences updated but cloud synchronization failed.");
     }
   };
   
@@ -228,6 +232,23 @@ export function AdminDashboard() {
       console.warn("Could not load database logs: ", err);
     }
 
+    // C. Fetch Real-Time Global Site Settings from Cloud
+    try {
+      const cloudSettings = await fetchSiteSettings();
+      if (cloudSettings) {
+        setMaintenanceActive(cloudSettings.tooleefy_maintenance === "true");
+        setHideBanners(cloudSettings.tooleefy_hide_banners === "true");
+        setHideValuePage(cloudSettings.tooleefy_hide_value_page === "true");
+        
+        safeStorage.setItem("tooleefy_maintenance", cloudSettings.tooleefy_maintenance);
+        safeStorage.setItem("tooleefy_hide_banners", cloudSettings.tooleefy_hide_banners);
+        safeStorage.setItem("tooleefy_hide_value_page", cloudSettings.tooleefy_hide_value_page);
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (err) {
+      console.warn("Could not load cloud site settings: ", err);
+    }
+
     if (isManual) {
       setTimeout(() => {
         setLiveRefreshSpin(false);
@@ -243,16 +264,20 @@ export function AdminDashboard() {
   }, [isAdmin]);
 
   // Handle Maintenance Mode
-  const handleToggleMaintenance = () => {
+  const handleToggleMaintenance = async () => {
     const newVal = !maintenanceActive;
     setMaintenanceActive(newVal);
-    safeStorage.setItem("tooleefy_maintenance", String(newVal));
-    if (newVal) {
-      toast.warning("High-Alert: Production node is locked. Public endpoints are now serving Maintenance warnings.");
+    const success = await upsertSiteSetting("tooleefy_maintenance", String(newVal));
+    if (success) {
+      if (newVal) {
+        toast.warning("High-Alert: Production node is locked. Public endpoints are now serving Maintenance warnings.");
+      } else {
+        toast.success("Security Cleared: Production system restored to normal routing protocols.", {
+          icon: <Check className="w-5 h-5 text-emerald-500" />
+        });
+      }
     } else {
-      toast.success("Security Cleared: Production system restored to normal routing protocols.", {
-        icon: <Check className="w-5 h-5 text-emerald-500" />
-      });
+      toast.error("Database Issue: Local maintenance state updated but cloud synchronization failed.");
     }
   };
 

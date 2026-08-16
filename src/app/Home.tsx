@@ -24,6 +24,7 @@ import {
 import { defaultArticles, BlogPost } from "@/app/Articles";
 import { fetchBlogPosts } from "@/supabase/db";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
+import { safeStorage } from "@/utils/safeStorage";
 
 const tools = [
   {
@@ -70,7 +71,7 @@ export function Home() {
           const sorted = [...posts].sort((a, b) => b.views - a.views);
           setBlogPosts(sorted);
         } else {
-          const stored = localStorage.getItem("blog_posts");
+          const stored = safeStorage.getItem("blog_posts");
           if (stored) {
             try {
               const parsed = JSON.parse(stored);

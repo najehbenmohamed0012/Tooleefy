@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Heart, Stars, Zap } from "lucide-react";
+import { safeStorage } from "@/utils/safeStorage";
 
 export const ValueBanner: React.FC = () => {
   const [hidden, setHidden] = useState(() => {
-    return localStorage.getItem("tooleefy_hide_banners") === "true" || 
-           localStorage.getItem("tooleefy_hide_value_page") === "true";
+    return safeStorage.getItem("tooleefy_hide_banners") === "true" || 
+           safeStorage.getItem("tooleefy_hide_value_page") === "true";
   });
 
   useEffect(() => {
     const handleStorageChange = () => {
       setHidden(
-        localStorage.getItem("tooleefy_hide_banners") === "true" || 
-        localStorage.getItem("tooleefy_hide_value_page") === "true"
+        safeStorage.getItem("tooleefy_hide_banners") === "true" || 
+        safeStorage.getItem("tooleefy_hide_value_page") === "true"
       );
     };
 

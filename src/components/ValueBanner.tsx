@@ -4,18 +4,19 @@ import { Sparkles, Heart, Zap, ShieldCheck, Globe } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { safeStorage } from "@/utils/safeStorage";
 
 export function ValueBanner() {
   const [hidden, setHidden] = useState(() => {
-    return localStorage.getItem("tooleefy_hide_banners") === "true" || 
-           localStorage.getItem("tooleefy_hide_value_page") === "true";
+    return safeStorage.getItem("tooleefy_hide_banners") === "true" || 
+           safeStorage.getItem("tooleefy_hide_value_page") === "true";
   });
 
   useEffect(() => {
     const handleStorageChange = () => {
       setHidden(
-        localStorage.getItem("tooleefy_hide_banners") === "true" || 
-        localStorage.getItem("tooleefy_hide_value_page") === "true"
+        safeStorage.getItem("tooleefy_hide_banners") === "true" || 
+        safeStorage.getItem("tooleefy_hide_value_page") === "true"
       );
     };
 

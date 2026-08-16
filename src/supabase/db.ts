@@ -207,7 +207,10 @@ export async function fetchBlogPosts(): Promise<BlogPost[] | null> {
       console.warn("Supabase fetchBlogPosts failed (table may not exist or RLS active):", error.message);
       return null;
     }
-    return data as BlogPost[];
+    
+    // Filter out system configuration rows so they never leak as real articles
+    const filteredData = data ? data.filter((p: any) => p.id !== "tooleefy_system_settings_v1") : [];
+    return filteredData as BlogPost[];
   } catch (err) {
     console.error("Error in fetchBlogPosts:", err);
     return null;
@@ -265,6 +268,117 @@ export async function deleteBlogPost(postId: string): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("Error in deleteBlogPost:", err);
+    return false;
+  }
+}
+
+// Fetch global site configuration with recursive fallback to hidden blog post config row
+export async function fetchSiteSettings(): Promise<Record<string, string>> {
+  const defaults: Record<string, string> = {
+    tooleefy_maintenance: "false",
+    tooleefy_hide_banners: "false",
+    tooleefy_hide_value_page: "false"
+  };
+
+  try {
+    // 1. Try fetching from site_settings table first (primary modern path)
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("key, value");
+
+    if (!error && data && data.length > 0) {
+      const settings = { ...defaults };
+      data.forEach((row: any) => {
+        settings[row.key] = row.value;
+      });
+      return settings;
+    }
+  } catch (err) {
+    // site_settings table doesn't exist yet, proceed to robust fallback
+  }
+
+  // 2. Fallback: Query hidden system settings record in the existing 'blog_posts' table
+  try {
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("id", "tooleefy_system_settings_v1")
+      .maybeSingle();
+
+    if (!error && data) {
+      try {
+        const parsed = JSON.parse(data.content);
+        return {
+          ...defaults,
+          ...parsed
+        };
+      } catch (e) {
+        console.warn("Failed to parse system configuration content payload:", e);
+      }
+    }
+  } catch (err) {
+    console.error("Critical: Failed to read site settings from fallback database configuration layer.", err);
+  }
+
+  return defaults;
+}
+
+// Upsert site-wide global configuration safely
+export async function upsertSiteSetting(key: string, value: string): Promise<boolean> {
+  // Always write to local storage first for high-performance offline lookup speed and storage triggers
+  safeStorage.setItem(key, value);
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+
+  // 1. Try writing to site_settings table first
+  try {
+    const { error } = await supabase
+      .from("site_settings")
+      .upsert({ key, value }, { onConflict: "key" });
+
+    if (!error) return true;
+  } catch (err) {
+    // site_settings table doesn't exist yet, fallback
+  }
+
+  // 2. Fallback: Save to the hidden system settings row in the 'blog_posts' table
+  try {
+    // Load current configuration first
+    const currentSettings = await fetchSiteSettings();
+    const updatedSettings = {
+      ...currentSettings,
+      [key]: value
+    };
+
+    const { error } = await supabase
+      .from("blog_posts")
+      .upsert({
+        id: "tooleefy_system_settings_v1",
+        title: "System Configuration Override Record",
+        excerpt: "Global system configuration keys for Tooleefy core.",
+        content: JSON.stringify(updatedSettings),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        author: "Tooleefy Engine",
+        category: "System",
+        views: 0,
+        reactions: { heart: 0, fire: 0 },
+        published: false,
+        coverImage: "",
+        coverImageAlt: "",
+        coverImageCaption: "",
+        coverImageTitle: "",
+        seoTitle: "System Configuration Override Record",
+        seoDesc: "System Settings",
+        seoKeywords: ""
+      });
+
+    if (error) {
+      console.error("Fallback settings write failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Critical: Fallback settings upsert failed:", err);
     return false;
   }
 }

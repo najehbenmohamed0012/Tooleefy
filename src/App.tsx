@@ -8,6 +8,8 @@ import { Home } from "@/app/Home";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { safeStorage } from "@/utils/safeStorage";
+import { fetchSiteSettings } from "@/supabase/db";
 
 // Dynamic high-performance code splitting (React.lazy)
 const UnitsConverter = lazy(() => import("@/features/converter/UnitsConverter").then(m => ({ default: m.UnitsConverter })));
@@ -54,12 +56,32 @@ function PageSkeleton() {
 
 export default function App() {
   const [hideValuePage, setHideValuePage] = useState(() => {
-    return localStorage.getItem("tooleefy_hide_value_page") === "true";
+    return safeStorage.getItem("tooleefy_hide_value_page") === "true";
   });
 
   useEffect(() => {
+    const syncGlobalSettings = async () => {
+      try {
+        const cloudSettings = await fetchSiteSettings();
+        if (cloudSettings) {
+          safeStorage.setItem("tooleefy_maintenance", cloudSettings.tooleefy_maintenance || "false");
+          safeStorage.setItem("tooleefy_hide_banners", cloudSettings.tooleefy_hide_banners || "false");
+          safeStorage.setItem("tooleefy_hide_value_page", cloudSettings.tooleefy_hide_value_page || "false");
+          
+          // Trigger component rerenders locally
+          setHideValuePage(cloudSettings.tooleefy_hide_value_page === "true");
+          window.dispatchEvent(new Event("storage"));
+          window.dispatchEvent(new Event("tooleefy_preferences_changed"));
+        }
+      } catch (err) {
+        console.warn("Could not synchronize cloud site settings on startup:", err);
+      }
+    };
+
+    syncGlobalSettings();
+
     const handleStorageChange = () => {
-      setHideValuePage(localStorage.getItem("tooleefy_hide_value_page") === "true");
+      setHideValuePage(safeStorage.getItem("tooleefy_hide_value_page") === "true");
     };
 
     window.addEventListener("storage", handleStorageChange);
