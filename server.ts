@@ -1349,13 +1349,26 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       if (param === "qr") return "og/qr-code-generator.jpg";
       if (param === "barcode") return "og/barcode-generator.jpg";
       if (param === "converter") return "og/units-converter.jpg";
+      if (param === "blog") return "og/blog.jpg";
       return `og/${param}.jpg`;
     }
 
-    const relativeOgPath = getOgImagePath(routeMeta.ogImageParam);
-    const ogImgUrlBase = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
-      ? routeMeta.ogImageParam
-      : `${protocol}://${host}/${relativeOgPath}`;
+    const param = routeMeta.ogImageParam;
+    let ogImgUrlBase = "";
+    if (param) {
+      if (param.startsWith("http://") || param.startsWith("https://")) {
+        ogImgUrlBase = param;
+      } else if (param.startsWith("/")) {
+        ogImgUrlBase = `${protocol}://${host}${param}`;
+      } else if (param.startsWith("og/") || param.startsWith("images/")) {
+        ogImgUrlBase = `${protocol}://${host}/${param}`;
+      } else {
+        const relativeOgPath = getOgImagePath(param);
+        ogImgUrlBase = `${protocol}://${host}/${relativeOgPath}`;
+      }
+    } else {
+      ogImgUrlBase = `${protocol}://${host}/og/default.jpg`;
+    }
     const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");

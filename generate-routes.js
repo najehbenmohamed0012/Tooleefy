@@ -307,9 +307,24 @@ blogPostsToPreRender.forEach((post) => {
   const title = `${post.seoTitle || post.title} | Tooleefy Insights`;
   const desc = post.seoDesc || post.excerpt;
   const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
-  const ogImgUrlBase = post.coverImage && post.coverImage.startsWith("http")
-    ? post.coverImage
-    : `${protocol}://${host}/og/default.jpg`;
+  
+  const param = post.coverImage;
+  let ogImgUrlBase = "";
+  if (param) {
+    if (param.startsWith("http://") || param.startsWith("https://")) {
+      ogImgUrlBase = param;
+    } else if (param.startsWith("/")) {
+      ogImgUrlBase = `${protocol}://${host}${param}`;
+    } else if (param.startsWith("og/") || param.startsWith("images/")) {
+      ogImgUrlBase = `${protocol}://${host}/${param}`;
+    } else if (param === "blog") {
+      ogImgUrlBase = `${protocol}://${host}/og/blog.jpg`;
+    } else {
+      ogImgUrlBase = `${protocol}://${host}/og/${param}.jpg`;
+    }
+  } else {
+    ogImgUrlBase = `${protocol}://${host}/og/blog.jpg`;
+  }
   const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
     
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
