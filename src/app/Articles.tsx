@@ -393,7 +393,7 @@ export function Blog() {
     const loadPosts = async () => {
       try {
         const dbPosts = await fetchBlogPosts();
-        if (dbPosts && dbPosts.length > 0) {
+        if (dbPosts !== null) {
           setPosts(dbPosts);
           safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
           

@@ -67,27 +67,37 @@ export function Home() {
     const loadBlogPosts = async () => {
       try {
         const posts = await fetchBlogPosts();
-        if (posts && posts.length > 0) {
-          const sorted = [...posts].sort((a, b) => b.views - a.views);
-          setBlogPosts(sorted);
-        } else {
-          const stored = safeStorage.getItem("blog_posts");
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              const sorted = [...parsed].sort((a, b) => b.views - a.views);
+        if (posts !== null) {
+          const published = posts.filter(p => p.published);
+          if (published.length > 0) {
+            const sorted = [...published].sort((a, b) => b.views - a.views);
+            setBlogPosts(sorted);
+            return;
+          }
+        }
+        
+        // Fallback to cached articles
+        const stored = safeStorage.getItem("blog_posts");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            const published = parsed.filter((p: any) => p.published);
+            if (published.length > 0) {
+              const sorted = [...published].sort((a, b) => b.views - a.views);
               setBlogPosts(sorted);
               return;
-            } catch {
-              // ignore
             }
+          } catch {
+            // ignore
           }
-          const sorted = [...defaultArticles].sort((a, b) => b.views - a.views);
-          setBlogPosts(sorted);
         }
+        
+        // Fallback to default articles
+        const sorted = [...defaultArticles].filter(p => p.published).sort((a, b) => b.views - a.views);
+        setBlogPosts(sorted);
       } catch (err) {
         console.error("Failed to load blog posts in Home", err);
-        const sorted = [...defaultArticles].sort((a, b) => b.views - a.views);
+        const sorted = [...defaultArticles].filter(p => p.published).sort((a, b) => b.views - a.views);
         setBlogPosts(sorted);
       }
     };
@@ -376,7 +386,7 @@ export function Home() {
           >
             {blogPosts.map((post) => {
               const getCategoryStyle = (category: string) => {
-                const lower = category.toLowerCase();
+                const lower = (category || "").toLowerCase();
                 if (lower.includes("invoice")) return "bg-emerald-500 text-white";
                 if (lower.includes("qr")) return "bg-blue-500 text-white";
                 if (lower.includes("barcode")) return "bg-purple-500 text-white";

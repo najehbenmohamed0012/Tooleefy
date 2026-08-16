@@ -110,6 +110,11 @@ export function AdminBlogManager() {
   const [previewTab, setPreviewTab] = useState<"write" | "preview">("write");
   const [seoPreviewType, setSeoPreviewType] = useState<"desktop" | "mobile">("desktop");
 
+  // Real-time Database Health and Diagnostic States
+  const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "error">("checking");
+  const [dbErrorMessage, setDbErrorMessage] = useState<string>("");
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+
   // AI Writer State Variables
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiCategory, setAiCategory] = useState("Invoice Generator");
@@ -249,15 +254,38 @@ export function AdminBlogManager() {
     }
   };
 
-  // Load posts
+  // Load posts and check Supabase live database synchronization status
   useEffect(() => {
     const loadPosts = async () => {
-      const dbPosts = await fetchBlogPosts();
-      if (dbPosts && dbPosts.length > 0) {
-        setPosts(dbPosts);
-        safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
-      } else {
-        const raw = localStorage.getItem("blog_posts");
+      try {
+        const dbPosts = await fetchBlogPosts();
+        if (dbPosts !== null) {
+          setDbStatus("connected");
+          setPosts(dbPosts);
+          safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
+        } else {
+          setDbStatus("error");
+          setDbErrorMessage("Supabase returned null. Your 'blog_posts' table might not be created yet, or your database Row-Level Security (RLS) is blocking access.");
+          
+          // Local fallback
+          const raw = safeStorage.getItem("blog_posts") || localStorage.getItem("blog_posts");
+          if (raw) {
+            try {
+              setPosts(JSON.parse(raw));
+            } catch {
+              setPosts(defaultArticles);
+            }
+          } else {
+            safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
+            setPosts(defaultArticles);
+          }
+        }
+      } catch (err: any) {
+        setDbStatus("error");
+        setDbErrorMessage(err?.message || "Unhandled database connection check failure.");
+        
+        // Local fallback
+        const raw = safeStorage.getItem("blog_posts") || localStorage.getItem("blog_posts");
         if (raw) {
           try {
             setPosts(JSON.parse(raw));
@@ -265,7 +293,6 @@ export function AdminBlogManager() {
             setPosts(defaultArticles);
           }
         } else {
-          safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
           setPosts(defaultArticles);
         }
       }
@@ -351,32 +378,45 @@ export function AdminBlogManager() {
   };
 
   // Toggle publish state directly from list
-  const handleTogglePublish = (postId: string) => {
-    const updated = posts.map(p => {
+  const handleTogglePublish = async (postId: string) => {
+    let dbSuccess = true;
+    const updated = await Promise.all(posts.map(async p => {
       if (String(p.id) === String(postId)) {
         const nextState = !p.published;
         const updatedPost = { ...p, published: nextState };
-        // Upsert to Supabase
-        upsertBlogPost(updatedPost);
-        toast.success(nextState ? `Published "${p.title}" successfully!` : `Unpublished "${p.title}" to Draft state.`);
+        // Upsert to Supabase with proper await
+        const ok = await upsertBlogPost(updatedPost);
+        if (!ok) {
+          dbSuccess = false;
+        } else {
+          toast.success(nextState ? `Published "${p.title}" successfully in Supabase!` : `Unpublished "${p.title}" to Draft state.`);
+        }
         return updatedPost;
       }
       return p;
-    });
+    }));
+
+    if (!dbSuccess) {
+      toast.error("Database sync failed! The article status was updated locally in your browser cache, but failed to write to Supabase. Check your table schema and RLS policies.");
+    }
     syncPosts(updated);
   };
 
   // Delete article with verification
-  const handleDeletePost = (postId: string) => {
+  const handleDeletePost = async (postId: string) => {
     const target = posts.find(p => String(p.id) === String(postId));
     if (!target) return;
 
     if (window.confirm(`Are you sure you want to permanently delete "${target.title}"? This action cannot be undone.`)) {
       const filtered = posts.filter(p => String(p.id) !== String(postId));
       // Delete from Supabase
-      deleteBlogPost(postId);
+      const ok = await deleteBlogPost(postId);
+      if (ok) {
+        toast.success("Blog article deleted successfully from Supabase database.");
+      } else {
+        toast.error("Failed to delete from Supabase database! The article was removed locally from cache, but please check your Supabase table RLS permissions.");
+      }
       syncPosts(filtered);
-      toast.success("Blog article deleted successfully.");
     }
   };
 
@@ -465,7 +505,7 @@ export function AdminBlogManager() {
   };
 
   // Save changes handler (Create or Update)
-  const handleSavePost = (e: React.FormEvent) => {
+  const handleSavePost = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim() || !content.trim()) {
@@ -496,14 +536,21 @@ export function AdminBlogManager() {
     let updatedList: BlogPost[] = [];
     if (editorMode === "new") {
       updatedList = [compiledPost, ...posts];
-      toast.success(`Successfully published new article: "${compiledPost.title}"!`);
     } else {
       updatedList = posts.map(p => String(p.id) === String(selectedPostId) ? compiledPost : p);
-      toast.success(`Updated article alterations for "${compiledPost.title}" successfully.`);
     }
 
     // Upsert to Supabase
-    upsertBlogPost(compiledPost);
+    const ok = await upsertBlogPost(compiledPost);
+    if (ok) {
+      if (editorMode === "new") {
+        toast.success(`Successfully saved and published new article: "${compiledPost.title}" in Supabase!`);
+      } else {
+        toast.success(`Updated and synchronized "${compiledPost.title}" in Supabase successfully.`);
+      }
+    } else {
+      toast.error(`Database Save Failed! The article was updated locally in your browser cache, but failed to write to the Supabase database. Please run diagnostics using the button below.`);
+    }
 
     syncPosts(updatedList);
     setEditorMode("list");
@@ -571,6 +618,106 @@ export function AdminBlogManager() {
             exit={{ opacity: 0, y: -15 }}
             className="space-y-6"
           >
+            {/* Database Sync Status Panel */}
+            <Card className="p-6 border-none shadow-premium bg-card rounded-3xl overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-2xl ${
+                    dbStatus === "connected" 
+                      ? "bg-emerald-500/10 text-emerald-500" 
+                      : dbStatus === "checking" 
+                      ? "bg-amber-500/10 text-amber-500 animate-pulse" 
+                      : "bg-rose-500/10 text-rose-500"
+                  }`}>
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black uppercase italic tracking-tight text-foreground flex flex-wrap items-center gap-2">
+                      Supabase Cloud Sync Status: 
+                      {dbStatus === "connected" && (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Synced & Live</span>
+                      )}
+                      {dbStatus === "checking" && (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">Verifying Connection...</span>
+                      )}
+                      {dbStatus === "error" && (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">Local Fallback Only</span>
+                      )}
+                    </h4>
+                    <p className="text-xs text-muted-foreground font-semibold mt-0.5">
+                      {dbStatus === "connected" 
+                        ? "Successfully connected to Supabase. All articles and changes are saved to the cloud and instant worldwide!" 
+                        : dbStatus === "checking"
+                        ? "Querying your remote database table 'blog_posts'..."
+                        : "Offline Mode. Articles are stored in your local browser only. Other users cannot see them yet."}
+                    </p>
+                  </div>
+                </div>
+
+                {dbStatus === "error" && (
+                  <Button
+                    onClick={() => setShowDiagnostics(!showDiagnostics)}
+                    variant="outline"
+                    className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-wider border-rose-500/30 text-rose-600 bg-rose-500/5 hover:bg-rose-500/10 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <HelpCircle className="w-4 h-4" /> 
+                    {showDiagnostics ? "Hide Setup Instructions" : "Fix Database Setup"}
+                  </Button>
+                )}
+              </div>
+
+              {dbStatus === "error" && showDiagnostics && (
+                <div className="mt-5 pt-5 border-t border-border/40 space-y-4">
+                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-4 text-xs font-semibold text-rose-700 space-y-1.5 leading-relaxed">
+                    <p className="font-black uppercase tracking-wider text-rose-800">Connection Error Details:</p>
+                    <p className="font-mono text-[11px] bg-white/40 p-2.5 rounded-lg border border-rose-500/10">{dbErrorMessage}</p>
+                    <p>When in 'Local Fallback' mode, any articles you write or toggle publish on are cached in your personal browser storage, meaning other users worldwide on their devices (including social media WebViews) cannot see them.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Step-by-Step Fix to make everything live:</p>
+                    <ol className="list-decimal pl-5 text-xs text-muted-foreground font-semibold space-y-2 leading-relaxed">
+                      <li>Log in to your <strong>Supabase Dashboard</strong>.</li>
+                      <li>Select your active project and open the <strong>SQL Editor</strong> in the left sidebar.</li>
+                      <li>Click "New Query", paste the exact script below, and click <strong>Run</strong>:</li>
+                    </ol>
+
+                    <div className="relative mt-3 text-left">
+                      <pre className="p-4 bg-slate-950 text-slate-100 rounded-2xl font-mono text-[10.5px] leading-relaxed overflow-x-auto select-all max-h-72">
+{`-- 1. Create the 'blog_posts' table in your Supabase project
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  excerpt TEXT,
+  content TEXT NOT NULL,
+  date TEXT,
+  author TEXT DEFAULT 'Tooleefy Team',
+  category TEXT,
+  views INTEGER DEFAULT 0,
+  reactions JSONB DEFAULT '{"heart": 0, "fire": 0, "thumbsUp": 0}'::jsonb,
+  published BOOLEAN DEFAULT false,
+  "coverImage" TEXT,
+  "coverImageAlt" TEXT,
+  "coverImageCaption" TEXT,
+  "coverImageTitle" TEXT,
+  "seoTitle" TEXT,
+  "seoDesc" TEXT,
+  "seoKeywords" TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Turn off Row-Level Security (RLS) to allow instant public read/write sync
+ALTER TABLE blog_posts DISABLE ROW LEVEL SECURITY;`}
+                      </pre>
+                      <p className="text-[10px] text-muted-foreground font-bold mt-1.5 italic">
+                        💡 Note: Keep the double-quoted camelCase column names (e.g. "coverImage") exactly as shown to prevent Postgres from force-lowercasing, ensuring flawless matching with our API keys!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+
             {posts.length === 0 ? (
               <Card className="p-12 text-center border-none shadow-premium bg-card rounded-[2.5rem]">
                 <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-pulse" />
@@ -582,7 +729,11 @@ export function AdminBlogManager() {
               <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] overflow-hidden">
                 <div className="flex justify-between items-center mb-6">
                   <h4 className="text-lg font-black uppercase italic text-foreground">Active Catalog ({posts.length} articles)</h4>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">Real-time DB Active</span>
+                  {dbStatus === "connected" ? (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Real-time DB Live</span>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-rose-500 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">Local Fallback</span>
+                  )}
                 </div>
 
                 <div className="overflow-x-auto">
@@ -869,7 +1020,7 @@ export function AdminBlogManager() {
                         </Button>
 
                         <Button
-                          onClick={() => {
+                          onClick={async () => {
                             // Fully automated direct publish!
                             const newPost: BlogPost = {
                               id: `art-${generatedArticle.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()}-${Math.floor(Math.random() * 9000 + 1000)}`,
@@ -891,9 +1042,13 @@ export function AdminBlogManager() {
                               seoKeywords: generatedArticle.seoKeywords || aiKeywords
                             };
                             // Upsert to Supabase
-                            upsertBlogPost(newPost);
+                            const ok = await upsertBlogPost(newPost);
+                            if (ok) {
+                              toast.success(`Successfully published and synchronized: "${newPost.title}" in Supabase!`);
+                            } else {
+                              toast.error(`Database Write Failed! "${newPost.title}" was saved locally in your browser cache, but we failed to write to the Supabase database. Please check table structure or RLS.`);
+                            }
                             syncPosts([newPost, ...posts]);
-                            toast.success(`Successfully published: "${newPost.title}"!`);
                             setEditorMode("list");
                           }}
                           className="h-11 px-6 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wider gap-2 shadow hover:bg-secondary cursor-pointer"
