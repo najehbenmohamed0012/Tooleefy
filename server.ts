@@ -1156,8 +1156,24 @@ Primary SEO Keywords to include: "${keywordsList}"`;
   let indexHtmlCache = "";
   
   async function getIndexHtml(reqPath: string, hostHeader: string | undefined): Promise<string> {
-    const host = hostHeader || "tooleefy.com";
-    const protocol = host.includes("localhost") || host.includes("3000") ? "http" : "https";
+    let host = hostHeader || "tooleefy.com";
+    
+    // Clean port numbers from the host if it's not a local development server
+    if (!host.includes("localhost") && !host.includes("127.0.0.1") && host.includes(":")) {
+      host = host.split(":")[0];
+    }
+    
+    // If the host is local, internal loopback, or a random passenger port, force tooleefy.com production domain
+    const isInternal = host.includes("127.0.0.1") || 
+                       host.includes("localhost") || 
+                       host.includes("::1") || 
+                       !host.includes(".");
+                       
+    if (isInternal) {
+      host = "tooleefy.com";
+    }
+    
+    const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
     const absoluteUrl = `${protocol}://${host}${reqPath}`;
     
     // Metadata map mapping public URLs to SEO benchmarks
@@ -1422,8 +1438,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="1376" />
+    <meta property="og:image:height" content="768" />
     <meta property="og:image:alt" content="${routeMeta.title}" />
 
     <!-- Twitter Card metadata -->

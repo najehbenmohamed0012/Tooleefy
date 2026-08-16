@@ -197,8 +197,8 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="1376" />
+    <meta property="og:image:height" content="768" />
     <meta property="og:image:alt" content="${meta.title}" />
 
     <!-- Twitter Card metadata -->
@@ -321,8 +321,8 @@ blogPostsToPreRender.forEach((post) => {
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="1376" />
+    <meta property="og:image:height" content="768" />
     <meta property="og:image:alt" content="${title}" />
 
     <!-- Twitter Card metadata -->
