@@ -713,6 +713,26 @@ async function startServer() {
     res.send(svg);
   });
 
+  // Dynamic Open Graph (OG) high-reliability image delivery service
+  // This serves JPEG images dynamically via an API route, bypassing Vercel static asset DDoS/bot filters.
+  app.get("/api/og-image/:filename", (req, res) => {
+    const filename = req.params.filename;
+    
+    // Prevent directory traversal attacks
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return res.status(400).send("Invalid filename");
+    }
+
+    const imagePath = path.join(distPath, "images", filename);
+    if (fs.existsSync(imagePath) && fs.statSync(imagePath).isFile()) {
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.sendFile(imagePath);
+    } else {
+      return res.status(404).send(`Image ${filename} not found`);
+    }
+  });
+
   // Reliable exchange rates engine
   let ratesCache: any = {
     fiat: null,
@@ -1309,8 +1329,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     const ogImgUrl = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
       ? routeMeta.ogImageParam
       : (routeMeta.ogImageParam 
-          ? `${protocol}://${host}/images/og-${routeMeta.ogImageParam}-v1.jpg`
-          : `${protocol}://${host}/images/og-default-v1.jpg`);
+          ? `${protocol}://${host}/api/og-image/og-${routeMeta.ogImageParam}-v1.jpg`
+          : `${protocol}://${host}/api/og-image/og-default-v1.jpg`);
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
