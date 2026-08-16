@@ -9,6 +9,11 @@
     PassengerBaseURI /
 </IfModule>
 
+# Disable Gzip/deflate compression on already compressed image assets to prevent file corruption for crawlers
+<IfModule mod_deflate.c>
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|ico|webp)$ no-gzip dont-vary
+</IfModule>
+
 # Handle URL Rewriting and Route Delegations
 <IfModule mod_rewrite.c>
     RewriteEngine On

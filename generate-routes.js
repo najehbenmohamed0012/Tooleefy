@@ -155,6 +155,16 @@ const baseHtml = stripExistingSeoTags(rawHtml);
 
 console.log("Generating pre-rendered physical HTML routes for SEO and Hostinger 404 compatibility...");
 
+function getOgImagePath(param) {
+  if (!param) return "og/default.jpg";
+  if (param === "home") return "og/home.jpg";
+  if (param === "invoice") return "og/invoice-generator.jpg";
+  if (param === "qr") return "og/qr-code-generator.jpg";
+  if (param === "barcode") return "og/barcode-generator.jpg";
+  if (param === "converter") return "og/units-converter.jpg";
+  return `og/${param}.jpg`;
+}
+
 // Generate public routes
 Object.entries(metaMap).forEach(([route, meta]) => {
   let targetHtmlPath;
@@ -170,11 +180,10 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   }
   
   const absoluteUrl = `${protocol}://${host}${route}`;
+  const relativeOgPath = getOgImagePath(meta.ogImageParam);
   const ogImgUrl = meta.ogImageParam && meta.ogImageParam.startsWith("http")
     ? meta.ogImageParam
-    : (meta.ogImageParam 
-        ? `${protocol}://${host}/images/og-${meta.ogImageParam}-v2.jpg`
-        : `${protocol}://${host}/images/og-default-v2.jpg`);
+    : `${protocol}://${host}/${relativeOgPath}`;
   
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -299,7 +308,7 @@ blogPostsToPreRender.forEach((post) => {
   const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
   const ogImgUrl = post.coverImage && post.coverImage.startsWith("http")
     ? post.coverImage
-    : `${protocol}://${host}/images/og-default-v2.jpg`;
+    : `${protocol}://${host}/og/default.jpg`;
     
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";

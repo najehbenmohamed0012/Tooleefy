@@ -1342,11 +1342,20 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       }
     }
 
+    function getOgImagePath(param: string | undefined): string {
+      if (!param) return "og/default.jpg";
+      if (param === "home") return "og/home.jpg";
+      if (param === "invoice") return "og/invoice-generator.jpg";
+      if (param === "qr") return "og/qr-code-generator.jpg";
+      if (param === "barcode") return "og/barcode-generator.jpg";
+      if (param === "converter") return "og/units-converter.jpg";
+      return `og/${param}.jpg`;
+    }
+
+    const relativeOgPath = getOgImagePath(routeMeta.ogImageParam);
     const ogImgUrl = routeMeta.ogImageParam && routeMeta.ogImageParam.startsWith("http")
       ? routeMeta.ogImageParam
-      : (routeMeta.ogImageParam 
-          ? `${protocol}://${host}/images/og-${routeMeta.ogImageParam}-v2.jpg`
-          : `${protocol}://${host}/images/og-default-v2.jpg`);
+      : `${protocol}://${host}/${relativeOgPath}`;
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -1535,8 +1544,9 @@ Primary SEO Keywords to include: "${keywordsList}"`;
             
             res.setHeader("Content-Type", contentType);
             res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-            const assetBuffer = fs.readFileSync(physicalPath);
-            return res.send(assetBuffer);
+            
+            // Using res.sendFile instead of readFileSync ensures Express native support for byte-range/206 partial content
+            return res.sendFile(physicalPath);
           } else {
             // Static asset does not exist on disk, return 404 to avoid feeding HTML slop to the crawler/debugger
             return res.status(404).send(`Asset ${cleanPath} not found`);
