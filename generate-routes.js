@@ -173,8 +173,8 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   const ogImgUrl = meta.ogImageParam && meta.ogImageParam.startsWith("http")
     ? meta.ogImageParam
     : (meta.ogImageParam 
-        ? `${protocol}://${host}/api/og-image/og-${meta.ogImageParam}-v1.jpg`
-        : `${protocol}://${host}/api/og-image/og-default-v1.jpg`);
+        ? `${protocol}://${host}/images/og-${meta.ogImageParam}-v2.jpg`
+        : `${protocol}://${host}/images/og-default-v2.jpg`);
   
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -297,7 +297,7 @@ blogPostsToPreRender.forEach((post) => {
   const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
   const ogImgUrl = post.coverImage && post.coverImage.startsWith("http")
     ? post.coverImage
-    : `${protocol}://${host}/api/og-image/og-default-v1.jpg`;
+    : `${protocol}://${host}/images/og-default-v2.jpg`;
     
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
