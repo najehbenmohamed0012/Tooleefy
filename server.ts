@@ -1350,72 +1350,100 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     let blogPostId = "";
     let initialPostScript = "";
 
-    // Dynamic SEO injector for individual blog posts
-    if (!isProfilePage && reqPath.startsWith("/blog/") && reqPath !== "/blog") {
-      const postId = reqPath.split("/blog/")[1]?.split("?")[0];
-      if (postId) {
-        blogPostId = postId;
-        let foundPost: any = null;
-        const client = getSupabaseClient();
-        if (client) {
-          try {
-            const { data, error } = await client
-              .from("blog_posts")
-              .select("*")
-              .eq("id", postId)
-              .maybeSingle();
-            if (!error && data) {
-              foundPost = data;
-            }
-          } catch (err) {
-            console.warn("Sitemap/SEO dynamic route metadata fetch failed, using defaultArticles fallback:", err);
-          }
-        }
-        
-        if (!foundPost) {
-          const defaults = [
-            {
-              id: "art-1",
-              title: "Why Client-Side Processing is the Future of B2B SaaS",
-              excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-              seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
-              seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-              seoKeywords: "client-side, local-first, decentralized, SaaS, WASM",
-              coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-              category: "Business"
-            },
-            {
-              id: "art-2",
-              title: "5 Common Invoicing Mistakes Every Freelancer Makes",
-              excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-              seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes",
-              seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-              seoKeywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
-              coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
-              category: "Invoice Generator"
-            },
-            {
-              id: "art-3",
-              title: "Mastering Custom QR Code Architecture for Retail",
-              excerpt: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
-              seoTitle: "Mastering Custom QR Code Architecture for Retail",
-              seoDesc: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
-              seoKeywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
-              coverImage: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80",
-              category: "QR Code Generator"
-            }
-          ];
-          foundPost = defaults.find(p => p.id === postId);
-        }
+    // Dynamic SEO injector for blog index, individual posts, and home page
+    if (!isProfilePage && (reqPath === "/" || reqPath === "/index.html" || reqPath.startsWith("/blog"))) {
+      const isBlogIndex = reqPath === "/blog" || reqPath === "/blog/";
+      const isHome = reqPath === "/" || reqPath === "/index.html";
+      const client = getSupabaseClient();
+      let allPosts: any[] = [];
+      let foundPost: any = null;
 
-        if (foundPost) {
-          routeMeta = {
-            title: `${foundPost.seoTitle || foundPost.title} | Tooleefy Insights`,
-            desc: foundPost.seoDesc || foundPost.excerpt,
-            keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
-            ogImageParam: foundPost.coverImage || "blog"
-          };
-          initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(foundPost).replace(/</g, '\\u003c')};\n    </script>\n`;
+      if (client) {
+        try {
+          const { data, error } = await client
+            .from("blog_posts")
+            .select("*")
+            .order("date", { ascending: false });
+          if (!error && data) {
+            allPosts = data.filter((p: any) => p.id !== "tooleefy_system_settings_v1");
+          }
+        } catch (err) {
+          console.warn("Failed to prefetch blog posts for index/article page:", err);
+        }
+      }
+
+      // If database queries failed or returned empty, we fall back to robust defaults
+      if (allPosts.length === 0) {
+        allPosts = [
+          {
+            id: "art-1",
+            title: "Why Client-Side Processing is the Future of B2B SaaS",
+            excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+            content: "In the classical cloud paradigm, client browsers acted as thin, passive portals. All telemetry, parsing, and structural data flowed upstream to centralized servers. While convenient, this model introduces high latency, huge bandwidth costs, and severe security compliance challenges (such as GDPR, HIPAA, and CCPA).",
+            date: "May 15, 2024",
+            author: "Tech Insider",
+            category: "Business",
+            views: 1420,
+            reactions: { heart: 88, fire: 54, thumbsUp: 31 },
+            published: true,
+            coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+            seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
+            seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
+            seoKeywords: "client-side, local-first, decentralized, SaaS, WASM"
+          },
+          {
+            id: "art-2",
+            title: "5 Common Invoicing Mistakes Every Freelancer Makes",
+            excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+            content: "Freelancers are critical, yet invoicing is often treated as a chore. Avoiding common mistakes is paramount to professional success.",
+            date: "May 28, 2024",
+            author: "Finance Team",
+            category: "Invoice Generator",
+            views: 954,
+            reactions: { heart: 42, fire: 18, thumbsUp: 29 },
+            published: true,
+            coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+            seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes",
+            seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
+            seoKeywords: "online invoice maker, invoice creator, pdf billing creator"
+          },
+          {
+            id: "art-3",
+            title: "Mastering Custom QR Code Architecture for Retail",
+            excerpt: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+            content: "Quick Response codes are integral to modern retail campaigns. Mastering their styling ensures higher user conversion and engagement.",
+            date: "Jun 10, 2024",
+            author: "Retail Labs",
+            category: "QR Code Generator",
+            views: 1102,
+            reactions: { heart: 61, fire: 39, thumbsUp: 45 },
+            published: true,
+            coverImage: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80",
+            seoTitle: "Mastering Custom QR Code Architecture for Retail",
+            seoDesc: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
+            seoKeywords: "branded qr code generator, custom qr creator, free qr logo"
+          }
+        ];
+      }
+
+      if (isBlogIndex || isHome) {
+        initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POSTS__ = ${JSON.stringify(allPosts).replace(/</g, '\\u003c')};\n    </script>\n`;
+      } else {
+        // Individual article page
+        const postId = reqPath.split("/blog/")[1]?.split("?")[0];
+        if (postId) {
+          blogPostId = postId;
+          foundPost = allPosts.find(p => String(p.id) === String(postId));
+          
+          if (foundPost) {
+            routeMeta = {
+              title: `${foundPost.seoTitle || foundPost.title} | Tooleefy Insights`,
+              desc: foundPost.seoDesc || foundPost.excerpt,
+              keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
+              ogImageParam: foundPost.coverImage || "blog"
+            };
+            initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(foundPost).replace(/</g, '\\u003c')};\n    window.__INITIAL_BLOG_POSTS__ = ${JSON.stringify(allPosts).replace(/</g, '\\u003c')};\n    </script>\n`;
+          }
         }
       }
     }

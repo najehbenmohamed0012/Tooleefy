@@ -378,7 +378,7 @@ export function Blog() {
 
   // Track asynchronous DB query load state
   const [loading, setLoading] = useState(() => {
-    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POST__) {
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
       return false;
     }
     return true;
@@ -386,8 +386,8 @@ export function Blog() {
 
   // Synchronous, instant load from server-injected script or default to empty list (relying on fresh fetch)
   const [posts, setPosts] = useState<BlogPost[]>(() => {
-    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POST__) {
-      return [(window as any).__INITIAL_BLOG_POST__];
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
+      return (window as any).__INITIAL_BLOG_POSTS__;
     }
     return [];
   });
@@ -399,6 +399,11 @@ export function Blog() {
       if (articleIdParam && String(initPost.id) === String(articleIdParam)) {
         return initPost;
       }
+    }
+    if (articleIdParam) {
+      const initPosts = (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) || [];
+      const match = initPosts.find((p: any) => String(p.id) === String(articleIdParam));
+      if (match) return match;
     }
     return null;
   });
@@ -422,7 +427,7 @@ export function Blog() {
     const loadPosts = async () => {
       try {
         const dbPosts = await fetchBlogPosts();
-        if (dbPosts !== null) {
+        if (dbPosts !== null && dbPosts.length > 0) {
           setPosts(dbPosts);
           safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
           
@@ -433,16 +438,27 @@ export function Blog() {
               setSelectedPost(match);
             }
           }
+        } else if (posts.length === 0) {
+          // If fetch fails or returns empty, and we don't have initial posts yet, use defaultArticles
+          setPosts(defaultArticles);
+          safeStorage.setItem("blog_posts", JSON.stringify(defaultArticles));
         }
       } catch (err) {
         console.warn("Error fetching latest blog posts from database:", err);
+        if (posts.length === 0) {
+          setPosts(defaultArticles);
+        }
       } finally {
         setLoading(false);
       }
     };
 
+    // If preloaded posts exist, we don't block the UI with loading skeletons
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
+      setLoading(false);
+    }
     loadPosts();
-  }, []);
+  }, [articleIdParam]);
 
   // Update URL if deep linked article changes
   useEffect(() => {

@@ -79,15 +79,29 @@ const HomeBlogSkeleton = () => (
 export function Home() {
   const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business\nExchange"];
   const [index, setIndex] = useState(0);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
+      const parsed = (window as any).__INITIAL_BLOG_POSTS__;
+      const published = parsed.filter((p: any) => p.published);
+      if (published.length > 0) {
+        return [...published].sort((a, b) => b.views - a.views);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
+      return false;
+    }
+    return true;
+  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadBlogPosts = async () => {
       try {
         const posts = await fetchBlogPosts();
-        if (posts !== null) {
+        if (posts !== null && posts.length > 0) {
           const published = posts.filter(p => p.published);
           if (published.length > 0) {
             const sorted = [...published].sort((a, b) => b.views - a.views);
@@ -97,27 +111,27 @@ export function Home() {
           }
         }
         
-        // Fallback to cached articles
-        const stored = safeStorage.getItem("blog_posts");
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            const published = parsed.filter((p: any) => p.published);
-            if (published.length > 0) {
-              const sorted = [...published].sort((a, b) => b.views - a.views);
-              setBlogPosts(sorted);
-              return;
-            }
-          } catch {
-            // ignore
-          }
+        // If Supabase is empty or offline and we have no state, fallback to defaultArticles
+        if (blogPosts.length === 0) {
+          const published = defaultArticles.filter(p => p.published);
+          const sorted = [...published].sort((a, b) => b.views - a.views);
+          setBlogPosts(sorted);
         }
       } catch (err) {
         console.error("Failed to load blog posts in Home", err);
+        if (blogPosts.length === 0) {
+          const published = defaultArticles.filter(p => p.published);
+          const sorted = [...published].sort((a, b) => b.views - a.views);
+          setBlogPosts(sorted);
+        }
       } finally {
         setLoading(false);
       }
     };
+
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
+      setLoading(false);
+    }
     loadBlogPosts();
   }, []);
 
