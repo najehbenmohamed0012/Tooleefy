@@ -733,6 +733,80 @@ async function startServer() {
     }
   });
 
+  // Dynamic Open Graph (OG) image delivery route specifically for blog posts (base64 decoders & proxies)
+  app.get("/og/blog/:postId.jpg", async (req, res) => {
+    const postId = req.params.postId;
+    const client = getSupabaseClient();
+    let coverImage: string | null = null;
+    
+    if (client && postId) {
+      try {
+        const { data, error } = await client
+          .from("blog_posts")
+          .select("coverImage")
+          .eq("id", postId)
+          .maybeSingle();
+        if (!error && data) {
+          coverImage = data.coverImage;
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch cover image for /og/blog/${postId}.jpg:`, err);
+      }
+    }
+    
+    // Auto-detect host and protocol to resolve redirect URLs dynamically
+    let host = req.get("host") || "tooleefy.com";
+    if (!host.includes("localhost") && !host.includes("127.0.0.1") && host.includes(":")) {
+      host = host.split(":")[0];
+    }
+    const isInternal = host.includes("127.0.0.1") || host.includes("localhost") || host.includes("::1") || !host.includes(".");
+    if (isInternal) {
+      host = "tooleefy.com";
+    }
+    const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+
+    if (coverImage) {
+      if (coverImage.startsWith("data:image/")) {
+        try {
+          const parts = coverImage.split("base64,");
+          if (parts.length === 2) {
+            const mimePart = parts[0];
+            const base64Data = parts[1];
+            
+            let mimeType = "image/jpeg";
+            const mimeMatch = mimePart.match(/data:([^;]+)/);
+            if (mimeMatch && mimeMatch[1]) {
+              mimeType = mimeMatch[1];
+            }
+            
+            const buffer = Buffer.from(base64Data.trim(), "base64");
+            res.setHeader("Content-Type", mimeType);
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+            return res.send(buffer);
+          }
+        } catch (err) {
+          console.error(`Error decoding base64 image for /og/blog/${postId}.jpg:`, err);
+        }
+      } else if (coverImage.startsWith("http://") || coverImage.startsWith("https://")) {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.redirect(302, coverImage);
+      } else if (coverImage.startsWith("/") || coverImage.startsWith("og/") || coverImage.startsWith("images/")) {
+        const relativePath = coverImage.startsWith("/") ? coverImage : `/${coverImage}`;
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.redirect(302, `${protocol}://${host}${relativePath}`);
+      }
+    }
+    
+    // Ultimate fallback to static blog.jpg
+    const fallbackPath = path.join(distPath, "og", "blog.jpg");
+    if (fs.existsSync(fallbackPath)) {
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(fallbackPath);
+    }
+    return res.status(404).send("Not found");
+  });
+
   // Reliable exchange rates engine
   let ratesCache: any = {
     fiat: null,
@@ -1273,11 +1347,13 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       : '<meta name="robots" content="index, follow" />';
 
     let routeMeta = isProfilePage ? defMeta : (metaMap[reqPath] || defMeta);
+    let blogPostId = "";
 
     // Dynamic SEO injector for individual blog posts
     if (!isProfilePage && reqPath.startsWith("/blog/") && reqPath !== "/blog") {
       const postId = reqPath.split("/blog/")[1]?.split("?")[0];
       if (postId) {
+        blogPostId = postId;
         let foundPost: any = null;
         const client = getSupabaseClient();
         if (client) {
@@ -1358,6 +1434,12 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     if (param) {
       if (param.startsWith("http://") || param.startsWith("https://")) {
         ogImgUrlBase = param;
+      } else if (param.startsWith("data:image/")) {
+        if (blogPostId) {
+          ogImgUrlBase = `${protocol}://${host}/og/blog/${blogPostId}.jpg`;
+        } else {
+          ogImgUrlBase = `${protocol}://${host}/og/blog.jpg`;
+        }
       } else if (param.startsWith("/")) {
         ogImgUrlBase = `${protocol}://${host}${param}`;
       } else if (param.startsWith("og/") || param.startsWith("images/")) {
@@ -1461,8 +1543,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1376" />
-    <meta property="og:image:height" content="768" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${routeMeta.title}" />
 
     <!-- Twitter Card metadata -->

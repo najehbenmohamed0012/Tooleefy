@@ -207,8 +207,8 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1376" />
-    <meta property="og:image:height" content="768" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${meta.title}" />
 
     <!-- Twitter Card metadata -->
@@ -313,6 +313,8 @@ blogPostsToPreRender.forEach((post) => {
   if (param) {
     if (param.startsWith("http://") || param.startsWith("https://")) {
       ogImgUrlBase = param;
+    } else if (param.startsWith("data:image/")) {
+      ogImgUrlBase = `${protocol}://${host}/og/blog/${post.id}.jpg`;
     } else if (param.startsWith("/")) {
       ogImgUrlBase = `${protocol}://${host}${param}`;
     } else if (param.startsWith("og/") || param.startsWith("images/")) {
@@ -347,8 +349,8 @@ blogPostsToPreRender.forEach((post) => {
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
-    <meta property="og:image:width" content="1376" />
-    <meta property="og:image:height" content="768" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${title}" />
 
     <!-- Twitter Card metadata -->
