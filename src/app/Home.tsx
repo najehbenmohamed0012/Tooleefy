@@ -79,22 +79,8 @@ const HomeBlogSkeleton = () => (
 export function Home() {
   const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business\nExchange"];
   const [index, setIndex] = useState(0);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
-    const stored = safeStorage.getItem("blog_posts");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const published = parsed.filter((p: any) => p.published);
-        if (published.length > 0) {
-          return [...published].sort((a, b) => b.views - a.views);
-        }
-      } catch {}
-    }
-    return []; // Start empty, avoiding stale test articles flash
-  });
-  const [loading, setLoading] = useState(() => {
-    return !safeStorage.getItem("blog_posts");
-  });
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

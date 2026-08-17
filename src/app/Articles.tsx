@@ -378,34 +378,27 @@ export function Blog() {
 
   // Track asynchronous DB query load state
   const [loading, setLoading] = useState(() => {
-    return !safeStorage.getItem("blog_posts");
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POST__) {
+      return false;
+    }
+    return true;
   });
 
-  // Synchronous, instant load from cache or default fallback (strictly empty if live)
+  // Synchronous, instant load from server-injected script or default to empty list (relying on fresh fetch)
   const [posts, setPosts] = useState<BlogPost[]>(() => {
-    const raw = safeStorage.getItem("blog_posts");
-    if (raw) {
-      try {
-        return JSON.parse(raw);
-      } catch (e) {}
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POST__) {
+      return [(window as any).__INITIAL_BLOG_POST__];
     }
-    return []; // No defaultArticles fallback to prevent flashing stale test data
+    return [];
   });
 
   // Synchronously resolve the selected post on mount to avoid page flash
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(() => {
-    const initialPosts = (() => {
-      const raw = safeStorage.getItem("blog_posts");
-      if (raw) {
-        try {
-          return JSON.parse(raw);
-        } catch (e) {}
+    if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POST__) {
+      const initPost = (window as any).__INITIAL_BLOG_POST__;
+      if (articleIdParam && String(initPost.id) === String(articleIdParam)) {
+        return initPost;
       }
-      return [];
-    })();
-
-    if (articleIdParam && initialPosts.length > 0) {
-      return initialPosts.find(p => String(p.id) === String(articleIdParam)) || null;
     }
     return null;
   });

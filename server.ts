@@ -1348,6 +1348,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
 
     let routeMeta = isProfilePage ? defMeta : (metaMap[reqPath] || defMeta);
     let blogPostId = "";
+    let initialPostScript = "";
 
     // Dynamic SEO injector for individual blog posts
     if (!isProfilePage && reqPath.startsWith("/blog/") && reqPath !== "/blog") {
@@ -1360,7 +1361,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
           try {
             const { data, error } = await client
               .from("blog_posts")
-              .select("title, excerpt, seoTitle, seoDesc, seoKeywords, coverImage, category")
+              .select("*")
               .eq("id", postId)
               .maybeSingle();
             if (!error && data) {
@@ -1414,6 +1415,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
             keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
             ogImageParam: foundPost.coverImage || "blog"
           };
+          initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(foundPost).replace(/</g, '\\u003c')};\n    </script>\n`;
         }
       }
     }
@@ -1533,6 +1535,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="author" content="Tooleefy" />
     ${robotsTag}
     <link rel="canonical" href="${absoluteUrl}" />
+    ${initialPostScript}
 
     <!-- Open Graph tags for high priority indexing and dynamic preview layouts -->
     <meta property="og:type" content="website" />

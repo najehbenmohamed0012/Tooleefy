@@ -60,6 +60,12 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Clear legacy stale blog_posts cache to ensure everyone pulls fresh Supabase covers instantly
+    try {
+      safeStorage.removeItem("blog_posts");
+      localStorage.removeItem("blog_posts");
+    } catch {}
+
     const syncGlobalSettings = async () => {
       try {
         const cloudSettings = await fetchSiteSettings();
