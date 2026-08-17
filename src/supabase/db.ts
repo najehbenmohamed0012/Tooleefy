@@ -195,12 +195,12 @@ export async function fetchActivities() {
   }
 }
 
-// Fetch blog posts from Supabase table 'blog_posts' with graceful fallbacks
+// Fetch blog posts from Supabase table 'blog_posts' with graceful fallbacks (excluding heavy content)
 export async function fetchBlogPosts(): Promise<BlogPost[] | null> {
   try {
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("*")
+      .select("id, title, excerpt, date, author, category, views, reactions, published, coverImage, coverImageAlt, coverImageCaption, coverImageTitle, seoTitle, seoDesc, seoKeywords")
       .order("date", { ascending: false });
 
     if (error) {
@@ -213,6 +213,26 @@ export async function fetchBlogPosts(): Promise<BlogPost[] | null> {
     return filteredData as BlogPost[];
   } catch (err) {
     console.error("Error in fetchBlogPosts:", err);
+    return null;
+  }
+}
+
+// Fetch a single complete blog post from Supabase including content
+export async function fetchSingleBlogPost(id: string): Promise<BlogPost | null> {
+  try {
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      console.warn(`Supabase fetchSingleBlogPost failed for id ${id}:`, error.message);
+      return null;
+    }
+    return data as BlogPost;
+  } catch (err) {
+    console.error("Error in fetchSingleBlogPost:", err);
     return null;
   }
 }

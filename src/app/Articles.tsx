@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
-import { fetchBlogPosts, upsertBlogPost } from "@/supabase/db";
+import { fetchBlogPosts, upsertBlogPost, fetchSingleBlogPost } from "@/supabase/db";
 import { 
   Calendar, 
   User, 
@@ -245,99 +245,7 @@ const renderParagraphWithFormatting = (text: string, idx: number) => {
   );
 };
 
-export const defaultArticles: BlogPost[] = [
-  {
-    id: "art-1",
-    title: "Why Client-Side Processing is the Future of B2B SaaS",
-    excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-    content: `## The Rise of Decentralized Architectures
-
-In the classical cloud paradigm, client browsers acted as thin, passive portals. All telemetry, parsing, and structural data flowed upstream to centralized servers. While convenient, this model introduces high latency, huge bandwidth costs, and severe security compliance challenges (such as GDPR, HIPAA, and CCPA).
-
-### Enter Local-First Computing
-
-Modern JavaScript runtimes, accelerated WASM engines, and physical sandbox storage partitions (like standard IndexedDB) allow modern applications to execute heavy workloads *directly inside the browser*. This is the core philosophy of **Tooleefy**:
-
-1. **Absolute Security**: Because zero raw customer data leaves the user's terminal, a potential cloud vector leak is completely mitigated.
-2. **Sub-millisecond Latency**: Local computation processes QR styles, unit translations, and barcode sequences instantaneously.
-3. **Offline Integrity**: Your productivity suite remains 100% active, regardless of satellite, cellular, or local network interruptions.
-
-By embracing this decentralization, developers can build faster, cheaper, and inherently secure professional utilities that treat clients as powerful computation peers rather than dumb terminals.`,
-    date: "May 15, 2024",
-    author: "Tech Insider",
-    category: "Business",
-    views: 1420,
-    reactions: { heart: 88, fire: 54, thumbsUp: 31 },
-    published: true,
-    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-    seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
-    seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-    seoKeywords: "client-side, local-first, decentralized, SaaS, WASM"
-  },
-  {
-    id: "art-2",
-    title: "5 Common Invoicing Mistakes Every Freelancer Makes",
-    excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-    content: `## Professional Financial Standards
-
-Freelancers often operate as high-velocity solopreneurs. Yet, their financial backend remains their primary bottleneck. A single delayed invoice can disrupt key operational cashflow. Here are the five most common invoicing mistakes and how to solve them:
-
-### 1. Ambiguous Terms
-Never leave payment windows open. Avoid writing vague terms like "Payable on receipt." Instead, enforce precise guidelines (e.g., **NET 15** or **NET 30** with dynamic percentage-based late compound penalties clearly declared).
-
-### 2. Lack of Granular Breakdowns
-Clients hesitate when they see giant lump sums. Always structure your work scope as discrete, transparent line items, separating materials, consultative hours, and software subscriptions.
-
-### 3. Static/Manual Numbering
-Duplicate invoice numbers confuse bookkeeping software. Utilize a strict sequential indexing schema (e.g., \`INV-2026-0042\`) to ensure historical records remain pristine.
-
-### 4. Poor Mobile Readability
-Many business managers approve invoices on their smartphones. Avoid sending physical spreadsheets or dense tables. Ensure your layout converts to a responsive PDF container instantly.
-
-### 5. Neglecting Auto-calculating Tax Rates
-Double-checking sales taxes or regional VAT rates manually invite computational errors. Always use an auto-calculating professional generator like **Tooleefy Invoices** to ensure perfect sums.`,
-    date: "May 10, 2024",
-    author: "Finance Pro",
-    category: "Invoice Generator",
-    views: 935,
-    reactions: { heart: 42, fire: 22, thumbsUp: 19 },
-    published: true,
-    coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
-    seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes | Tooleefy",
-    seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-    seoKeywords: "invoicing, freelance, business tips, finance, invoice templates"
-  },
-  {
-    id: "art-3",
-    title: "Understanding QR Code Security: Beyond the Scanner",
-    excerpt: "An in-depth look at how dynamic QR codes are used in modern cybersecurity and authentication workflows.",
-    content: `## The Modern Security Landscape of Matrix Codes
-
-Initially developed in 1994 by Denso Wave for automotive tracking, Quick Response (QR) codes have become the ubiquitous bridging mechanism between physical reality and digital directories. However, with massive convenience comes security vectors that admins must defend.
-
-### The Problem: Malicious Redirection
-
-Because humans cannot read raw QR pixel arrays intuitively, we rely entirely on scanner software to decode terminal endpoints. Attackers leverage this by pasting fraudulent stickers over physical QR codes (a vector known as *Quishing*).
-
-### Best Practices for Secure QR Usage:
-
-- **Static vs. Dynamic Isolation**: Real-time static generation compiled in the sandbox is immune to server manipulation. Ensure encryption keys are held in client cookies rather than remote data pools.
-- **Strict HTTPS Constraints**: Scanners should never auto-load endpoints that do not display verified SSL certificates or validated security signatures.
-- **Custom Visual Brand Authentication**: Applying cohesive company colors, embedded logo signatures, and custom styling patterns makes forgery of your physical banners far more difficult to execute.
-
-Understanding how to isolate QR code generation inside client environments ensures that your team and your corporate users remain secure.`,
-    date: "May 05, 2024",
-    author: "Security Team",
-    category: "QR Code Generator",
-    views: 2125,
-    reactions: { heart: 110, fire: 72, thumbsUp: 50 },
-    published: true,
-    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-    seoTitle: "Understanding QR Code Security: Beyond the Scanner",
-    seoDesc: "An in-depth look at how dynamic QR codes are used in modern cybersecurity and authentication workflows.",
-    seoKeywords: "qr code security, quishing, encryption, cyber security, qr scanner"
-  }
-];
+export const defaultArticles: BlogPost[] = [];
 
 const BlogSkeletonGrid = () => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -476,6 +384,28 @@ export function Blog() {
       setSelectedPost(null);
     }
   }, [articleIdParam, posts, id, navigate, selectedPost]);
+
+  const [fullPostLoading, setFullPostLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedPost && !selectedPost.content) {
+      const loadFullPost = async () => {
+        setFullPostLoading(true);
+        try {
+          const full = await fetchSingleBlogPost(selectedPost.id);
+          if (full && full.content) {
+            setSelectedPost(full);
+            setPosts(prev => prev.map(p => p.id === full.id ? full : p));
+          }
+        } catch (err) {
+          console.warn("Failed to load full article content:", err);
+        } finally {
+          setFullPostLoading(false);
+        }
+      };
+      loadFullPost();
+    }
+  }, [selectedPost?.id]);
 
   // Dynamic Open Graph and Meta Tag optimization for the selected article
   useEffect(() => {
@@ -834,54 +764,68 @@ export function Blog() {
 
               {/* Body Content - beautiful typography */}
               <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-semibold space-y-6 animate-fade-in">
-                {selectedPost.content.split("\n\n").map((block, idx) => {
-                  const renderedBlock = (() => {
-                    if (block.startsWith("## ")) {
-                      return (
-                        <h2 key={idx} className="text-2xl md:text-3xl font-black text-foreground italic uppercase tracking-tight pt-6 border-b border-border/40 pb-2">
-                          {parseInlineFormatting(block.replace("## ", ""))}
-                        </h2>
-                      );
-                    }
-                    if (block.startsWith("### ")) {
-                      return (
-                        <h3 key={idx} className="text-xl font-black text-foreground uppercase tracking-wider pt-4">
-                          {parseInlineFormatting(block.replace("### ", ""))}
-                        </h3>
-                      );
-                    }
-                    if (block.startsWith("- ")) {
-                      return (
-                        <ul key={idx} className="list-disc pl-6 space-y-2 text-muted-foreground font-medium">
-                          {block.split("\n").map((li, i) => (
-                            <li key={i}>{parseInlineFormatting(li.replace("- ", ""))}</li>
-                          ))}
-                        </ul>
-                      );
-                    }
-                    if (block.startsWith("1. ")) {
-                      return (
-                        <ol key={idx} className="list-decimal pl-6 space-y-3 text-muted-foreground font-medium">
-                          {block.split("\n").map((li, i) => (
-                            <li key={i}>{parseInlineFormatting(li.substring(3))}</li>
-                          ))}
-                        </ol>
-                      );
-                    }
-                    return renderParagraphWithFormatting(block, idx);
-                  })();
+                {fullPostLoading || !selectedPost.content ? (
+                  <div className="space-y-4 py-2">
+                    <div className="h-4 bg-muted rounded-full w-full animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-5/6 animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-11/12 animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-full animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-4/5 animate-pulse" />
+                    <div className="h-8 bg-muted rounded-2xl w-1/3 animate-pulse my-6" />
+                    <div className="h-4 bg-muted rounded-full w-full animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-11/12 animate-pulse" />
+                    <div className="h-4 bg-muted rounded-full w-5/6 animate-pulse" />
+                  </div>
+                ) : (
+                  selectedPost.content.split("\n\n").map((block, idx) => {
+                    const renderedBlock = (() => {
+                      if (block.startsWith("## ")) {
+                        return (
+                          <h2 key={idx} className="text-2xl md:text-3xl font-black text-foreground italic uppercase tracking-tight pt-6 border-b border-border/40 pb-2">
+                            {parseInlineFormatting(block.replace("## ", ""))}
+                          </h2>
+                        );
+                      }
+                      if (block.startsWith("### ")) {
+                        return (
+                          <h3 key={idx} className="text-xl font-black text-foreground uppercase tracking-wider pt-4">
+                            {parseInlineFormatting(block.replace("### ", ""))}
+                          </h3>
+                        );
+                      }
+                      if (block.startsWith("- ")) {
+                        return (
+                          <ul key={idx} className="list-disc pl-6 space-y-2 text-muted-foreground font-medium">
+                            {block.split("\n").map((li, i) => (
+                              <li key={i}>{parseInlineFormatting(li.replace("- ", ""))}</li>
+                            ))}
+                          </ul>
+                        );
+                      }
+                      if (block.startsWith("1. ")) {
+                        return (
+                          <ol key={idx} className="list-decimal pl-6 space-y-3 text-muted-foreground font-medium">
+                            {block.split("\n").map((li, i) => (
+                              <li key={i}>{parseInlineFormatting(li.substring(3))}</li>
+                            ))}
+                          </ol>
+                        );
+                      }
+                      return renderParagraphWithFormatting(block, idx);
+                    })();
 
-                  if (idx === 4) {
-                    return (
-                      <React.Fragment key={idx}>
-                        <AdSenseUnit slot="8920153810" type="sidebar" className="my-8" />
-                        {renderedBlock}
-                      </React.Fragment>
-                    );
-                  }
+                    if (idx === 4) {
+                      return (
+                        <React.Fragment key={idx}>
+                          <AdSenseUnit slot="8920153810" type="sidebar" className="my-8" />
+                          {renderedBlock}
+                        </React.Fragment>
+                      );
+                    }
 
-                  return <React.Fragment key={idx}>{renderedBlock}</React.Fragment>;
-                })}
+                    return <React.Fragment key={idx}>{renderedBlock}</React.Fragment>;
+                  })
+                )}
               </div>
 
               {/* Reaction and Engagement Control */}
