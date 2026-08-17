@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { defaultArticles, BlogPost } from "@/app/Articles";
 import { fetchBlogPosts } from "@/supabase/db";
+import { BlogImage } from "@/components/BlogImage";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { safeStorage } from "@/utils/safeStorage";
 
@@ -443,12 +444,10 @@ export function Home() {
                     <Card className="h-full bg-card hover:bg-card/90 border border-border/40 hover:border-primary/30 shadow-premium hover:shadow-2xl transition-all duration-500 rounded-[2rem] overflow-hidden flex flex-col p-4">
                       {/* Cover Image */}
                       <div className="relative h-48 sm:h-56 rounded-[1.5rem] overflow-hidden bg-muted mb-6">
-                        <img
-                          src={post.coverImage || "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?auto=format&fit=crop&w=800&q=80"}
+                        <BlogImage
+                          id={post.id}
                           alt={post.coverImageAlt || post.title}
-                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                          id={`home-blog-img-${post.id}`}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
                         

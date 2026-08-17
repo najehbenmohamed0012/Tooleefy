@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/PageHeader";
+import { BlogImage } from "@/components/BlogImage";
 import { Card } from "@/components/ui/card";
 import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { fetchBlogPosts, upsertBlogPost, fetchSingleBlogPost } from "@/supabase/db";
@@ -631,16 +632,11 @@ export function Blog() {
                           onClick={() => handleOpenPost(article)}
                         >
                         <div className="aspect-[16/10] bg-muted relative overflow-hidden">
-                          {article.coverImage ? (
-                            <img 
-                              src={article.coverImage} 
-                              alt={article.title} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-720 ease-out"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-                          )}
+                          <BlogImage 
+                            id={article.id} 
+                            alt={article.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-720 ease-out"
+                          />
                           <div className="absolute top-6 left-6 px-3 py-1 bg-background rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm border border-border/20">
                             {article.category}
                           </div>
@@ -711,17 +707,14 @@ export function Blog() {
 
             {/* Premium Article Container */}
             <div className="container mx-auto px-6 max-w-4xl mt-12 bg-card rounded-[3rem] p-8 md:p-14 border border-border/20 shadow-premium">
-              {selectedPost.coverImage && (
-                <div className="w-full h-80 md:h-[26rem] rounded-[2rem] overflow-hidden mb-12 shadow-sm relative">
-                  <img 
-                    src={selectedPost.coverImage} 
-                    alt={selectedPost.title} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-                </div>
-              )}
+              <div className="w-full h-80 md:h-[26rem] rounded-[2rem] overflow-hidden mb-12 shadow-sm relative bg-muted">
+                <BlogImage 
+                  id={selectedPost.id} 
+                  alt={selectedPost.title} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
+              </div>
 
               {/* Tag and stats metrics panel */}
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-6 mb-8">
@@ -974,16 +967,11 @@ export function Blog() {
                       }}
                     >
                       <div className="aspect-[16/10] bg-muted relative overflow-hidden">
-                        {article.coverImage ? (
-                          <img 
-                            src={article.coverImage} 
-                            alt={article.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-                        )}
+                        <BlogImage 
+                          id={article.id} 
+                          alt={article.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
                         <div className="absolute top-4 left-4 px-2.5 py-0.5 bg-background/90 backdrop-blur-sm rounded-full text-[9px] font-black uppercase tracking-widest text-primary border border-border/10">
                           {article.category}
                         </div>

@@ -1360,11 +1360,11 @@ Primary SEO Keywords to include: "${keywordsList}"`;
 
       if (client) {
         try {
-          // Optimization: select only metadata columns, omitting the heavy "content" column
+          // Optimization: select only metadata columns, omitting the heavy "content" and "coverImage" columns
           // to prevent Supabase query timeouts on massive base64 cover images.
           const { data, error } = await client
             .from("blog_posts")
-            .select("id, title, excerpt, date, author, category, views, reactions, published, coverImage, coverImageAlt, coverImageCaption, coverImageTitle, seoTitle, seoDesc, seoKeywords")
+            .select("id, title, excerpt, date, author, category, views, reactions, published, coverImageAlt, coverImageCaption, coverImageTitle, seoTitle, seoDesc, seoKeywords")
             .order("date", { ascending: false });
           if (!error && data) {
             allPosts = data.filter((p: any) => p.id !== "tooleefy_system_settings_v1");
