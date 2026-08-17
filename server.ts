@@ -1652,6 +1652,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
         const isDynamicPage = cleanPath === "/" || 
                              cleanPath === "/index.html" || 
                              cleanPath.startsWith("/tools/") || 
+                             cleanPath === "/blog" ||
+                             cleanPath.startsWith("/blog/") ||
                              cleanPath === "/categories" || 
                              cleanPath === "/about" || 
                              cleanPath === "/faq" || 
