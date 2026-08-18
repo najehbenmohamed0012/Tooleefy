@@ -663,6 +663,7 @@ export function Blog() {
                           <BlogImage 
                             id={article.id} 
                             alt={article.title} 
+                            coverImage={article.coverImage}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-720 ease-out"
                           />
                           <div className="absolute top-6 left-6 px-3 py-1 bg-background rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm border border-border/20">
@@ -739,6 +740,7 @@ export function Blog() {
                 <BlogImage 
                   id={selectedPost.id} 
                   alt={selectedPost.title} 
+                  coverImage={selectedPost.coverImage}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
