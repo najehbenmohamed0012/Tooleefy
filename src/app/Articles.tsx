@@ -416,7 +416,15 @@ export function Blog() {
           const full = await fetchSingleBlogPost(selectedPost.id);
           if (full && full.content) {
             setSelectedPost(full);
-            setPosts(prev => prev.map(p => p.id === full.id ? full : p));
+            setPosts(prev => {
+              const updated = prev.map(p => p.id === full.id ? full : p);
+              try {
+                safeStorage.setItem("blog_posts", JSON.stringify(updated));
+              } catch (e) {
+                // ignore
+              }
+              return updated;
+            });
           }
         } catch (err) {
           console.warn("Failed to load full article content:", err);

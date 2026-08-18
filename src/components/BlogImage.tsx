@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/supabase/client";
+import { safeStorage } from "@/utils/safeStorage";
 
-// Client-side cache to retain downloaded base64 cover images during session navigation
-const coverImageCache = new Map<string, string>();
+// Memory cache as a fast-lookup tier
+const memoryCoverImageCache = new Map<string, string>();
 
 interface BlogImageProps {
   id: string;
@@ -13,13 +14,30 @@ interface BlogImageProps {
 
 export function BlogImage({ id, className = "w-full h-full object-cover", alt = "Blog Cover Image", fallbackImage }: BlogImageProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(() => {
-    return coverImageCache.get(id) || null;
+    // 1. Check memory cache tier
+    if (memoryCoverImageCache.has(id)) {
+      return memoryCoverImageCache.get(id) || null;
+    }
+    // 2. Check localStorage cache tier for instant startup rendering
+    try {
+      const cached = safeStorage.getItem(`cover_image_${id}`);
+      if (cached) {
+        memoryCoverImageCache.set(id, cached);
+        return cached;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
   });
   const [loading, setLoading] = useState(!imageSrc);
 
   useEffect(() => {
     // If image is already cached in memory, do not trigger a database read
-    if (imageSrc) return;
+    if (imageSrc) {
+      setLoading(false);
+      return;
+    }
 
     let active = true;
     const fetchImage = async () => {
@@ -32,7 +50,12 @@ export function BlogImage({ id, className = "w-full h-full object-cover", alt = 
 
         if (active) {
           if (!error && data?.coverImage) {
-            coverImageCache.set(id, data.coverImage);
+            memoryCoverImageCache.set(id, data.coverImage);
+            try {
+              safeStorage.setItem(`cover_image_${id}`, data.coverImage);
+            } catch (e) {
+              // ignore storage limits
+            }
             setImageSrc(data.coverImage);
           } else if (fallbackImage) {
             setImageSrc(fallbackImage);
