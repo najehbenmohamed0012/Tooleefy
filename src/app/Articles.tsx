@@ -24,7 +24,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
-import { safeStorage } from "@/utils/safeStorage";
+import { safeStorage, dbCache } from "@/utils/safeStorage";
+import { supabase } from "@/supabase/client";
 
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -388,6 +389,75 @@ export function Blog() {
     }
     loadPosts();
   }, []);
+
+  // Proactive Background Prefetching Pipeline
+  useEffect(() => {
+    if (posts.length === 0) return;
+
+    let active = true;
+
+    const prefetchAssets = async () => {
+      // Defer prefetching to run after initial paint to keep UI perfectly smooth (60fps)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!active) return;
+
+      // 1. Proactively prefetch all cover images into IndexedDB cache
+      for (const post of posts) {
+        if (!active) return;
+        try {
+          const cacheKey = `cover_image_${post.id}`;
+          const existing = await dbCache.getItem(cacheKey);
+          if (!existing) {
+            const { data } = await supabase
+              .from("blog_posts")
+              .select("coverImage")
+              .eq("id", post.id)
+              .maybeSingle();
+
+            if (data?.coverImage) {
+              const trimmed = data.coverImage.trim().toLowerCase();
+              const isExternal = trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.includes("unsplash.com");
+              if (!isExternal) {
+                await dbCache.setItem(cacheKey, data.coverImage);
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // 2. Proactively prefetch full text content for all articles in the background
+      for (const post of posts) {
+        if (!active) return;
+        if (!post.content) {
+          try {
+            const full = await fetchSingleBlogPost(post.id);
+            if (active && full && full.content) {
+              setPosts(prev => {
+                const updated = prev.map(p => p.id === full.id ? { ...p, content: full.content } : p);
+                try {
+                  const cleanForCache = updated.map(({ coverImage, ...rest }) => rest);
+                  safeStorage.setItem("blog_posts", JSON.stringify(cleanForCache));
+                } catch (e) {}
+                return updated;
+              });
+            }
+            // Add a small pause between fetches to keep network activity friendly and CPU usage minimal
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (err) {
+            // ignore
+          }
+        }
+      }
+    };
+
+    prefetchAssets();
+
+    return () => {
+      active = false;
+    };
+  }, [posts.length]);
 
   // Update URL or active article when routing state changes
   useEffect(() => {
