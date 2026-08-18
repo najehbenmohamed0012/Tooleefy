@@ -1403,7 +1403,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
               keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
               ogImageParam: foundPost.coverImage || "blog"
             };
-            initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(foundPost).replace(/</g, '\\u003c')};\n    window.__INITIAL_BLOG_POSTS__ = ${JSON.stringify(allPosts).replace(/</g, '\\u003c')};\n    </script>\n`;
+            const { coverImage, ...lightweightPost } = foundPost;
+            initialPostScript = `\n    <script>\n    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(lightweightPost).replace(/</g, '\\u003c')};\n    window.__INITIAL_BLOG_POSTS__ = ${JSON.stringify(allPosts).replace(/</g, '\\u003c')};\n    </script>\n`;
           }
         }
       }
@@ -1517,6 +1518,8 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     
     let html = indexHtmlCache || "";
     
+    const ogType = blogPostId ? "article" : "website";
+
     const seoTags = `
     <!-- General SEO tags -->
     <meta name="description" content="${routeMeta.desc}" />
@@ -1524,10 +1527,9 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="author" content="Tooleefy" />
     ${robotsTag}
     <link rel="canonical" href="${absoluteUrl}" />
-    ${initialPostScript}
 
     <!-- Open Graph tags for high priority indexing and dynamic preview layouts -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="${ogType}" />
     <meta property="og:site_name" content="Tooleefy" />
     <meta property="og:url" content="${absoluteUrl}" />
     <meta property="og:title" content="${routeMeta.title}" />
@@ -1544,7 +1546,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="twitter:url" content="${absoluteUrl}" />
     <meta name="twitter:title" content="${routeMeta.title}" />
     <meta name="twitter:description" content="${routeMeta.desc}" />
-    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
+    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}${initialPostScript}
     `;
 
     // Inject Title and custom compiled meta blocks cleanly nested before </head>
