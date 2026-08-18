@@ -290,13 +290,29 @@ export function Blog() {
     if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
       return false;
     }
+    try {
+      const cached = safeStorage.getItem("blog_posts");
+      if (cached && JSON.parse(cached).length > 0) {
+        return false;
+      }
+    } catch (e) {
+      // ignore
+    }
     return true;
   });
 
-  // Synchronous, instant load from server-injected script or default to empty list (relying on fresh fetch)
+  // Synchronous, instant load from server-injected script, local storage cache, or default to empty list (relying on fresh fetch)
   const [posts, setPosts] = useState<BlogPost[]>(() => {
     if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
       return (window as any).__INITIAL_BLOG_POSTS__;
+    }
+    try {
+      const cached = safeStorage.getItem("blog_posts");
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      // ignore
     }
     return [];
   });
@@ -313,6 +329,18 @@ export function Blog() {
       const initPosts = (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) || [];
       const match = initPosts.find((p: any) => String(p.id) === String(articleIdParam));
       if (match) return match;
+
+      // Check client-side localStorage fallback
+      try {
+        const cached = safeStorage.getItem("blog_posts");
+        if (cached) {
+          const parsed = JSON.parse(cached) as BlogPost[];
+          const m = parsed.find((p: any) => String(p.id) === String(articleIdParam));
+          if (m) return m;
+        }
+      } catch (e) {
+        // ignore
+      }
     }
     return null;
   });
@@ -339,14 +367,6 @@ export function Blog() {
         if (dbPosts !== null && dbPosts.length > 0) {
           setPosts(dbPosts);
           safeStorage.setItem("blog_posts", JSON.stringify(dbPosts));
-          
-          // Refresh selected post if data has updated on server
-          if (articleIdParam) {
-            const match = dbPosts.find(p => String(p.id) === String(articleIdParam));
-            if (match) {
-              setSelectedPost(match);
-            }
-          }
         } else if (posts.length === 0) {
           // If fetch fails or returns empty, and we don't have initial posts yet, use defaultArticles
           setPosts(defaultArticles);
@@ -367,9 +387,9 @@ export function Blog() {
       setLoading(false);
     }
     loadPosts();
-  }, [articleIdParam]);
+  }, []);
 
-  // Update URL if deep linked article changes
+  // Update URL or active article when routing state changes
   useEffect(() => {
     if (posts.length > 0 && articleIdParam) {
       const match = posts.find(p => String(p.id) === String(articleIdParam));
@@ -723,7 +743,7 @@ export function Blog() {
                     {selectedPost.category}
                   </span>
                   <div className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-primary" /> {Math.max(2, Math.ceil(selectedPost.content.split(" ").length / 225))} min read
+                    <Clock className="w-4 h-4 text-primary" /> {Math.max(2, Math.ceil((selectedPost.content || "").split(" ").length / 225))} min read
                   </div>
                 </div>
 
