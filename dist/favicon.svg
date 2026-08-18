@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .bg { fill: #006241; stroke: white; stroke-width: 4; }
+    .icon { fill: white; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: white; stroke: #006241; }
+      .icon { fill: #006241; }
+    }
+  </style>
+  <rect x="2" y="2" width="96" height="96" rx="24" class="bg" />
+  <path d="M22 20 H78 L74 35 H56 L46 80 H30 L40 35 H22 Z" class="icon" />
+  <circle cx="78" cy="74" r="10" class="icon" />
+</svg>

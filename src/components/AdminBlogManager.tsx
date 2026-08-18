@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
+import { BlogImage } from "@/components/BlogImage";
 import { fetchBlogPosts, upsertBlogPost, deleteBlogPost } from "@/supabase/db";
 import { getApiUrl } from "@/lib/utils";
 import { safeStorage } from "@/utils/safeStorage";
@@ -754,12 +755,13 @@ ALTER TABLE blog_posts DISABLE ROW LEVEL SECURITY;`}
                           <tr key={post.id} className="hover:bg-muted/10 transition-colors group">
                             <td className="py-4 pr-4">
                               <div className="flex items-center gap-4 min-w-[280px]">
-                                <div className="w-14 h-10 bg-muted/60 rounded-lg overflow-hidden shrink-0 border border-border/40">
-                                  {post.coverImage ? (
-                                    <img src={post.coverImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-transparent" />
-                                  )}
+                                <div className="w-14 h-10 bg-muted/60 rounded-lg overflow-hidden shrink-0 border border-border/40 relative">
+                                  <BlogImage 
+                                    id={post.id} 
+                                    alt={post.title} 
+                                    coverImage={post.coverImage} 
+                                    className="w-full h-full object-cover" 
+                                  />
                                 </div>
                                 <div className="truncate">
                                   <p className="font-extrabold text-foreground group-hover:text-primary transition-colors truncate max-w-[240px] md:max-w-[340px]" title={post.title}>
