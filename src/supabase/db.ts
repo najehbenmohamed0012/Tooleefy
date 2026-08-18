@@ -195,12 +195,12 @@ export async function fetchActivities() {
   }
 }
 
-// Fetch blog posts from Supabase table 'blog_posts' with graceful fallbacks (excluding heavy content)
+// Fetch blog posts from Supabase table 'blog_posts' with graceful fallbacks (excluding heavy content and coverImage)
 export async function fetchBlogPosts(): Promise<BlogPost[] | null> {
   try {
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id, title, excerpt, date, author, category, views, reactions, published, coverImage, coverImageAlt, coverImageCaption, coverImageTitle, seoTitle, seoDesc, seoKeywords")
+      .select("id, title, excerpt, date, author, category, views, reactions, published, coverImageAlt, coverImageCaption, coverImageTitle, seoTitle, seoDesc, seoKeywords")
       .order("date", { ascending: false });
 
     if (error) {

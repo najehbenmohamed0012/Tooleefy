@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/supabase/client";
-import { safeStorage } from "@/utils/safeStorage";
+import { safeStorage, dbCache } from "@/utils/safeStorage";
 
 // Memory cache as a fast-lookup tier
 const memoryCoverImageCache = new Map<string, string>();
@@ -24,25 +24,13 @@ export function BlogImage({ id, className = "w-full h-full object-cover", alt = 
     // 0. Use pre-loaded cover image if passed and valid
     if (coverImage && !isExternalUrl(coverImage)) {
       memoryCoverImageCache.set(id, coverImage);
-      try {
-        safeStorage.setItem(`cover_image_${id}`, coverImage);
-      } catch (e) {}
+      dbCache.setItem(`cover_image_${id}`, coverImage).catch(() => {});
       return coverImage;
     }
     // 1. Check memory cache tier
     if (memoryCoverImageCache.has(id)) {
       const mem = memoryCoverImageCache.get(id) || null;
       if (mem && !isExternalUrl(mem)) return mem;
-    }
-    // 2. Check localStorage cache tier for instant startup rendering
-    try {
-      const cached = safeStorage.getItem(`cover_image_${id}`);
-      if (cached && !isExternalUrl(cached)) {
-        memoryCoverImageCache.set(id, cached);
-        return cached;
-      }
-    } catch (e) {
-      // ignore
     }
     return null;
   });
@@ -54,16 +42,32 @@ export function BlogImage({ id, className = "w-full h-full object-cover", alt = 
   });
 
   useEffect(() => {
-    // If we already have a valid local image source, or the preloaded image was determined to be an external URL
-    // (which we will block and replace with gradient directly), stop loading and skip DB query.
-    if (imageSrc || (coverImage && isExternalUrl(coverImage))) {
-      setLoading(false);
-      return;
-    }
-
     let active = true;
+
     const fetchImage = async () => {
+      // 1. If we already have imageSrc, stop loading
+      if (imageSrc) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      // 2. Check if we have preloaded coverImage that is external
+      if (coverImage && isExternalUrl(coverImage)) {
+        if (active) setLoading(false);
+        return;
+      }
+
       try {
+        // 3. Try to load from high-speed IndexedDB cache
+        const cached = await dbCache.getItem(`cover_image_${id}`);
+        if (active && cached && !isExternalUrl(cached)) {
+          memoryCoverImageCache.set(id, cached);
+          setImageSrc(cached);
+          setLoading(false);
+          return;
+        }
+
+        // 4. Query Supabase
         const { data, error } = await supabase
           .from("blog_posts")
           .select("coverImage")
@@ -73,11 +77,7 @@ export function BlogImage({ id, className = "w-full h-full object-cover", alt = 
         if (active) {
           if (!error && data?.coverImage && !isExternalUrl(data.coverImage)) {
             memoryCoverImageCache.set(id, data.coverImage);
-            try {
-              safeStorage.setItem(`cover_image_${id}`, data.coverImage);
-            } catch (e) {
-              // ignore storage limits
-            }
+            await dbCache.setItem(`cover_image_${id}`, data.coverImage);
             setImageSrc(data.coverImage);
           } else if (fallbackImage && !isExternalUrl(fallbackImage)) {
             setImageSrc(fallbackImage);
@@ -104,6 +104,7 @@ export function BlogImage({ id, className = "w-full h-full object-cover", alt = 
       active = false;
     };
   }, [id, fallbackImage, imageSrc, coverImage]);
+
 
   if (loading) {
     return (

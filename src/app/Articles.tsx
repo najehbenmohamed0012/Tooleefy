@@ -419,7 +419,9 @@ export function Blog() {
             setPosts(prev => {
               const updated = prev.map(p => p.id === full.id ? full : p);
               try {
-                safeStorage.setItem("blog_posts", JSON.stringify(updated));
+                // Strip heavy coverImage binary payload to keep localStorage under the strict 5MB quota
+                const cleanForCache = updated.map(({ coverImage, ...rest }) => rest);
+                safeStorage.setItem("blog_posts", JSON.stringify(cleanForCache));
               } catch (e) {
                 // ignore
               }

@@ -90,3 +90,60 @@ export const safeStorage = {
     }
   }
 };
+
+// High-performance asynchronous IndexedDB cache for storing large base64 cover images without size quotas.
+export const dbCache = {
+  dbPromise: null as Promise<IDBDatabase> | null,
+
+  getDB(): Promise<IDBDatabase> {
+    if (this.dbPromise) return this.dbPromise;
+
+    this.dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open("TooleefyCacheDB", 1);
+      request.onupgradeneeded = (event: any) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("images")) {
+          db.createObjectStore("images");
+        }
+      };
+      request.onsuccess = (event: any) => {
+        resolve(event.target.result);
+      };
+      request.onerror = (event: any) => {
+        reject(event.target.error);
+      };
+    });
+    return this.dbPromise;
+  },
+
+  async getItem(key: string): Promise<string | null> {
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve) => {
+        const transaction = db.transaction("images", "readonly");
+        const store = transaction.objectStore("images");
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+      });
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async setItem(key: string, value: string): Promise<boolean> {
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve) => {
+        const transaction = db.transaction("images", "readwrite");
+        const store = transaction.objectStore("images");
+        const request = store.put(value, key);
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => resolve(false);
+      });
+    } catch (e) {
+      return false;
+    }
+  }
+};
+
