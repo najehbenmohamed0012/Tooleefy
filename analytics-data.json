@@ -1,17 +1,17 @@
 {
   "pageVisits": {
-    "invoice": 0,
+    "invoice": 1,
     "converter": 0,
     "qr": 0,
     "barcode": 0,
-    "blog": 0,
-    "home": 22,
+    "blog": 1,
+    "home": 20,
     "about": 0
   },
   "totalVisits": 22,
   "registeredVisits": 22,
   "guestVisits": 0,
-  "rawServerVisits": 298,
+  "rawServerVisits": 281,
   "botVisits": 10,
   "actionsCount": {
     "converter": 0,
@@ -43,11 +43,11 @@
   },
   "demographics": {
     "age_18_24": 6,
-    "age_25_34": 10,
-    "age_35_44": 4,
+    "age_25_34": 7,
+    "age_35_44": 7,
     "age_45_plus": 2,
-    "male": 8,
-    "female": 14,
+    "male": 9,
+    "female": 13,
     "non_binary": 0
   }
 }

@@ -318,6 +318,74 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
   
+  // Generate JSON-LD Schema
+  let jsonLdSchema = null;
+  if (route === "/") {
+    jsonLdSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Tooleefy",
+      "url": `${protocol}://${host}/`,
+      "description": meta.desc,
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires HTML5/CSS3",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "Tooleefy",
+        "url": `${protocol}://${host}/`
+      }
+    };
+  } else {
+    const toolLabel = meta.title.split("|")[0].trim();
+    jsonLdSchema = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": `${protocol}://${host}${route}#webapp`,
+          "name": toolLabel,
+          "url": `${protocol}://${host}${route}`,
+          "applicationCategory": route.includes("invoice") ? "FinancialApplication" : route.includes("qr") ? "DesignApplication" : route.includes("barcode") ? "RetailApplication" : "UtilityApplication",
+          "operatingSystem": "All",
+          "description": meta.desc,
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": `${protocol}://${host}${route}#breadcrumb`,
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": `${protocol}://${host}/`
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": toolLabel,
+              "item": `${protocol}://${host}${route}`
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  const schemaString = jsonLdSchema 
+    ? `\n    <script type="application/ld+json">\n    ${JSON.stringify(jsonLdSchema, null, 2).replace(/\n/g, "\n    ")}\n    </script>`
+    : "";
+
   // Build clean SEO meta tags block
   const seoTags = `
     <!-- General SEO tags -->
@@ -345,7 +413,7 @@ Object.entries(metaMap).forEach(([route, meta]) => {
     <meta name="twitter:url" content="${absoluteUrl}" />
     <meta name="twitter:title" content="${meta.title}" />
     <meta name="twitter:description" content="${meta.desc}" />
-    <meta name="twitter:image" content="${ogImgUrl}" />
+    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
   `;
 
   let pageHtml = baseHtml;
@@ -442,6 +510,60 @@ blogPostsToPreRender.forEach((post) => {
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
     
+  // Generate BlogPosting JSON-LD Schema
+  const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${protocol}://${host}${route}#entry`,
+        "headline": post.title,
+        "description": post.seoDesc || post.excerpt,
+        "image": ogImgUrl,
+        "datePublished": post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
+        "author": {
+          "@type": "Person",
+          "name": post.author || "Tooleefy Team"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Tooleefy",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${protocol}://${host}/favicon.svg`
+          }
+        },
+        "mainEntityOfPage": `${protocol}://${host}${route}`
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${protocol}://${host}${route}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": `${protocol}://${host}/`
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": `${protocol}://${host}/blog`
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": post.title,
+            "item": `${protocol}://${host}${route}`
+          }
+        ]
+      }
+    ]
+  };
+
+  const schemaString = `\n    <script type="application/ld+json">\n    ${JSON.stringify(jsonLdSchema, null, 2).replace(/\n/g, "\n    ")}\n    </script>`;
+
   const seoTags = `
     <!-- General SEO tags for ${post.title} -->
     <meta name="description" content="${desc}" />
@@ -468,7 +590,7 @@ blogPostsToPreRender.forEach((post) => {
     <meta name="twitter:url" content="${absoluteUrl}" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${desc}" />
-    <meta name="twitter:image" content="${ogImgUrl}" />
+    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
   `;
 
   let pageHtml = baseHtml;

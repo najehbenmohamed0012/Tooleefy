@@ -1721,6 +1721,7 @@ ${article.content}`;
 
     let routeMeta = isProfilePage ? defMeta : (metaMap[reqPath] || defMeta);
     let blogPostId = "";
+    let foundPost: any = null;
     let initialPostScript = "";
 
     // Dynamic SEO injector for blog index, individual posts, and home page
@@ -1729,7 +1730,6 @@ ${article.content}`;
       const isHome = reqPath === "/" || reqPath === "/index.html";
       const client = getSupabaseClient();
       let allPosts: any[] = [];
-      let foundPost: any = null;
 
       if (client) {
         try {
@@ -1810,6 +1810,57 @@ ${article.content}`;
           "name": "Tooleefy",
           "url": `${protocol}://${host}/`
         }
+      };
+    } else if (blogPostId && foundPost) {
+      jsonLdSchema = {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "BlogPosting",
+            "@id": `${protocol}://${host}${reqPath}#entry`,
+            "headline": foundPost.title,
+            "description": foundPost.seoDesc || foundPost.excerpt,
+            "image": ogImgUrl,
+            "datePublished": foundPost.date ? new Date(foundPost.date).toISOString() : new Date().toISOString(),
+            "author": {
+              "@type": "Person",
+              "name": foundPost.author || "Tooleefy Team"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Tooleefy",
+              "logo": {
+                "@type": "ImageObject",
+                "url": `${protocol}://${host}/favicon.svg`
+              }
+            },
+            "mainEntityOfPage": `${protocol}://${host}${reqPath}`
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": `${protocol}://${host}${reqPath}#breadcrumb`,
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": `${protocol}://${host}/`
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": `${protocol}://${host}/blog`
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": foundPost.title,
+                "item": `${protocol}://${host}${reqPath}`
+              }
+            ]
+          }
+        ]
       };
     } else if (metaMap[reqPath]) {
       const toolLabel = routeMeta.title.split("|")[0].trim();
