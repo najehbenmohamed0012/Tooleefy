@@ -11,6 +11,149 @@ dotenv.config();
 
 const app = express();
 
+// Centralized helper to get the path of standard OG images
+function getOgImagePath(param: string | undefined): string {
+  if (!param) return "og/default.jpg";
+  if (param === "home") return "og/home.jpg";
+  if (param === "invoice") return "og/invoice-generator.jpg";
+  if (param === "qr") return "og/qr-code-generator.jpg";
+  if (param === "barcode") return "og/barcode-generator.jpg";
+  if (param === "converter") return "og/units-converter.jpg";
+  if (param === "blog") return "og/blog.jpg";
+  return `og/${param}.jpg`;
+}
+
+// Centralized OG image URL resolver that guarantees an absolute, HTTPS, publicly accessible, queryless and fragmentless production URL
+function getOgImageUrl(param: string | undefined, blogPostId?: string): string {
+  const defaultHost = "tooleefy.com";
+  const defaultProtocol = "https";
+  const fallbackUrl = `https://${defaultHost}/og/default.jpg`;
+  
+  let resolvedUrl = "";
+  if (param) {
+    if (param.startsWith("http://") || param.startsWith("https://")) {
+      resolvedUrl = param;
+    } else if (param.startsWith("data:image/")) {
+      if (blogPostId) {
+        resolvedUrl = `https://${defaultHost}/og/blog/${blogPostId}.jpg`;
+      } else {
+        resolvedUrl = `https://${defaultHost}/og/blog.jpg`;
+      }
+    } else if (param.startsWith("/")) {
+      resolvedUrl = `https://${defaultHost}${param}`;
+    } else if (param.startsWith("og/") || param.startsWith("images/")) {
+      resolvedUrl = `https://${defaultHost}/${param}`;
+    } else {
+      const relativeOgPath = getOgImagePath(param);
+      resolvedUrl = `https://${defaultHost}/${relativeOgPath}`;
+    }
+  } else {
+    resolvedUrl = `https://${defaultHost}/og/default.jpg`;
+  }
+
+  try {
+    const parsed = new URL(resolvedUrl);
+    
+    // Enforce HTTPS
+    if (parsed.protocol !== "https:") {
+      parsed.protocol = "https:";
+    }
+    
+    // Enforce production domain (no localhost/dev URL)
+    if (parsed.hostname.includes("localhost") || parsed.hostname.includes("127.0.0.1") || parsed.hostname.includes("run.app")) {
+      parsed.hostname = defaultHost;
+      parsed.port = "";
+    }
+
+    // Strip query strings
+    if (parsed.search !== "") {
+      parsed.search = "";
+    }
+
+    // Strip fragments
+    if (parsed.hash !== "") {
+      parsed.hash = "";
+    }
+
+    // Check extension
+    const pathnameLower = parsed.pathname.toLowerCase();
+    const hasValidExtension = pathnameLower.endsWith(".jpg") || 
+                             pathnameLower.endsWith(".jpeg") || 
+                             pathnameLower.endsWith(".png") || 
+                             pathnameLower.endsWith(".webp");
+                             
+    if (!hasValidExtension) {
+      console.warn(`[getOgImageUrl] Invalid extension found for: ${resolvedUrl}. Falling back.`);
+      return fallbackUrl;
+    }
+
+    const finalUrl = parsed.toString();
+    
+    // Final defensive validation of the output URL against any future regressions
+    if (finalUrl.includes("?") || finalUrl.includes("#") || !finalUrl.startsWith("https://")) {
+      console.error(`[getOgImageUrl] Regression check failed for: ${finalUrl}`);
+      return fallbackUrl;
+    }
+
+    return finalUrl;
+  } catch (err) {
+    console.error(`[getOgImageUrl] Error parsing resolved URL ${resolvedUrl}:`, err);
+    return fallbackUrl;
+  }
+}
+
+// Lightweight self-test suite running on startup and build-time to prevent any regressions
+function runOgImageUrlValidationTests(): void {
+  console.log("[TEST] Running Open Graph Image URL validation tests...");
+  
+  // Test cases that must pass
+  const testCases = [
+    { param: "home", blogPostId: undefined, expected: "https://tooleefy.com/og/home.jpg" },
+    { param: "invoice", blogPostId: undefined, expected: "https://tooleefy.com/og/invoice-generator.jpg" },
+    { param: "data:image/png;base64,...", blogPostId: "art-3", expected: "https://tooleefy.com/og/blog/art-3.jpg" },
+    { param: "https://images.unsplash.com/photo-1234.jpg", blogPostId: undefined, expected: "https://images.unsplash.com/photo-1234.jpg" },
+    { param: "/images/custom-cover.webp", blogPostId: undefined, expected: "https://tooleefy.com/images/custom-cover.webp" }
+  ];
+
+  for (const tc of testCases) {
+    const result = getOgImageUrl(tc.param, tc.blogPostId);
+    if (result !== tc.expected) {
+      throw new Error(`[TEST FAILURE] Expected ${tc.expected} for param="${tc.param}" but got: ${result}`);
+    }
+  }
+
+  // Regression validation checks: must block bad URLs
+  const invalidUrlsToTest = [
+    "https://tooleefy.com/og/home.jpg?v=3",
+    "https://tooleefy.com/og/home.jpg?version=4",
+    "https://tooleefy.com/og/home.jpg#section",
+    "https://tooleefy.com/og/home",
+    "/og/home.jpg"
+  ];
+
+  for (const badUrl of invalidUrlsToTest) {
+    const resolved = getOgImageUrl(badUrl, undefined);
+    
+    // Check constraints on the output
+    if (resolved.includes("?") || resolved.includes("#")) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL contains query or hash: ${resolved}`);
+    }
+    if (!resolved.startsWith("https://")) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL is not absolute HTTPS: ${resolved}`);
+    }
+    const lower = resolved.toLowerCase();
+    const hasValidExtension = lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp");
+    if (!hasValidExtension) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL does not end in a valid extension: ${resolved}`);
+    }
+  }
+
+  console.log("[TEST SUCCESS] All Open Graph Image URL validation tests passed successfully!");
+}
+
+// Execute validation tests immediately upon module load to prevent any startup of a misconfigured build
+runOgImageUrlValidationTests();
+
 async function startServer() {
   const rawPort = process.env.PORT;
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
@@ -1640,40 +1783,7 @@ ${article.content}`;
       }
     }
 
-    function getOgImagePath(param: string | undefined): string {
-      if (!param) return "og/default.jpg";
-      if (param === "home") return "og/home.jpg";
-      if (param === "invoice") return "og/invoice-generator.jpg";
-      if (param === "qr") return "og/qr-code-generator.jpg";
-      if (param === "barcode") return "og/barcode-generator.jpg";
-      if (param === "converter") return "og/units-converter.jpg";
-      if (param === "blog") return "og/blog.jpg";
-      return `og/${param}.jpg`;
-    }
-
-    const param = routeMeta.ogImageParam;
-    let ogImgUrlBase = "";
-    if (param) {
-      if (param.startsWith("http://") || param.startsWith("https://")) {
-        ogImgUrlBase = param;
-      } else if (param.startsWith("data:image/")) {
-        if (blogPostId) {
-          ogImgUrlBase = `${protocol}://${host}/og/blog/${blogPostId}.jpg`;
-        } else {
-          ogImgUrlBase = `${protocol}://${host}/og/blog.jpg`;
-        }
-      } else if (param.startsWith("/")) {
-        ogImgUrlBase = `${protocol}://${host}${param}`;
-      } else if (param.startsWith("og/") || param.startsWith("images/")) {
-        ogImgUrlBase = `${protocol}://${host}/${param}`;
-      } else {
-        const relativeOgPath = getOgImagePath(param);
-        ogImgUrlBase = `${protocol}://${host}/${relativeOgPath}`;
-      }
-    } else {
-      ogImgUrlBase = `${protocol}://${host}/og/default.jpg`;
-    }
-    const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
+    const ogImgUrl = getOgImageUrl(routeMeta.ogImageParam, blogPostId);
     
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";

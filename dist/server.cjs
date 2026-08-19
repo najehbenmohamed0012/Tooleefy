@@ -42,6 +42,112 @@ var import_genai = require("@google/genai");
 var import_supabase_js = require("@supabase/supabase-js");
 import_dotenv.default.config();
 var app = (0, import_express.default)();
+function getOgImagePath(param) {
+  if (!param) return "og/default.jpg";
+  if (param === "home") return "og/home.jpg";
+  if (param === "invoice") return "og/invoice-generator.jpg";
+  if (param === "qr") return "og/qr-code-generator.jpg";
+  if (param === "barcode") return "og/barcode-generator.jpg";
+  if (param === "converter") return "og/units-converter.jpg";
+  if (param === "blog") return "og/blog.jpg";
+  return `og/${param}.jpg`;
+}
+function getOgImageUrl(param, blogPostId) {
+  const defaultHost = "tooleefy.com";
+  const defaultProtocol = "https";
+  const fallbackUrl = `https://${defaultHost}/og/default.jpg`;
+  let resolvedUrl = "";
+  if (param) {
+    if (param.startsWith("http://") || param.startsWith("https://")) {
+      resolvedUrl = param;
+    } else if (param.startsWith("data:image/")) {
+      if (blogPostId) {
+        resolvedUrl = `https://${defaultHost}/og/blog/${blogPostId}.jpg`;
+      } else {
+        resolvedUrl = `https://${defaultHost}/og/blog.jpg`;
+      }
+    } else if (param.startsWith("/")) {
+      resolvedUrl = `https://${defaultHost}${param}`;
+    } else if (param.startsWith("og/") || param.startsWith("images/")) {
+      resolvedUrl = `https://${defaultHost}/${param}`;
+    } else {
+      const relativeOgPath = getOgImagePath(param);
+      resolvedUrl = `https://${defaultHost}/${relativeOgPath}`;
+    }
+  } else {
+    resolvedUrl = `https://${defaultHost}/og/default.jpg`;
+  }
+  try {
+    const parsed = new URL(resolvedUrl);
+    if (parsed.protocol !== "https:") {
+      parsed.protocol = "https:";
+    }
+    if (parsed.hostname.includes("localhost") || parsed.hostname.includes("127.0.0.1") || parsed.hostname.includes("run.app")) {
+      parsed.hostname = defaultHost;
+      parsed.port = "";
+    }
+    if (parsed.search !== "") {
+      parsed.search = "";
+    }
+    if (parsed.hash !== "") {
+      parsed.hash = "";
+    }
+    const pathnameLower = parsed.pathname.toLowerCase();
+    const hasValidExtension = pathnameLower.endsWith(".jpg") || pathnameLower.endsWith(".jpeg") || pathnameLower.endsWith(".png") || pathnameLower.endsWith(".webp");
+    if (!hasValidExtension) {
+      console.warn(`[getOgImageUrl] Invalid extension found for: ${resolvedUrl}. Falling back.`);
+      return fallbackUrl;
+    }
+    const finalUrl = parsed.toString();
+    if (finalUrl.includes("?") || finalUrl.includes("#") || !finalUrl.startsWith("https://")) {
+      console.error(`[getOgImageUrl] Regression check failed for: ${finalUrl}`);
+      return fallbackUrl;
+    }
+    return finalUrl;
+  } catch (err) {
+    console.error(`[getOgImageUrl] Error parsing resolved URL ${resolvedUrl}:`, err);
+    return fallbackUrl;
+  }
+}
+function runOgImageUrlValidationTests() {
+  console.log("[TEST] Running Open Graph Image URL validation tests...");
+  const testCases = [
+    { param: "home", blogPostId: void 0, expected: "https://tooleefy.com/og/home.jpg" },
+    { param: "invoice", blogPostId: void 0, expected: "https://tooleefy.com/og/invoice-generator.jpg" },
+    { param: "data:image/png;base64,...", blogPostId: "art-3", expected: "https://tooleefy.com/og/blog/art-3.jpg" },
+    { param: "https://images.unsplash.com/photo-1234.jpg", blogPostId: void 0, expected: "https://images.unsplash.com/photo-1234.jpg" },
+    { param: "/images/custom-cover.webp", blogPostId: void 0, expected: "https://tooleefy.com/images/custom-cover.webp" }
+  ];
+  for (const tc of testCases) {
+    const result = getOgImageUrl(tc.param, tc.blogPostId);
+    if (result !== tc.expected) {
+      throw new Error(`[TEST FAILURE] Expected ${tc.expected} for param="${tc.param}" but got: ${result}`);
+    }
+  }
+  const invalidUrlsToTest = [
+    "https://tooleefy.com/og/home.jpg?v=3",
+    "https://tooleefy.com/og/home.jpg?version=4",
+    "https://tooleefy.com/og/home.jpg#section",
+    "https://tooleefy.com/og/home",
+    "/og/home.jpg"
+  ];
+  for (const badUrl of invalidUrlsToTest) {
+    const resolved = getOgImageUrl(badUrl, void 0);
+    if (resolved.includes("?") || resolved.includes("#")) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL contains query or hash: ${resolved}`);
+    }
+    if (!resolved.startsWith("https://")) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL is not absolute HTTPS: ${resolved}`);
+    }
+    const lower = resolved.toLowerCase();
+    const hasValidExtension = lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp");
+    if (!hasValidExtension) {
+      throw new Error(`[TEST FAILURE] Regression validation failed: resolved URL does not end in a valid extension: ${resolved}`);
+    }
+  }
+  console.log("[TEST SUCCESS] All Open Graph Image URL validation tests passed successfully!");
+}
+runOgImageUrlValidationTests();
 async function startServer() {
   const rawPort = process.env.PORT;
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
@@ -1096,6 +1202,217 @@ Primary SEO Keywords to include: "${keywordsList}"`;
       });
     }
   });
+  async function runModelWithFallback(client, prompt, systemInstruction, responseSchema) {
+    const modelsToTry = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+    let lastError = null;
+    let result = null;
+    for (const modelName of modelsToTry) {
+      let delay = 500;
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[IMPROVE] Attempting with model: ${modelName} (attempt ${attempt}/${maxRetries})`);
+          result = await client.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+              responseSchema
+            }
+          });
+          if (result && result.text) {
+            console.log(`[IMPROVE] Succeeded with model: ${modelName}`);
+            return result;
+          }
+        } catch (err) {
+          const errMsg = err?.message || "";
+          const errStatus = err?.status || err?.code || 0;
+          const isQuotaError = errStatus === 429 || errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("Quota exceeded");
+          const isAuthError = errStatus === 401 || errStatus === 403 || errMsg.includes("API_KEY_INVALID");
+          if (isQuotaError || isAuthError) {
+            lastError = err;
+            throw err;
+          }
+          if (attempt < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            delay *= 2;
+            lastError = err;
+          } else {
+            lastError = err;
+            break;
+          }
+        }
+      }
+    }
+    throw lastError || new Error("Failed to execute with any model");
+  }
+  app.post("/api/ai/improve", async (req, res) => {
+    try {
+      const { article, action, customInstruction, mode, selectedChanges, originalAnalysisReport } = req.body;
+      if (!article || !article.title || !article.content) {
+        return res.status(400).json({ error: "Missing required parameter: article with title and content" });
+      }
+      const client = getGeminiClient();
+      let responseJson = null;
+      const actionStr = Array.isArray(action) ? action.map((act) => act.toUpperCase()).join(", ") : (action || "Analyze Article").toUpperCase();
+      if (mode === "analyze") {
+        const systemInstruction = `You are a world-class SEO strategist, semantic structure auditor, and editorial specialist for Tooleefy, a business offline utilities platform.
+Your job is to rigorously analyze an existing blog article written in Markdown and produce a highly detailed, actionable semantic, SEO, spacing, and structural quality report based on the selected targets.
+
+The user has chosen to analyze the following specific target actions: ${actionStr}.
+Evaluate the article heavily against these chosen dimensions, but also provide a general overview of other areas.
+
+Analyze the article on the following aspects:
+1. Content Depth: Is it comprehensive, or does it need FAQs, details, expansion, or extra examples?
+2. Heading Structure (Semantic H1-H4):
+   - H1: Ensure there is exactly one H1 or that the main title functions as H1. Check for duplicates.
+   - H2-H4: Confirm nested structure. Detect if H3 is used without a parent H2, or if H4 is used without H3, or if heading levels are inconsistent, or if some headings are just bold text instead of real headings.
+3. Spacing & Layout: Check for excessive blank lines, squished content blocks, or monotonous/unbalanced paragraphs.
+4. Structure: Assess the logical flow (intro, body sections, concluding sections, CTA, etc.)
+5. SEO: Assess primary/secondary keyword placements, meta description quality, and title tag length.
+
+You must output a strictly valid JSON response with the following schema:
+{
+  "analysis": {
+    "content_quality": "Detailed rating and brief feedback about content depth and details.",
+    "heading_structure": "Rigorously identify any semantic heading nesting problems (e.g., duplicated H1s, wrong levels, or incorrect order like H3 directly under H1).",
+    "readability": "Assess tone of voice, transitions, and sentence flow.",
+    "seo": "Evaluate keyword usage, meta title, meta description length and effectiveness.",
+    "spacing": "Report on visual rhythm, excessive line breaks, or squished text blocks.",
+    "structure": "Examine overall logical hierarchy, visual cues like lists, blockquotes, tables."
+  },
+  "issues": [
+    {
+      "type": "heading" | "spacing" | "content" | "seo" | "structure",
+      "problem": "Clear, objective description of the issue.",
+      "recommendation": "Exactly what to do to solve it."
+    }
+  ],
+  "suggested_changes": [
+    {
+      "id": "A short snake_case identifier (e.g. 'fix_heading_hierarchy', 'expand_introduction')",
+      "label": "Short actionable label (e.g., 'Fix Heading Hierarchy')",
+      "description": "Clear description of what this change will achieve (e.g., 'Correct H3 headings to H2 and re-order nested levels under section 3')."
+    }
+  ]
+}
+Note: Do not suggest changes that rewrite the entire article if only targeted adjustments are needed. Ensure the ids in suggested_changes are simple and clean.`;
+        const userPrompt = `Analyze the following blog article:
+Title: "${article.title}"
+Category: "${article.category || "Business"}"
+Content:
+${article.content}
+
+Target Actions Selected: "${actionStr}"
+Custom User Instruction: "${customInstruction || "None"}"`;
+        const responseSchema = {
+          type: import_genai.Type.OBJECT,
+          properties: {
+            analysis: {
+              type: import_genai.Type.OBJECT,
+              properties: {
+                content_quality: { type: import_genai.Type.STRING },
+                heading_structure: { type: import_genai.Type.STRING },
+                readability: { type: import_genai.Type.STRING },
+                seo: { type: import_genai.Type.STRING },
+                spacing: { type: import_genai.Type.STRING },
+                structure: { type: import_genai.Type.STRING }
+              },
+              required: ["content_quality", "heading_structure", "readability", "seo", "spacing", "structure"]
+            },
+            issues: {
+              type: import_genai.Type.ARRAY,
+              items: {
+                type: import_genai.Type.OBJECT,
+                properties: {
+                  type: { type: import_genai.Type.STRING },
+                  problem: { type: import_genai.Type.STRING },
+                  recommendation: { type: import_genai.Type.STRING }
+                },
+                required: ["type", "problem", "recommendation"]
+              }
+            },
+            suggested_changes: {
+              type: import_genai.Type.ARRAY,
+              items: {
+                type: import_genai.Type.OBJECT,
+                properties: {
+                  id: { type: import_genai.Type.STRING },
+                  label: { type: import_genai.Type.STRING },
+                  description: { type: import_genai.Type.STRING }
+                },
+                required: ["id", "label", "description"]
+              }
+            }
+          },
+          required: ["analysis", "issues", "suggested_changes"]
+        };
+        const result = await runModelWithFallback(client, userPrompt, systemInstruction, responseSchema);
+        responseJson = JSON.parse(result.text.trim());
+      } else {
+        const systemInstruction = `You are an expert copywriter, SEO strategist, and editor for Tooleefy, a premium local-first business offline utilities suite.
+Your goal is to apply targeted AI improvements to an existing blog article written in Markdown.
+
+CRITICAL RULES:
+1. ONLY apply the specific improvements selected by the user, and respect the general user instructions.
+2. PRESERVE as much of the original content as possible. Do NOT unnecessarily rewrite sections that are already excellent or outside the scope of selected improvements.
+3. PRESERVE: Article URL/slug, Article ID, Author, Publication date, Cover image, OG image, Canonical URL, Existing metadata, Internal links, HTML/Markdown structure, Images, Tables, Lists, Code blocks, and CTA components, unless explicitly asked to modify them.
+4. Ensure headings (##, ###) are semantically and hierarchically correct. No duplicate H1 tags, correct order (e.g., H3 must sit under H2).
+5. Organic links: Preserve existing links of the form [Link Label](/route). Do not delete or break them.
+6. The article must remain written in rich Markdown.
+
+The requested improvements to apply are:
+Selected changes from previous analysis:
+${selectedChanges ? JSON.stringify(selectedChanges) : "None"}
+
+Chosen target actions: "${actionStr}"
+Custom User Instruction: "${customInstruction || "None"}"
+
+Original analysis reference:
+${originalAnalysisReport ? JSON.stringify(originalAnalysisReport) : "None"}
+
+You must output your response in STRICTLY valid JSON matching this schema:
+{
+  "title": "The article title (updated ONLY if needed, otherwise identical to original)",
+  "excerpt": "A short, engaging summary under 150 characters (updated ONLY if needed)",
+  "content": "The full blog article content in rich Markdown format with the selected improvements carefully applied.",
+  "seoTitle": "A highly optimized meta title under 60 characters (updated ONLY if needed)",
+  "seoDescription": "A highly optimized meta description under 155 characters (updated ONLY if needed)",
+  "seoKeywords": "comma, separated, list, of, keywords (updated ONLY if needed)"
+}`;
+        const userPrompt = `Improve the following blog article based on the instructions:
+Original Title: "${article.title}"
+Original Excerpt: "${article.excerpt || ""}"
+Original SEO Title: "${article.seoTitle || ""}"
+Original SEO Description: "${article.seoDesc || ""}"
+Original SEO Keywords: "${article.seoKeywords || ""}"
+Original Markdown Content:
+${article.content}`;
+        const responseSchema = {
+          type: import_genai.Type.OBJECT,
+          properties: {
+            title: { type: import_genai.Type.STRING },
+            excerpt: { type: import_genai.Type.STRING },
+            content: { type: import_genai.Type.STRING },
+            seoTitle: { type: import_genai.Type.STRING },
+            seoDescription: { type: import_genai.Type.STRING },
+            seoKeywords: { type: import_genai.Type.STRING }
+          },
+          required: ["title", "excerpt", "content", "seoTitle", "seoDescription", "seoKeywords"]
+        };
+        const result = await runModelWithFallback(client, userPrompt, systemInstruction, responseSchema);
+        responseJson = JSON.parse(result.text.trim());
+      }
+      res.json({ success: true, result: responseJson });
+    } catch (err) {
+      console.error("Gemini AI Improve error:", err);
+      res.status(500).json({
+        error: "AI Improvement or Analysis failed. Please check your credentials and configuration.",
+        details: err?.message || err
+      });
+    }
+  });
   function stripExistingSeoTags(html) {
     let cleaned = html;
     cleaned = cleaned.replace(/<title>.*?<\/title>/gi, "");
@@ -1252,9 +1569,10 @@ Primary SEO Keywords to include: "${keywordsList}"`;
               keywords: foundPost.seoKeywords || "tooleefy blog, local saas insights, tech workflow security",
               ogImageParam: foundPost.coverImage || "blog"
             };
+            const { coverImage, ...lightweightPost } = foundPost;
             initialPostScript = `
     <script>
-    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(foundPost).replace(/</g, "\\u003c")};
+    window.__INITIAL_BLOG_POST__ = ${JSON.stringify(lightweightPost).replace(/</g, "\\u003c")};
     window.__INITIAL_BLOG_POSTS__ = ${JSON.stringify(allPosts).replace(/</g, "\\u003c")};
     </script>
 `;
@@ -1262,39 +1580,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
         }
       }
     }
-    function getOgImagePath(param2) {
-      if (!param2) return "og/default.jpg";
-      if (param2 === "home") return "og/home.jpg";
-      if (param2 === "invoice") return "og/invoice-generator.jpg";
-      if (param2 === "qr") return "og/qr-code-generator.jpg";
-      if (param2 === "barcode") return "og/barcode-generator.jpg";
-      if (param2 === "converter") return "og/units-converter.jpg";
-      if (param2 === "blog") return "og/blog.jpg";
-      return `og/${param2}.jpg`;
-    }
-    const param = routeMeta.ogImageParam;
-    let ogImgUrlBase = "";
-    if (param) {
-      if (param.startsWith("http://") || param.startsWith("https://")) {
-        ogImgUrlBase = param;
-      } else if (param.startsWith("data:image/")) {
-        if (blogPostId) {
-          ogImgUrlBase = `${protocol}://${host}/og/blog/${blogPostId}.jpg`;
-        } else {
-          ogImgUrlBase = `${protocol}://${host}/og/blog.jpg`;
-        }
-      } else if (param.startsWith("/")) {
-        ogImgUrlBase = `${protocol}://${host}${param}`;
-      } else if (param.startsWith("og/") || param.startsWith("images/")) {
-        ogImgUrlBase = `${protocol}://${host}/${param}`;
-      } else {
-        const relativeOgPath = getOgImagePath(param);
-        ogImgUrlBase = `${protocol}://${host}/${relativeOgPath}`;
-      }
-    } else {
-      ogImgUrlBase = `${protocol}://${host}/og/default.jpg`;
-    }
-    const ogImgUrl = ogImgUrlBase.includes("?") || ogImgUrlBase.includes("unsplash.com") ? ogImgUrlBase : `${ogImgUrlBase}?v=3`;
+    const ogImgUrl = getOgImageUrl(routeMeta.ogImageParam, blogPostId);
     const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "";
     const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
     let jsonLdSchema = null;
@@ -1364,6 +1650,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     ${JSON.stringify(jsonLdSchema, null, 2).replace(/\n/g, "\n    ")}
     </script>` : "";
     let html = indexHtmlCache || "";
+    const ogType = blogPostId ? "article" : "website";
     const seoTags = `
     <!-- General SEO tags -->
     <meta name="description" content="${routeMeta.desc}" />
@@ -1371,10 +1658,9 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="author" content="Tooleefy" />
     ${robotsTag}
     <link rel="canonical" href="${absoluteUrl}" />
-    ${initialPostScript}
 
     <!-- Open Graph tags for high priority indexing and dynamic preview layouts -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="${ogType}" />
     <meta property="og:site_name" content="Tooleefy" />
     <meta property="og:url" content="${absoluteUrl}" />
     <meta property="og:title" content="${routeMeta.title}" />
@@ -1391,7 +1677,7 @@ Primary SEO Keywords to include: "${keywordsList}"`;
     <meta name="twitter:url" content="${absoluteUrl}" />
     <meta name="twitter:title" content="${routeMeta.title}" />
     <meta name="twitter:description" content="${routeMeta.desc}" />
-    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
+    <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}${initialPostScript}
     `;
     html = html.replace("</head>", `<title>${routeMeta.title}</title>
 ${seoTags}
