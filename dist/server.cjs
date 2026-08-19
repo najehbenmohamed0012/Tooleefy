@@ -1424,6 +1424,9 @@ ${article.content}`;
   }
   let indexHtmlCache = "";
   async function getIndexHtml(reqPath, hostHeader) {
+    if (reqPath.endsWith("/") && reqPath.length > 1) {
+      reqPath = reqPath.slice(0, -1);
+    }
     let host = hostHeader || "tooleefy.com";
     if (!host.includes("localhost") && !host.includes("127.0.0.1") && host.includes(":")) {
       host = host.split(":")[0];

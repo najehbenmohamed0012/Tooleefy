@@ -1603,6 +1603,9 @@ ${article.content}`;
   let indexHtmlCache = "";
   
   async function getIndexHtml(reqPath: string, hostHeader: string | undefined): Promise<string> {
+    if (reqPath.endsWith("/") && reqPath.length > 1) {
+      reqPath = reqPath.slice(0, -1);
+    }
     let host = hostHeader || "tooleefy.com";
     
     // Clean port numbers from the host if it's not a local development server
