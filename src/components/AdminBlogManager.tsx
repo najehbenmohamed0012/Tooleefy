@@ -39,7 +39,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { BlogPost, defaultArticles } from "@/app/Articles";
 import { BlogImage } from "@/components/BlogImage";
-import { fetchBlogPosts, upsertBlogPost, deleteBlogPost } from "@/supabase/db";
+import { fetchBlogPosts, upsertBlogPost, deleteBlogPost, fetchSingleBlogPost } from "@/supabase/db";
 import { getApiUrl } from "@/lib/utils";
 import { safeStorage } from "@/utils/safeStorage";
 
@@ -125,6 +125,28 @@ export function AdminBlogManager() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiLogs, setAiLogs] = useState<string[]>([]);
   const [generatedArticle, setGeneratedArticle] = useState<any>(null);
+
+  // AI Article Improvement States
+  const [aiMode, setAiMode] = useState<"create" | "improve">("create");
+  const [improveSelectedPostId, setImproveSelectedPostId] = useState<string>("");
+  const [improveActions, setImproveActions] = useState<string[]>(["analyze"]);
+  const [improveCustomInstruction, setImproveCustomInstruction] = useState("");
+  const [improveAnalysisReport, setImproveAnalysisReport] = useState<any>(null);
+  const [improveSelectedChanges, setImproveSelectedChanges] = useState<string[]>([]);
+  const [isImproving, setIsImproving] = useState(false);
+  const [improveLogs, setImproveLogs] = useState<string[]>([]);
+  const [improvedArticle, setImprovedArticle] = useState<any>(null);
+  const [articleBackup, setArticleBackup] = useState<BlogPost | null>(null);
+
+  const handleToggleImproveAction = (actionId: string) => {
+    setImproveActions((prev) => {
+      if (prev.includes(actionId)) {
+        return prev.filter((id) => id !== actionId);
+      } else {
+        return [...prev, actionId];
+      }
+    });
+  };
 
   // Rich form states
   const [title, setTitle] = useState("");
@@ -252,6 +274,247 @@ export function AdminBlogManager() {
       toast.error(err.message || "An unexpected error occurred during generation.");
     } finally {
       setIsAiGenerating(false);
+    }
+  };
+
+  const handleAnalyzeArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!improveSelectedPostId) {
+      toast.error("Please select an article to analyze.");
+      return;
+    }
+    if (improveActions.length === 0) {
+      toast.error("Please select at least one target action.");
+      return;
+    }
+
+    setIsImproving(true);
+    setImproveAnalysisReport(null);
+    setImprovedArticle(null);
+    setImproveLogs(["[INIT] Loading selected blog post from database..."]);
+
+    const addLogWithDelay = (message: string, delay: number) => {
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setImproveLogs((prev) => [...prev, message]);
+          resolve();
+        }, delay);
+      });
+    };
+
+    try {
+      // 1. Fetch full blog post content
+      const post = await fetchSingleBlogPost(improveSelectedPostId);
+      if (!post) {
+        throw new Error("Failed to load the selected article. Please verify database connectivity.");
+      }
+
+      await addLogWithDelay(`[DATABASE] Successfully fetched article "${post.title}"`, 300);
+      await addLogWithDelay(`[SEO] Instantiating server-side audit agent...`, 400);
+      await addLogWithDelay(`[TRANSMITTING] Dispatched analysis request to endpoint /api/ai/improve...`, 400);
+
+      // 2. Call backend analyze api
+      const response = await fetch(getApiUrl("/api/ai/improve"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          article: {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            category: post.category,
+            excerpt: post.excerpt,
+            seoTitle: post.seoTitle,
+            seoDesc: post.seoDesc,
+            seoKeywords: post.seoKeywords
+          },
+          action: improveActions,
+          customInstruction: improveCustomInstruction,
+          mode: "analyze"
+        })
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        const errData = (contentType && contentType.includes("application/json"))
+          ? await response.json().catch(() => ({}))
+          : {};
+        throw new Error(errData.error || `Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success || !data.result) {
+        throw new Error("Invalid response format received from AI evaluation node.");
+      }
+
+      await addLogWithDelay(`[COMPILING] Analysis results received from Gemini LLM!`, 300);
+      await addLogWithDelay(`[SUCCESS] Semantic, SEO and spacing evaluation report is complete.`, 300);
+
+      setImproveAnalysisReport(data.result);
+      // Pre-select all suggested changes by default
+      if (data.result.suggested_changes) {
+        setImproveSelectedChanges(data.result.suggested_changes.map((c: any) => c.id));
+      }
+
+      toast.success("Article Audit Complete!");
+    } catch (err: any) {
+      console.error(err);
+      setImproveLogs((prev) => [...prev, `[ERROR] Secure AI analyze execution failed: ${err.message}`]);
+      toast.error(err.message || "An unexpected error occurred during audit.");
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  const handleApplyImprovements = async () => {
+    if (!improveSelectedPostId) {
+      toast.error("Please select an article.");
+      return;
+    }
+
+    setIsImproving(true);
+    setImprovedArticle(null);
+    setImproveLogs(["[INIT] Retrieving original article metadata..."]);
+
+    const addLogWithDelay = (message: string, delay: number) => {
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setImproveLogs((prev) => [...prev, message]);
+          resolve();
+        }, delay);
+      });
+    };
+
+    try {
+      const post = await fetchSingleBlogPost(improveSelectedPostId);
+      if (!post) {
+        throw new Error("Failed to load original article. Please try again.");
+      }
+
+      // Create backup for safety
+      setArticleBackup({ ...post });
+
+      await addLogWithDelay(`[SAFETY] Version backup created successfully in-memory.`, 300);
+      await addLogWithDelay(`[SEO] Deploying targeted correction models...`, 400);
+      await addLogWithDelay(`[TRANSMITTING] Dispatched improvement task to endpoint /api/ai/improve...`, 400);
+
+      const response = await fetch(getApiUrl("/api/ai/improve"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          article: {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            category: post.category,
+            excerpt: post.excerpt,
+            seoTitle: post.seoTitle,
+            seoDesc: post.seoDesc,
+            seoKeywords: post.seoKeywords
+          },
+          action: improveActions,
+          customInstruction: improveCustomInstruction,
+          mode: "apply",
+          selectedChanges: improveSelectedChanges,
+          originalAnalysisReport: improveAnalysisReport
+        })
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        const errData = (contentType && contentType.includes("application/json"))
+          ? await response.json().catch(() => ({}))
+          : {};
+        throw new Error(errData.error || `Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success || !data.result) {
+        throw new Error("Invalid response format from content synthesis node.");
+      }
+
+      await addLogWithDelay(`[COMPILING] Improved content layout parsed successfully.`, 300);
+      await addLogWithDelay(`[SUCCESS] Improvements integrated. Review your preview sandbox.`, 300);
+
+      setImprovedArticle(data.result);
+      toast.success("AI Improvements Drafted!");
+    } catch (err: any) {
+      console.error(err);
+      setImproveLogs((prev) => [...prev, `[ERROR] Secure AI application failed: ${err.message}`]);
+      toast.error(err.message || "Failed to apply AI improvements.");
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  const handleSaveImprovedArticle = async () => {
+    if (!improveSelectedPostId || !improvedArticle) {
+      toast.error("No article or modifications detected to save.");
+      return;
+    }
+
+    try {
+      const originalPost = await fetchSingleBlogPost(improveSelectedPostId);
+      if (!originalPost) {
+        throw new Error("Could not find the original post to overwrite.");
+      }
+
+      // Construct updated post preserving original essential metadata
+      const updatedPost: BlogPost = {
+        ...originalPost,
+        title: improvedArticle.title,
+        excerpt: improvedArticle.excerpt,
+        content: improvedArticle.content,
+        seoTitle: improvedArticle.seoTitle || originalPost.seoTitle,
+        seoDesc: improvedArticle.seoDescription || originalPost.seoDesc,
+        seoKeywords: improvedArticle.seoKeywords || originalPost.seoKeywords,
+        published: false // AI improvements must NOT automatically publish (save as draft/unpublished)
+      };
+
+      const success = await upsertBlogPost(updatedPost);
+      if (success) {
+        toast.success(`Successfully saved improvements to "${updatedPost.title}" as draft!`);
+        
+        // Refresh the local posts list
+        const updatedList = posts.map(p => p.id === updatedPost.id ? updatedPost : p);
+        syncPosts(updatedList);
+        
+        // Exit to list
+        setEditorMode("list");
+        setImprovedArticle(null);
+        setImproveAnalysisReport(null);
+        setImproveSelectedPostId("");
+      } else {
+        toast.error("Failed to write updated article to database.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "An unexpected error occurred while saving improvements.");
+    }
+  };
+
+  const handleRevertImprovedArticle = async () => {
+    if (!articleBackup) {
+      toast.error("No backup found to restore.");
+      return;
+    }
+
+    try {
+      const success = await upsertBlogPost(articleBackup);
+      if (success) {
+        toast.success(`Successfully restored original content for "${articleBackup.title}".`);
+        
+        const updatedList = posts.map(p => p.id === articleBackup.id ? articleBackup : p);
+        syncPosts(updatedList);
+        
+        setArticleBackup(null);
+        setImprovedArticle(null);
+      } else {
+        toast.error("Failed to restore original backup to database.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "An error occurred while reverting to backup.");
     }
   };
 
@@ -838,138 +1101,264 @@ ALTER TABLE blog_posts DISABLE ROW LEVEL SECURITY;`}
             exit={{ opacity: 0, y: -15 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            {/* Left generation forms */}
+            {/* Left generation / improvement forms */}
             <div className="lg:col-span-1 space-y-8">
               <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] space-y-6">
                 <div>
                   <h4 className="text-lg font-black uppercase italic text-foreground flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-violet-500 animate-pulse" /> Content Generator
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-1">Configure your B2B article parameters and SEO specifications.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Configure your B2B article parameters, SEO specifications, or improve existing posts.</p>
                 </div>
 
-                <form onSubmit={handleGenerateAiArticle} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="aiTopic" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Article Focus / Prompt Topic</Label>
-                    <textarea
-                      id="aiTopic"
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="e.g., How automatic invoice templates streamline client retention for visual agencies"
-                      className="w-full h-24 bg-muted/30 border border-border/40 rounded-xl p-3 text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
-                      disabled={isAiGenerating}
-                      required
-                    />
-                  </div>
+                {/* Segment tabs */}
+                <div className="flex bg-muted/40 p-1 rounded-2xl border border-border/20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiMode("create");
+                      setGeneratedArticle(null);
+                      setImprovedArticle(null);
+                      setImproveAnalysisReport(null);
+                    }}
+                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                      aiMode === "create"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                    }`}
+                  >
+                    Create New
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiMode("improve");
+                      setGeneratedArticle(null);
+                      setImprovedArticle(null);
+                      setImproveAnalysisReport(null);
+                    }}
+                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                      aiMode === "improve"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                    }`}
+                  >
+                    Improve Existing
+                  </button>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                {aiMode === "create" ? (
+                  <form onSubmit={handleGenerateAiArticle} className="space-y-5">
                     <div className="space-y-1.5">
-                      <Label htmlFor="aiCatSelect" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Vertical Category</Label>
-                      <select
-                        id="aiCatSelect"
-                        value={aiCategory}
-                        onChange={(e) => setAiCategory(e.target.value)}
-                        className="w-full h-11 bg-muted/30 rounded-xl border border-border/40 px-3 text-xs font-semibold text-foreground focus:outline-none"
+                      <Label htmlFor="aiTopic" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Article Focus / Prompt Topic</Label>
+                      <textarea
+                        id="aiTopic"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="e.g., How automatic invoice templates streamline client retention for visual agencies"
+                        className="w-full h-24 bg-muted/30 border border-border/40 rounded-xl p-3 text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none animate-none"
                         disabled={isAiGenerating}
-                      >
-                        <optgroup label="Tooleefy Tools">
-                          <option value="Invoice Generator">Invoice Generator</option>
-                          <option value="Units Converter">Units Converter</option>
-                          <option value="QR Code Generator">QR Code Generator</option>
-                          <option value="Barcode Generator">Barcode Generator</option>
-                        </optgroup>
-                        <option value="Finance">Finance</option>
-                        <option value="Business">Business</option>
-                        <option value="Insurance">Insurance</option>
-                      </select>
+                        required
+                      />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="aiToneSelect" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tone of Voice</Label>
-                      <select
-                        id="aiToneSelect"
-                        value={aiTone}
-                        onChange={(e) => setAiTone(e.target.value)}
-                        className="w-full h-11 bg-muted/30 rounded-xl border border-border/40 px-3 text-xs font-semibold text-foreground focus:outline-none"
-                        disabled={isAiGenerating}
-                      >
-                        <option value="Professional">Professional</option>
-                        <option value="Authoritative">Authoritative (Expert)</option>
-                        <option value="Engaging">Engaging & Storytelling</option>
-                        <option value="Analytical">Analytical & Technical</option>
-                        <option value="Friendly">Friendly & Actionable</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="aiLength" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Target Word Count</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[500, 1000, 1500].map((len) => (
-                        <button
-                          key={len}
-                          type="button"
-                          onClick={() => setAiTargetLength(len)}
-                          className={`h-10 text-[10px] font-black rounded-lg border transition-all ${
-                            aiTargetLength === len
-                              ? "bg-primary border-primary text-white scale-95"
-                              : "bg-muted/30 border-border/40 text-slate-500 hover:bg-muted"
-                          }`}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="aiCatSelect" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Vertical Category</Label>
+                        <select
+                          id="aiCatSelect"
+                          value={aiCategory}
+                          onChange={(e) => setAiCategory(e.target.value)}
+                          className="w-full h-11 bg-muted/30 rounded-xl border border-border/40 px-3 text-xs font-semibold text-foreground focus:outline-none"
                           disabled={isAiGenerating}
                         >
-                          ~{len} words
-                        </button>
-                      ))}
+                          <optgroup label="Tooleefy Tools">
+                            <option value="Invoice Generator">Invoice Generator</option>
+                            <option value="Units Converter">Units Converter</option>
+                            <option value="QR Code Generator">QR Code Generator</option>
+                            <option value="Barcode Generator">Barcode Generator</option>
+                          </optgroup>
+                          <option value="Finance">Finance</option>
+                          <option value="Business">Business</option>
+                          <option value="Insurance">Insurance</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="aiToneSelect" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tone of Voice</Label>
+                        <select
+                          id="aiToneSelect"
+                          value={aiTone}
+                          onChange={(e) => setAiTone(e.target.value)}
+                          className="w-full h-11 bg-muted/30 rounded-xl border border-border/40 px-3 text-xs font-semibold text-foreground focus:outline-none"
+                          disabled={isAiGenerating}
+                        >
+                          <option value="Professional">Professional</option>
+                          <option value="Authoritative">Authoritative (Expert)</option>
+                          <option value="Engaging">Engaging & Storytelling</option>
+                          <option value="Analytical">Analytical & Technical</option>
+                          <option value="Friendly">Friendly & Actionable</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="aiKeywords" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Primary SEO Keywords</Label>
-                    <Input
-                      id="aiKeywords"
-                      value={aiKeywords}
-                      onChange={(e) => setAiKeywords(e.target.value)}
-                      placeholder="e.g., invoices templates, automation, digital, b2b saas"
-                      className="h-11 rounded-xl text-xs font-semibold bg-muted/10 border-border/40"
+                    <div className="space-y-1.5">
+                      <Label htmlFor="aiLength" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Target Word Count</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[500, 1000, 1500].map((len) => (
+                          <button
+                            key={len}
+                            type="button"
+                            onClick={() => setAiTargetLength(len)}
+                            className={`h-10 text-[10px] font-black rounded-lg border transition-all ${
+                              aiTargetLength === len
+                                ? "bg-primary border-primary text-white scale-95"
+                                : "bg-muted/30 border-border/40 text-slate-500 hover:bg-muted"
+                            }`}
+                            disabled={isAiGenerating}
+                          >
+                            ~{len} words
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="aiKeywords" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Primary SEO Keywords</Label>
+                      <Input
+                        id="aiKeywords"
+                        value={aiKeywords}
+                        onChange={(e) => setAiKeywords(e.target.value)}
+                        placeholder="e.g., invoices templates, automation, digital, b2b saas"
+                        className="h-11 rounded-xl text-xs font-semibold bg-muted/10 border-border/40"
+                        disabled={isAiGenerating}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="aiAuthor" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Article Author</Label>
+                      <Input
+                        id="aiAuthor"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        placeholder="Tooleefy Team"
+                        className="h-11 rounded-xl text-xs font-semibold bg-muted/10 border-border/40"
+                        disabled={isAiGenerating}
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full h-13 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black uppercase tracking-wider text-xs gap-2 shadow-lg shadow-violet-500/10 cursor-pointer hover:from-violet-700 hover:to-indigo-700"
                       disabled={isAiGenerating}
-                    />
-                  </div>
+                    >
+                      {isAiGenerating ? (
+                        <>
+                          <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Drafting Article...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" /> Synthesize Article
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleAnalyzeArticle} className="space-y-5">
+                    {/* Select Existing Article */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="improveArticleSelect" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Select Article to Improve</Label>
+                      <select
+                        id="improveArticleSelect"
+                        value={improveSelectedPostId}
+                        onChange={(e) => {
+                          setImproveSelectedPostId(e.target.value);
+                          setImproveAnalysisReport(null);
+                          setImprovedArticle(null);
+                        }}
+                        className="w-full h-11 bg-muted/30 rounded-xl border border-border/40 px-3 text-xs font-semibold text-foreground focus:outline-none"
+                        disabled={isImproving}
+                        required
+                      >
+                        <option value="">-- Choose an Article --</option>
+                        {posts.map((post) => (
+                          <option key={post.id} value={post.id}>
+                            {post.title} ({post.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="aiAuthor" className="text-[10px] font-black uppercase tracking-wider text-slate-500">Article Author</Label>
-                    <Input
-                      id="aiAuthor"
-                      value={author}
-                      onChange={(e) => setAuthor(e.target.value)}
-                      placeholder="Tooleefy Team"
-                      className="h-11 rounded-xl text-xs font-semibold bg-muted/10 border-border/40"
-                      disabled={isAiGenerating}
-                    />
-                  </div>
+                    {/* Action Select */}
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Target Actions (Select One or More)</Label>
+                      <div className="grid grid-cols-1 gap-1 bg-muted/20 p-2 rounded-2xl border border-border/10">
+                        {[
+                          { id: "analyze", label: "Analyze Article (Audit Only)" },
+                          { id: "expand", label: "Expand / Add Content" },
+                          { id: "improve", label: "Improve Content Quality" },
+                          { id: "heading", label: "Fix Heading Structure (H1-H4)" },
+                          { id: "spacing", label: "Analyze Spacing & Layout" },
+                          { id: "seo", label: "Optimize SEO Properties" },
+                          { id: "custom", label: "Custom AI Instruction" }
+                        ].map((act) => (
+                          <label key={act.id} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                            <input
+                              type="checkbox"
+                              name="improveAction"
+                              value={act.id}
+                              checked={improveActions.includes(act.id)}
+                              onChange={() => handleToggleImproveAction(act.id)}
+                              className="w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer border-border/40"
+                              disabled={isImproving}
+                            />
+                            <span className="text-[11px] font-bold text-foreground">{act.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full h-13 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black uppercase tracking-wider text-xs gap-2 shadow-lg shadow-violet-500/10 cursor-pointer hover:from-violet-700 hover:to-indigo-700"
-                    disabled={isAiGenerating}
-                  >
-                    {isAiGenerating ? (
-                      <>
-                        <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Drafting Article...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" /> Synthesize Article
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    {/* Custom AI Instruction */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="improveCustomInstruction" className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                        Custom AI Instruction (Optional)
+                      </Label>
+                      <textarea
+                        id="improveCustomInstruction"
+                        value={improveCustomInstruction}
+                        onChange={(e) => setImproveCustomInstruction(e.target.value)}
+                        placeholder="e.g., Make it beginner-friendly, add an FAQ section about invoice templates, or clean up any duplicate H2 headings"
+                        className="w-full h-20 bg-muted/30 border border-border/40 rounded-xl p-3 text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                        disabled={isImproving}
+                      />
+                    </div>
+
+                    {/* Submit / Audit Button */}
+                    <Button
+                      type="submit"
+                      className="w-full h-13 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black uppercase tracking-wider text-xs gap-2 shadow-lg shadow-violet-500/10 cursor-pointer hover:from-violet-700 hover:to-indigo-700"
+                      disabled={isImproving}
+                    >
+                      {isImproving && !improveAnalysisReport && !improvedArticle ? (
+                        <>
+                          <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Performing Audit...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 animate-pulse" /> Run Article Audit
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                )}
 
                 {/* Simulated Terminal Logger */}
-                {(isAiGenerating || aiLogs.length > 0) && (
+                {((aiMode === "create" && (isAiGenerating || aiLogs.length > 0)) ||
+                  (aiMode === "improve" && (isImproving || improveLogs.length > 0))) && (
                   <div className="pt-4 border-t border-border/20 space-y-2">
                     <p className="text-[10px] uppercase font-black tracking-wider text-slate-400">Secure Writing Agent Terminal:</p>
                     <div className="p-4 bg-slate-950 text-[11px] font-mono rounded-2xl text-slate-300 border border-border/20 max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
-                      {aiLogs.map((log, idx) => (
+                      {(aiMode === "create" ? aiLogs : improveLogs).map((log, idx) => (
                         <div key={idx} className={log.includes("[ERROR]") ? "text-rose-400" : log.includes("[SUCCESS]") ? "text-emerald-400" : "text-slate-300"}>
                           <span className="text-slate-500 select-none mr-1.5">&gt;</span>{log}
                         </div>
@@ -980,258 +1369,509 @@ ALTER TABLE blog_posts DISABLE ROW LEVEL SECURITY;`}
               </Card>
             </div>
 
-            {/* Right generated result workspace */}
+            {/* Right generated / improved result workspace */}
             <div className="lg:col-span-2 space-y-8">
-              {generatedArticle ? (
-                <div className="space-y-8">
-                  {/* Generated cover selection and general info */}
-                  <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] space-y-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border/30 pb-4 gap-4">
-                      <div>
-                        <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 px-3 py-1 rounded-full">
-                          AI Article Generation Complete
-                        </span>
-                        <h4 className="text-xl font-black uppercase italic text-foreground mt-2">Draft Sandbox Control Room</h4>
-                      </div>
-
-                      <div className="flex items-center gap-2.5">
-                        <Button
-                          onClick={() => {
-                            // Launch Draft manual review
-                            setTitle(generatedArticle.title);
-                            setSlug(generatedArticle.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim());
-                            setExcerpt(generatedArticle.excerpt);
-                            setContent(generatedArticle.content);
-                            setCategory(generatedArticle.category);
-                            setCoverImage(generatedArticle.coverImage);
-                            setCoverImageAlt(generatedArticle.seoTitle || generatedArticle.title);
-                            setCoverImageCaption(`Dynamic cover asset representational image for ${generatedArticle.category}`);
-                            setCoverImageTitle(generatedArticle.title);
-                            setSeoTitle(generatedArticle.seoTitle || generatedArticle.title);
-                            setSeoDesc(generatedArticle.seoDescription || generatedArticle.excerpt);
-                            setSeoKeywords(generatedArticle.seoKeywords || aiKeywords);
-                            setAuthor(generatedArticle.author || "Tooleefy Team");
-                            setDate(new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }));
-                            setEditorMode("new");
-                            toast.success("Loaded AI article into manual editor. Feel free to surgically refine content!");
-                          }}
-                          variant="outline"
-                          className="h-11 rounded-xl text-xs font-black uppercase border border-border/80 text-foreground hover:bg-muted cursor-pointer"
-                        >
-                          <Edit3 className="w-4 h-4 mr-1" /> Edit & Refine Draft
-                        </Button>
-
-                        <Button
-                          onClick={async () => {
-                            // Fully automated direct publish!
-                            const newPost: BlogPost = {
-                              id: `art-${generatedArticle.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()}-${Math.floor(Math.random() * 9000 + 1000)}`,
-                              title: generatedArticle.title,
-                              excerpt: generatedArticle.excerpt,
-                              content: generatedArticle.content,
-                              date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-                              author: author || "Tooleefy Team",
-                              category: generatedArticle.category,
-                              views: 0,
-                              reactions: { heart: 0, fire: 0, thumbsUp: 0 },
-                              published: true,
-                              coverImage: generatedArticle.coverImage,
-                              coverImageAlt: generatedArticle.seoTitle || generatedArticle.title,
-                              coverImageCaption: `Cover illustration representing ${generatedArticle.category}`,
-                              coverImageTitle: generatedArticle.title,
-                              seoTitle: generatedArticle.seoTitle || generatedArticle.title,
-                              seoDesc: generatedArticle.seoDescription || generatedArticle.excerpt,
-                              seoKeywords: generatedArticle.seoKeywords || aiKeywords
-                            };
-                            // Upsert to Supabase
-                            const ok = await upsertBlogPost(newPost);
-                            if (ok) {
-                              toast.success(`Successfully published and synchronized: "${newPost.title}" in Supabase!`);
-                            } else {
-                              toast.error(`Database Write Failed! "${newPost.title}" was saved locally in your browser cache, but we failed to write to the Supabase database. Please check table structure or RLS.`);
-                            }
-                            syncPosts([newPost, ...posts]);
-                            setEditorMode("list");
-                          }}
-                          className="h-11 px-6 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wider gap-2 shadow hover:bg-secondary cursor-pointer"
-                        >
-                          <Check className="w-4 h-4" /> Publish Directly
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Meta tag analysis / SEO health checks */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/40 border border-border/30 rounded-2xl p-6">
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">SEO Head tags Verification:</p>
-                        <div className="space-y-1.5 text-xs font-semibold">
-                          <div>
-                            <span className="text-slate-400 mr-1.5">SEO Title:</span>
-                            <span className="text-foreground italic">"{generatedArticle.seoTitle}"</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 mr-1.5">Meta Description:</span>
-                            <p className="text-muted-foreground leading-relaxed">"{generatedArticle.seoDescription}"</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 mr-1.5">Optimized Keyword Presets:</span>
-                            <span className="text-foreground">{generatedArticle.seoKeywords}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 border-t md:border-t-0 md:border-l border-border/20 pt-4 md:pt-0 md:pl-6 flex flex-col justify-between">
+              {aiMode === "create" ? (
+                generatedArticle ? (
+                  <div className="space-y-8">
+                    {/* Generated cover selection and general info */}
+                    <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] space-y-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border/30 pb-4 gap-4">
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Cover Illustration Selection:</p>
-                          <div className="flex items-center gap-4 mt-2">
-                            <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0 border border-border/40">
-                              <img src={generatedArticle.coverImage} alt="Cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs font-black text-foreground">Preset Chosen</p>
-                              <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">Keyword: "{generatedArticle.unsplashKeyword}"</p>
-                            </div>
-                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 px-3 py-1 rounded-full">
+                            AI Article Generation Complete
+                          </span>
+                          <h4 className="text-xl font-black uppercase italic text-foreground mt-2">Draft Sandbox Control Room</h4>
                         </div>
 
-                        {/* Regenerate image block! */}
-                        <div className="pt-2 border-t border-border/10">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Regenerate/Swap Cover:</p>
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            {(COVER_PRESETS_BY_CATEGORY[generatedArticle.category] || COVER_PRESETS).slice(0, 3).map((p, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  setGeneratedArticle((prev: any) => ({ ...prev, coverImage: p.url }));
-                                  toast.success(`Swapped cover to: ${p.name}`);
-                                }}
-                                className="bg-muted hover:bg-muted/80 text-[9px] font-bold text-slate-500 px-2 py-1 rounded border border-border/30 cursor-pointer"
-                              >
-                                Variant {idx + 1}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                        <div className="flex items-center gap-2.5">
+                          <Button
+                            onClick={() => {
+                              // Launch Draft manual review
+                              setTitle(generatedArticle.title);
+                              setSlug(generatedArticle.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim());
+                              setExcerpt(generatedArticle.excerpt);
+                              setContent(generatedArticle.content);
+                              setCategory(generatedArticle.category);
+                              setCoverImage(generatedArticle.coverImage);
+                              setCoverImageAlt(generatedArticle.seoTitle || generatedArticle.title);
+                              setCoverImageCaption(`Dynamic cover asset representational image for ${generatedArticle.category}`);
+                              setCoverImageTitle(generatedArticle.title);
+                              setSeoTitle(generatedArticle.seoTitle || generatedArticle.title);
+                              setSeoDesc(generatedArticle.seoDescription || generatedArticle.excerpt);
+                              setSeoKeywords(generatedArticle.seoKeywords || aiKeywords);
+                              setAuthor(generatedArticle.author || "Tooleefy Team");
+                              setDate(new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }));
+                              setEditorMode("new");
+                              toast.success("Loaded AI article into manual editor. Feel free to surgically refine content!");
+                            }}
+                            variant="outline"
+                            className="h-11 rounded-xl text-xs font-black uppercase border border-border/80 text-foreground hover:bg-muted cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4 mr-1" /> Edit & Refine Draft
+                          </Button>
 
-                    {/* Render live blog preview */}
-                    <div className="pt-6 border-t border-border/20 space-y-4">
-                      <div>
-                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5 text-primary" /> Rich Article Live Preview (SEO Internal Link Validation)
-                        </h5>
-                        <p className="text-[10px] text-muted-foreground font-semibold">This is exactly how your article will look in the reader hub.</p>
-                      </div>
-
-                      <div className="p-6 md:p-8 bg-muted/20 border border-border/30 rounded-3xl space-y-6 text-left">
-                        <div className="space-y-2">
-                          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" /> {generatedArticle.date} • {generatedArticle.category} • By {generatedArticle.author}
-                          </p>
-                          <h1 className="text-xl md:text-3xl font-black italic uppercase text-foreground leading-tight">{generatedArticle.title}</h1>
-                          <p className="text-sm text-muted-foreground italic pl-3 border-l-2 border-primary">{generatedArticle.excerpt}</p>
-                        </div>
-
-                        <div className="h-px bg-border/20" />
-
-                        {/* Markdown view rendering headings, bullet points, and inline links! */}
-                        <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed space-y-4 text-sm font-semibold">
-                          {generatedArticle.content.split("\n\n").map((block: string, idx: number) => {
-                            if (block.startsWith("## ")) {
-                              return (
-                                <h2 key={idx} className="text-base md:text-lg font-black text-foreground italic uppercase tracking-tight pt-3 border-b border-border/20">
-                                  {block.replace("## ", "")}
-                                </h2>
-                              );
-                            }
-                            if (block.startsWith("### ")) {
-                              return (
-                                <h3 key={idx} className="text-sm font-black text-foreground uppercase tracking-wide">
-                                  {block.replace("### ", "")}
-                                </h3>
-                              );
-                            }
-                            
-                            // Parse markdown links manually so they are interactive/visible!
-                            const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                            const parts = [];
-                            let lastIndex = 0;
-                            let match;
-                            
-                            while ((match = linkRegex.exec(block)) !== null) {
-                              if (match.index > lastIndex) {
-                                parts.push(block.substring(lastIndex, match.index));
+                          <Button
+                            onClick={async () => {
+                              // Fully automated direct publish!
+                              const newPost: BlogPost = {
+                                id: `art-${generatedArticle.title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()}-${Math.floor(Math.random() * 9000 + 1000)}`,
+                                title: generatedArticle.title,
+                                excerpt: generatedArticle.excerpt,
+                                content: generatedArticle.content,
+                                date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+                                author: author || "Tooleefy Team",
+                                category: generatedArticle.category,
+                                views: 0,
+                                reactions: { heart: 0, fire: 0, thumbsUp: 0 },
+                                published: true,
+                                coverImage: generatedArticle.coverImage,
+                                coverImageAlt: generatedArticle.seoTitle || generatedArticle.title,
+                                coverImageCaption: `Cover illustration representing ${generatedArticle.category}`,
+                                coverImageTitle: generatedArticle.title,
+                                seoTitle: generatedArticle.seoTitle || generatedArticle.title,
+                                seoDesc: generatedArticle.seoDescription || generatedArticle.excerpt,
+                                seoKeywords: generatedArticle.seoKeywords || aiKeywords
+                              };
+                              // Upsert to Supabase
+                              const ok = await upsertBlogPost(newPost);
+                              if (ok) {
+                                toast.success(`Successfully published and synchronized: "${newPost.title}" in Supabase!`);
+                              } else {
+                                toast.error(`Database Write Failed! "${newPost.title}" was saved locally in your browser cache, but we failed to write to the Supabase database. Please check table structure or RLS.`);
                               }
-                              parts.push(
-                                <span key={match.index} className="text-primary hover:underline underline-offset-4 cursor-pointer font-black inline-flex items-center gap-0.5 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/15">
-                                  {match[1]} <ExternalLink className="w-3 h-3" />
-                                </span>
-                              );
-                              lastIndex = linkRegex.lastIndex;
-                            }
-                            
-                            if (lastIndex < block.length) {
-                              parts.push(block.substring(lastIndex));
-                            }
-
-                            if (block.startsWith("- ")) {
-                              return (
-                                <ul key={idx} className="list-disc pl-6 space-y-1.5 text-muted-foreground text-xs font-semibold">
-                                  {block.split("\n").map((li, i) => (
-                                    <li key={i}>{li.replace("- ", "").replace(/\*\*/g, "")}</li>
-                                  ))}
-                                </ul>
-                              );
-                            }
-
-                            return (
-                              <p key={idx} className="text-xs md:text-sm text-muted-foreground font-semibold leading-relaxed">
-                                {parts.length > 0 ? parts : block}
-                              </p>
-                            );
-                          })}
+                              syncPosts([newPost, ...posts]);
+                              setEditorMode("list");
+                            }}
+                            className="h-11 px-6 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wider gap-2 shadow hover:bg-secondary cursor-pointer"
+                          >
+                            <Check className="w-4 h-4" /> Publish Directly
+                          </Button>
                         </div>
+                      </div>
+
+                      {/* Meta tag analysis / SEO health checks */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/40 border border-border/30 rounded-2xl p-6">
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">SEO Head tags Verification:</p>
+                          <div className="space-y-1.5 text-xs font-semibold">
+                            <div>
+                              <span className="text-slate-400 mr-1.5">SEO Title:</span>
+                              <span className="text-foreground italic">"{generatedArticle.seoTitle}"</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 mr-1.5">Meta Description:</span>
+                              <p className="text-muted-foreground leading-relaxed">"{generatedArticle.seoDescription}"</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 mr-1.5">Optimized Keyword Presets:</span>
+                              <span className="text-foreground">{generatedArticle.seoKeywords}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 border-t md:border-t-0 md:border-l border-border/20 pt-4 md:pt-0 md:pl-6 flex flex-col justify-between">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Cover Illustration Selection:</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0 border border-border/40">
+                                <img src={generatedArticle.coverImage} alt="Cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs font-black text-foreground">Preset Chosen</p>
+                                <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">Keyword: "{generatedArticle.unsplashKeyword}"</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Regenerate image block! */}
+                          <div className="pt-2 border-t border-border/10">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Regenerate/Swap Cover:</p>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {(COVER_PRESETS_BY_CATEGORY[generatedArticle.category] || COVER_PRESETS).slice(0, 3).map((p, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setGeneratedArticle((prev: any) => ({ ...prev, coverImage: p.url }));
+                                    toast.success(`Swapped cover to: ${p.name}`);
+                                  }}
+                                  className="bg-muted hover:bg-muted/80 text-[9px] font-bold text-slate-500 px-2 py-1 rounded border border-border/30 cursor-pointer"
+                                >
+                                  Variant {idx + 1}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Render live blog preview */}
+                      <div className="pt-6 border-t border-border/20 space-y-4">
+                        <div>
+                          <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5 text-primary" /> Rich Article Live Preview (SEO Internal Link Validation)
+                          </h5>
+                          <p className="text-[10px] text-muted-foreground font-semibold">This is exactly how your article will look in the reader hub.</p>
+                        </div>
+
+                        <div className="p-6 md:p-8 bg-muted/20 border border-border/30 rounded-3xl space-y-6 text-left">
+                          <div className="space-y-2">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" /> {generatedArticle.date} • {generatedArticle.category} • By {generatedArticle.author}
+                            </p>
+                            <h1 className="text-xl md:text-3xl font-black italic uppercase text-foreground leading-tight">{generatedArticle.title}</h1>
+                            <p className="text-sm text-muted-foreground italic pl-3 border-l-2 border-primary">{generatedArticle.excerpt}</p>
+                          </div>
+
+                          <div className="h-px bg-border/20" />
+
+                          <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed space-y-4 text-sm font-semibold">
+                            {generatedArticle.content.split("\n\n").map((block: string, idx: number) => {
+                              if (block.startsWith("## ")) {
+                                return (
+                                  <h2 key={idx} className="text-base md:text-lg font-black text-foreground italic uppercase tracking-tight pt-3 border-b border-border/20">
+                                    {block.replace("## ", "")}
+                                  </h2>
+                                );
+                              }
+                              if (block.startsWith("### ")) {
+                                return (
+                                  <h3 key={idx} className="text-sm font-black text-foreground uppercase tracking-wide">
+                                    {block.replace("### ", "")}
+                                  </h3>
+                                );
+                              }
+
+                              const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                              const parts = [];
+                              let lastIndex = 0;
+                              let match;
+
+                              while ((match = linkRegex.exec(block)) !== null) {
+                                if (match.index > lastIndex) {
+                                  parts.push(block.substring(lastIndex, match.index));
+                                }
+                                parts.push(
+                                  <span key={match.index} className="text-primary hover:underline underline-offset-4 cursor-pointer font-black inline-flex items-center gap-0.5 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/15">
+                                    {match[1]} <ExternalLink className="w-3 h-3" />
+                                  </span>
+                                );
+                                lastIndex = linkRegex.lastIndex;
+                              }
+
+                              if (lastIndex < block.length) {
+                                parts.push(block.substring(lastIndex));
+                              }
+
+                              if (block.startsWith("- ")) {
+                                return (
+                                  <ul key={idx} className="list-disc pl-6 space-y-1.5 text-muted-foreground text-xs font-semibold">
+                                    {block.split("\n").map((li, i) => (
+                                      <li key={i}>{li.replace("- ", "").replace(/\*\*/g, "")}</li>
+                                    ))}
+                                  </ul>
+                                );
+                              }
+
+                              return (
+                                <p key={idx} className="text-xs md:text-sm text-muted-foreground font-semibold leading-relaxed">
+                                  {parts.length > 0 ? parts : block}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                ) : (
+                  <Card className="p-12 text-center border-none shadow-premium bg-card rounded-[2.5rem] flex flex-col justify-center items-center min-h-[480px]">
+                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6 border border-border/20 text-slate-400">
+                      <Sparkles className="w-9 h-9 text-violet-500/60 animate-pulse" />
+                    </div>
+                    <h4 className="text-lg font-black uppercase italic text-foreground tracking-wide">AI Generation Sandbox Workspace</h4>
+                    <p className="text-xs text-muted-foreground font-semibold mt-2 max-w-md leading-relaxed">
+                      Set up your vertical target coordinates on the left column parameters, then press <strong className="text-primary">Synthesize Article</strong> to generate a fully optimized, human-written B2B publication.
+                    </p>
+
+                    <div className="mt-8 max-w-xl text-left space-y-3.5 pt-6 border-t border-border/20 w-full">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider text-center">Inspirational prompt seeds:</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {[
+                          { title: "Optimize Billing Workflows", desc: "How automatic invoice systems decrease payment cycles for high-ticket freelancers." },
+                          { title: "Smart Asset Tracking", desc: "The rise of bulk barcode stickers in modern digital warehouse stock management." },
+                          { title: "Direct Mobile Access", desc: "Leveraging static and dynamic vector QR codes for real estate presentation pipelines." },
+                          { title: "SaaS SEO Playbook", desc: "Why search intent and local business conversion calculators capture the top search results." }
+                        ].map((seed, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setAiPrompt(seed.desc);
+                              if (seed.title.includes("Billing")) setAiCategory("Invoice Generator");
+                              if (seed.title.includes("Barcode")) setAiCategory("Barcode Generator");
+                              if (seed.title.includes("QR")) setAiCategory("QR Code Generator");
+                              if (seed.title.includes("SaaS")) setAiCategory("Business");
+                              toast.success("Loaded prompt seed!");
+                            }}
+                            className="p-3 bg-muted/40 hover:bg-muted/80 text-left border border-border/20 rounded-xl transition-all cursor-pointer group"
+                          >
+                            <p className="text-[10px] font-black text-foreground group-hover:text-primary transition-colors">{seed.title}</p>
+                            <p className="text-[9px] text-muted-foreground leading-normal mt-0.5 line-clamp-2">{seed.desc}</p>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </Card>
-                </div>
+                )
+              ) : improvedArticle ? (
+                <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] space-y-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border/30 pb-4 gap-4">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 px-3 py-1 rounded-full">
+                        Modifications Sandbox
+                      </span>
+                      <h4 className="text-xl font-black uppercase italic text-foreground mt-2">Preview Proposed Changes</h4>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        onClick={() => setImprovedArticle(null)}
+                        variant="outline"
+                        className="h-10 px-4 rounded-lg text-xs font-black uppercase border border-border/80 text-foreground hover:bg-muted cursor-pointer"
+                      >
+                        <X className="w-4 h-4 mr-1" /> Discard
+                      </Button>
+
+                      <Button
+                        onClick={handleApplyImprovements}
+                        disabled={isImproving}
+                        variant="outline"
+                        className="h-10 px-4 rounded-lg text-xs font-black uppercase border border-border/80 text-foreground hover:bg-muted cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4 mr-1" /> Regenerate
+                      </Button>
+
+                      <Button
+                        onClick={handleSaveImprovedArticle}
+                        className="h-10 px-4 rounded-lg bg-primary text-white text-xs font-black uppercase tracking-wider gap-1.5 shadow hover:bg-secondary cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Save as Draft
+                      </Button>
+                    </div>
+                  </div>
+
+                  {articleBackup && (
+                    <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl flex items-center justify-between text-xs font-semibold">
+                      <span className="text-amber-600 dark:text-amber-400">Original version is securely backed up.</span>
+                      <Button
+                        onClick={handleRevertImprovedArticle}
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] font-black uppercase hover:bg-amber-500/10 text-amber-500 shrink-0 h-8"
+                      >
+                        Revert to Backup
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* side-by-side diff */}
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
+                    {/* Before */}
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> Original Version
+                      </p>
+                      <div className="p-6 bg-muted/25 border border-rose-500/10 rounded-2xl space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin">
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Title:</span>
+                          <p className="text-sm font-black text-foreground mt-1 leading-snug">
+                            {posts.find(p => p.id === improveSelectedPostId)?.title || "Untitled"}
+                          </p>
+                        </div>
+                        <div className="border-t border-border/10 pt-3">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Excerpt:</span>
+                          <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
+                            {posts.find(p => p.id === improveSelectedPostId)?.excerpt || "No excerpt."}
+                          </p>
+                        </div>
+                        <div className="border-t border-border/10 pt-3">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Content:</span>
+                          <pre className="text-[11px] font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed mt-2 p-3 bg-muted/40 rounded-xl max-h-[250px] overflow-y-auto">
+                            {posts.find(p => p.id === improveSelectedPostId)?.content || ""}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* After */}
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> AI Improved Version
+                      </p>
+                      <div className="p-6 bg-muted/25 border border-emerald-500/10 rounded-2xl space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin">
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Proposed Title:</span>
+                          <p className="text-sm font-black text-foreground mt-1 leading-snug">
+                            {improvedArticle.title}
+                          </p>
+                        </div>
+                        <div className="border-t border-border/10 pt-3">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Proposed Excerpt:</span>
+                          <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
+                            {improvedArticle.excerpt}
+                          </p>
+                        </div>
+                        <div className="border-t border-border/10 pt-3">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Proposed Content:</span>
+                          <pre className="text-[11px] font-mono whitespace-pre-wrap text-foreground leading-relaxed mt-2 p-3 bg-muted/40 rounded-xl max-h-[250px] overflow-y-auto">
+                            {improvedArticle.content}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ) : improveAnalysisReport ? (
+                <Card className="p-8 border-none shadow-premium bg-card rounded-[2.5rem] space-y-6 animate-none">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border/30 pb-4 gap-4">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/15 px-3 py-1 rounded-full">
+                        Semantic & SEO Audit Report
+                      </span>
+                      <h4 className="text-xl font-black uppercase italic text-foreground mt-2">Article Diagnostics</h4>
+                    </div>
+                    <Button
+                      onClick={handleApplyImprovements}
+                      disabled={isImproving || improveSelectedChanges.length === 0}
+                      className="h-11 px-6 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wider gap-2 shadow hover:bg-secondary cursor-pointer"
+                    >
+                      {isImproving ? (
+                        <>
+                          <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Synthesizing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 animate-pulse" /> Apply Selected Improvements
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Ratings Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {[
+                      { title: "Content Quality", value: improveAnalysisReport.analysis?.content_quality, color: "text-violet-500" },
+                      { title: "Heading Structure", value: improveAnalysisReport.analysis?.heading_structure, color: "text-blue-500" },
+                      { title: "Readability", value: improveAnalysisReport.analysis?.readability, color: "text-emerald-500" },
+                      { title: "SEO Keywords", value: improveAnalysisReport.analysis?.seo, color: "text-amber-500" },
+                      { title: "Spacing & Layout", value: improveAnalysisReport.analysis?.spacing, color: "text-pink-500" },
+                      { title: "Structure Flow", value: improveAnalysisReport.analysis?.structure, color: "text-rose-500" }
+                    ].map((metric, idx) => (
+                      <div key={idx} className="p-4 bg-muted/20 border border-border/10 rounded-2xl space-y-1">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">{metric.title}</span>
+                        <p className={`text-xs font-extrabold ${metric.color} leading-snug`}>{metric.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Issues List */}
+                  {improveAnalysisReport.issues && improveAnalysisReport.issues.length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Identified Shortcomings & Warnings:</p>
+                      <div className="space-y-2">
+                        {improveAnalysisReport.issues.map((issue: any, idx: number) => (
+                          <div key={idx} className="p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex items-start gap-3">
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 mt-0.5 shrink-0">
+                              {issue.type}
+                            </span>
+                            <div className="space-y-1 text-xs font-semibold">
+                              <p className="text-foreground leading-snug">{issue.problem}</p>
+                              <p className="text-muted-foreground text-[11px] leading-relaxed italic">Recommendation: {issue.recommendation}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommended Suggested Changes Checklist */}
+                  {improveAnalysisReport.suggested_changes && improveAnalysisReport.suggested_changes.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-border/10">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Select Improvements to Implement:</p>
+                      <div className="space-y-2">
+                        {improveAnalysisReport.suggested_changes.map((change: any) => {
+                          const isChecked = improveSelectedChanges.includes(change.id);
+                          return (
+                            <div
+                              key={change.id}
+                              onClick={() => {
+                                if (isImproving) return;
+                                setImproveSelectedChanges(prev =>
+                                  isChecked
+                                    ? prev.filter(id => id !== change.id)
+                                    : [...prev, change.id]
+                                );
+                              }}
+                              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 select-none ${
+                                isChecked
+                                  ? "bg-primary/5 border-primary/20"
+                                  : "bg-muted/10 border-border/10 hover:bg-muted/20"
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                                isChecked
+                                  ? "bg-primary border-primary text-white"
+                                  : "border-border/65 text-transparent"
+                              }`}>
+                                <Check className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="space-y-1 text-xs">
+                                <p className="font-extrabold text-foreground">{change.label}</p>
+                                <p className="text-muted-foreground text-[11px] leading-relaxed font-semibold">{change.description}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </Card>
               ) : (
                 <Card className="p-12 text-center border-none shadow-premium bg-card rounded-[2.5rem] flex flex-col justify-center items-center min-h-[480px]">
                   <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6 border border-border/20 text-slate-400">
-                    <Sparkles className="w-9 h-9 text-violet-500/60 animate-pulse" />
+                    <Sparkles className="w-9 h-9 text-indigo-500/60 animate-pulse" />
                   </div>
-                  <h4 className="text-lg font-black uppercase italic text-foreground tracking-wide">AI Generation Sandbox Workspace</h4>
+                  <h4 className="text-lg font-black uppercase italic text-foreground tracking-wide">AI Optimization Hub</h4>
                   <p className="text-xs text-muted-foreground font-semibold mt-2 max-w-md leading-relaxed">
-                    Set up your vertical target coordinates on the left column parameters, then press <strong className="text-primary">Synthesize Article</strong> to generate a fully optimized, human-written B2B publication.
+                    Select an existing article from the left panel and execute a comprehensive semantic audit. Identify heading nesting problems, SEO gaps, or content expansion points, then selectively apply AI improvements.
                   </p>
 
-                  {/* Suggestion prompt seeds */}
                   <div className="mt-8 max-w-xl text-left space-y-3.5 pt-6 border-t border-border/20 w-full">
-                    <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider text-center">Inspirational prompt seeds:</p>
+                    <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider text-center font-bold">Fast-Track Audit Presets:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                       {[
-                        { title: "Optimize Billing Workflows", desc: "How automatic invoice systems decrease payment cycles for high-ticket freelancers." },
-                        { title: "Smart Asset Tracking", desc: "The rise of bulk barcode stickers in modern digital warehouse stock management." },
-                        { title: "Direct Mobile Access", desc: "Leveraging static and dynamic vector QR codes for real estate presentation pipelines." },
-                        { title: "SaaS SEO Playbook", desc: "Why search intent and local business conversion calculators capture the top search results." }
-                      ].map((seed, idx) => (
+                        { title: "Heading structure check", act: "heading", desc: "Identify and normalize H1-H4 heading depth sequence problems." },
+                        { title: "SEO audit & enrich", act: "seo", desc: "Ensure organic keyword saturation meets premium B2B target parameters." },
+                        { title: "Spacing rhythm diagnostics", act: "spacing", desc: "Detect and split squished paragraph elements for mobile layout safety." },
+                        { title: "Complete overhaul analysis", act: "improve", desc: "Full-scale editorial semantic audit for B2B conversions." }
+                      ].map((preset, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => {
-                            setAiPrompt(seed.desc);
-                            // Auto map the category
-                            if (seed.title.includes("Billing")) setAiCategory("Invoice Generator");
-                            if (seed.title.includes("Barcode")) setAiCategory("Barcode Generator");
-                            if (seed.title.includes("QR")) setAiCategory("QR Code Generator");
-                            if (seed.title.includes("SaaS")) setAiCategory("Business");
-                            toast.success("Loaded prompt seed!");
+                            setImproveActions([preset.act]);
+                            if (posts.length > 0) {
+                              setImproveSelectedPostId(posts[0].id);
+                              toast.success(`Preset loaded with target action: ${preset.title}!`);
+                            } else {
+                              toast.error("No articles found in catalog to target.");
+                            }
                           }}
                           className="p-3 bg-muted/40 hover:bg-muted/80 text-left border border-border/20 rounded-xl transition-all cursor-pointer group"
                         >
-                          <p className="text-[10px] font-black text-foreground group-hover:text-primary transition-colors">{seed.title}</p>
-                          <p className="text-[9px] text-muted-foreground leading-normal mt-0.5 line-clamp-2">{seed.desc}</p>
+                          <p className="text-[10px] font-black text-foreground group-hover:text-primary transition-colors">{preset.title}</p>
+                          <p className="text-[9px] text-muted-foreground leading-normal mt-0.5 line-clamp-2 font-semibold">{preset.desc}</p>
                         </button>
                       ))}
                     </div>
