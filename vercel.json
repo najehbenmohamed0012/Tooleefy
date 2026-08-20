@@ -15,6 +15,10 @@
       "dest": "api/index.js"
     },
     {
+      "src": "^/og/(.*)",
+      "dest": "api/index.js"
+    },
+    {
       "src": "^/$",
       "dest": "api/index.js"
     },

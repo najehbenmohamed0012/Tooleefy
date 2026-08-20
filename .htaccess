@@ -30,6 +30,7 @@
     RewriteRule ^(assets/.*)$ /dist/$1 [L]
     RewriteRule ^(images/.*)$ /dist/$1 [L]
     RewriteRule ^(favicon\.svg|favicon\.ico|robots\.txt|sitemap\.xml|llms\.txt)$ /dist/$1 [L]
+    RewriteCond %{REQUEST_URI} !^/og/
     RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
     RewriteCond %{CONTEXT_DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/tooleefy.com/dist%{REQUEST_URI} -f

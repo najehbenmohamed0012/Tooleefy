@@ -942,6 +942,36 @@ async function startServer() {
     return res.status(404).send("Not found");
   });
 
+  // Dynamic Open Graph (OG) high-reliability image delivery route for non-blog pages
+  // This serves JPEG images dynamically via an Express route, bypassing Vercel and Apache static asset filters
+  app.get("/og/:filename.jpg", (req, res) => {
+    const filename = req.params.filename;
+    
+    // Prevent directory traversal attacks
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return res.status(400).send("Invalid filename");
+    }
+
+    const imagePath = path.join(distPath, "og", `${filename}.jpg`);
+    if (fs.existsSync(imagePath) && fs.statSync(imagePath).isFile()) {
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      // Explicitly prevent Gzip compression for binary stream to guarantee compatibility with Facebook/crawler decoders
+      res.setHeader("Content-Encoding", "identity");
+      return res.sendFile(imagePath);
+    } else {
+      // Fallback to default.jpg if requested image does not exist
+      const fallbackPath = path.join(distPath, "og", "default.jpg");
+      if (fs.existsSync(fallbackPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.setHeader("Content-Encoding", "identity");
+        return res.sendFile(fallbackPath);
+      }
+      return res.status(404).send(`OG Image ${filename} not found`);
+    }
+  });
+
   // Reliable exchange rates engine
   let ratesCache: any = {
     fiat: null,
