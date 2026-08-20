@@ -81,6 +81,37 @@ export function QRCodeGenerator() {
 
       <ValueBanner />
       <AdSenseUnit slot="1849204719" type="leaderboard" className="my-8" />
+      
+      {/* Supporting headings & content to capture search intent */}
+      <div className="w-full max-w-4xl mx-auto mt-16 p-8 border border-border/40 rounded-3xl bg-card shadow-premium space-y-8 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Free QR Code Generator Online</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Design scan-proof matrix codes for your digital platforms completely free. Tooleefy’s online creator works directly inside your browser, enabling you to generate high-fidelity, permanent QR patterns without registrations, hidden fees, or expiration limits.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Create Single & Bulk QR Codes</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Generate single custom landing links or use our high-speed bulk compilation workspace to create hundreds of distinct QR codes simultaneously. Upload dynamic spreadsheets or input sequential data matrices to produce bulk stickers ready for packaging.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Customize QR Codes with Logos & Brand Colors</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Incorporate your official company logo, customize pattern styles (including liquid dots, pixels, and smooth rounded edges), modify foreground/background gradients, and adjust error-correction rates (L, M, Q, H) to maintain scan speed.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Instant Vector SVG & High-Resolution PNG Downloads</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Export your creations as fully scalable, print-ready vector SVGs for billboards and large print media, or standard crisp PNG formats for digital use. No third-party servers see your data, ensuring complete confidentiality.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <QRFAQ />
     </div>
   );
