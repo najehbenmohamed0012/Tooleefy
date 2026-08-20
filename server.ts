@@ -2007,17 +2007,49 @@ ${article.content}`;
 
     app.get("*", async (req, res) => {
       try {
-        // Detect original virtual path passed by Apache/Passenger rewrite
+        // Resolve original requested path across various environments (Vercel Serverless, Apache/Passenger, local dev)
         let reqPath = req.path;
+        
+        // 1. Check for Apache/Passenger custom virtual route
         if (req.query._route_) {
           const rawRoute = req.query._route_ as string;
           reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
+        } 
+        // 2. Check for Vercel matched path header
+        else if (req.headers["x-matched-path"] && typeof req.headers["x-matched-path"] === "string") {
+          reqPath = req.headers["x-matched-path"];
+        } 
+        // 3. Check for standard Express originalUrl (stripping query parameters)
+        else if (req.originalUrl) {
+          reqPath = req.originalUrl.split("?")[0];
+        }
+
+        // 4. If path refers to the serverless entrypoint, fallback to x-original-url header
+        if (reqPath.startsWith("/api/index.js") || reqPath.startsWith("/api/index") || reqPath === "/api") {
+          const origUrl = req.headers["x-original-url"];
+          if (typeof origUrl === "string" && origUrl) {
+            reqPath = origUrl.split("?")[0];
+          }
         }
 
         // Clean up the path for physical mapping
         let cleanPath = reqPath;
         if (cleanPath.endsWith("/") && cleanPath.length > 1) {
           cleanPath = cleanPath.slice(0, -1);
+        }
+
+        // Handle short URLs and redirect to their formal tool paths
+        const shortUrlRedirects: Record<string, string> = {
+          "/invoice": "/tools/invoice",
+          "/qr": "/tools/qr",
+          "/barcode": "/tools/barcode",
+          "/converter": "/tools/converter"
+        };
+
+        if (shortUrlRedirects[cleanPath]) {
+          const targetPath = shortUrlRedirects[cleanPath];
+          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache redirections for 1 day
+          return res.redirect(301, targetPath);
         }
 
         // Validate blog post requests and return 410 for stale routes or 404 for non-existent ones

@@ -818,6 +818,28 @@ async function startServer() {
     }
     return res.status(404).send("Not found");
   });
+  app.get("/og/:filename.jpg", (req, res) => {
+    const filename = req.params.filename;
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return res.status(400).send("Invalid filename");
+    }
+    const imagePath = import_path.default.join(distPath, "og", `${filename}.jpg`);
+    if (import_fs.default.existsSync(imagePath) && import_fs.default.statSync(imagePath).isFile()) {
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("Content-Encoding", "identity");
+      return res.sendFile(imagePath);
+    } else {
+      const fallbackPath = import_path.default.join(distPath, "og", "default.jpg");
+      if (import_fs.default.existsSync(fallbackPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.setHeader("Content-Encoding", "identity");
+        return res.sendFile(fallbackPath);
+      }
+      return res.status(404).send(`OG Image ${filename} not found`);
+    }
+  });
   let ratesCache = {
     fiat: null,
     crypto: null,
@@ -1762,10 +1784,31 @@ ${seoTags}
         if (req.query._route_) {
           const rawRoute = req.query._route_;
           reqPath = rawRoute.startsWith("/") ? rawRoute : "/" + rawRoute;
+        } else if (req.headers["x-matched-path"] && typeof req.headers["x-matched-path"] === "string") {
+          reqPath = req.headers["x-matched-path"];
+        } else if (req.originalUrl) {
+          reqPath = req.originalUrl.split("?")[0];
+        }
+        if (reqPath.startsWith("/api/index.js") || reqPath.startsWith("/api/index") || reqPath === "/api") {
+          const origUrl = req.headers["x-original-url"];
+          if (typeof origUrl === "string" && origUrl) {
+            reqPath = origUrl.split("?")[0];
+          }
         }
         let cleanPath = reqPath;
         if (cleanPath.endsWith("/") && cleanPath.length > 1) {
           cleanPath = cleanPath.slice(0, -1);
+        }
+        const shortUrlRedirects = {
+          "/invoice": "/tools/invoice",
+          "/qr": "/tools/qr",
+          "/barcode": "/tools/barcode",
+          "/converter": "/tools/converter"
+        };
+        if (shortUrlRedirects[cleanPath]) {
+          const targetPath = shortUrlRedirects[cleanPath];
+          res.setHeader("Cache-Control", "public, max-age=86400");
+          return res.redirect(301, targetPath);
         }
         if (cleanPath.startsWith("/blog/") && cleanPath !== "/blog") {
           const postId = cleanPath.split("/blog/")[1]?.split("?")[0];
