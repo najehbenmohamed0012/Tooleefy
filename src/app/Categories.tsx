@@ -32,9 +32,9 @@ const categories = [
         bg: "bg-emerald-500/10"
       },
       { 
-        name: "Business & Rate Converter", 
+        name: "Unit Converter", 
         path: "/tools/converter", 
-        desc: "High-precision calculations for currency and crypto exchange rates.",
+        desc: "High-precision calculations for measurement units, currency and crypto rates.",
         icon: RefreshCcw,
         color: "text-teal-500",
         bg: "bg-teal-500/10"
@@ -47,7 +47,7 @@ const categories = [
     color: "from-blue-500/10 to-indigo-500/10",
     tools: [
       { 
-        name: "QR Generator", 
+        name: "QR Code Generator", 
         path: "/tools/qr", 
         desc: "Dynamic vector QR codes for business and web.",
         icon: QrCode,
@@ -55,9 +55,9 @@ const categories = [
         bg: "bg-blue-500/10"
       },
       { 
-        name: "Barcode Suite", 
+        name: "Barcode Generator", 
         path: "/tools/barcode", 
-        desc: "Industry standard labels (EAN, UPC, Code128).",
+        desc: "Industry standard barcode labels (EAN, UPC, Code128).",
         icon: Barcode,
         color: "text-indigo-500",
         bg: "bg-indigo-500/10"
@@ -70,7 +70,7 @@ export function Categories() {
   return (
     <div className="bg-muted/30 min-h-screen pb-24">
       <PageHeader 
-        title="Utility Ecosystem." 
+        title="Free Online Business & Productivity Tools" 
         description="Our refined collection of high-performance business utilities. No data leaves your browser."
         badge="Core Library"
       />

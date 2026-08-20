@@ -253,8 +253,10 @@ export function UnitsConverter() {
   return (
     <div className="container mx-auto px-6 py-4 max-w-7xl">
       <div className="flex flex-col gap-2 mb-4">
-        <h1 className="text-3xl font-black text-foreground tracking-tighter">Business & Rate Converter.</h1>
-        <p className="text-muted-foreground text-sm font-medium">High-fidelity conversion engine for financial currency, crypto, and dynamic rate evaluations.</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tighter">Free Unit Converter</h1>
+        <p className="text-muted-foreground text-sm font-medium max-w-3xl leading-relaxed">
+          Convert units online for free. Tooleefy’s professional unit converter handles calculations across length, weight, temperature, area, digital storage, currency, and crypto with fast, accurate results.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start relative">
@@ -473,6 +475,30 @@ export function UnitsConverter() {
         </div>
       </div>
       <AdSenseUnit slot="3940156291" type="banner" className="my-8" />
+      {/* Supporting headings & content to capture search intent */}
+      <div className="w-full max-w-4xl mx-auto mt-16 p-8 border border-border/40 rounded-3xl bg-card shadow-premium space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Convert Units Online for Free</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Tooleefy provides a fully featured, high-accuracy measurement conversion workspace that operates 100% inside your web browser. Seamlessly transform scientific metrics and global currencies without charges, forced registration, or limits.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">Length, Weight, Temperature, Area & More</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Our conversion suite supports comprehensive categories: <strong>Length</strong> (meters, miles, feet), <strong>Weight/Mass</strong> (kilograms, pounds, ounces), <strong>Temperature</strong> (Celsius, Fahrenheit, Kelvin), <strong>Area</strong> (sq meters, acres), <strong>Data</strong> (GB, MB, TB), and live <strong>Currencies & Cryptocurrencies</strong>.
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <h2 className="text-xl font-bold text-foreground mb-3">Fast and Accurate Unit Conversion</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Engineered for absolute mathematical precision, all metric translations use stabilized floating-point definitions. Real-time rates for world currencies and cryptocurrency assets are securely updated, processing inputs instantly on your device with complete network privacy.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <ConverterFAQ />
     </div>
   );

@@ -173,24 +173,28 @@ export function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-8 flex flex-col items-center justify-center gap-1 sm:gap-2"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-tight md:leading-[1.12] tracking-tighter mb-4 flex flex-col items-center justify-center text-center"
             >
+              <span>Free Online Business Tools</span>
+            </motion.h1>
+            
+            <div className="text-xl sm:text-3xl md:text-4xl font-bold text-muted-foreground mb-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
               <span>Ultimate Suite For</span>
-              <span className={`relative inline-block w-full min-w-[240px] sm:min-w-[280px] max-w-full overflow-hidden transition-all duration-300 ${index === 3 ? "h-[2.3em]" : "h-[1.3em]"}`}>
+              <span className={`relative inline-block w-[180px] sm:w-[280px] h-[1.3em] overflow-hidden`}>
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
+                    exit={{ opacity: 0, y: -15 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex flex-col items-center justify-center text-primary italic select-none text-2xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-center whitespace-pre-line leading-[1.05]"
+                    className="absolute inset-0 flex items-center justify-center text-primary italic font-black text-xl sm:text-3xl md:text-4xl"
                   >
                     {animatedWords[index]}
                   </motion.span>
                 </AnimatePresence>
               </span>
-            </motion.h1>
+            </div>
             
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -198,7 +202,7 @@ export function Home() {
               transition={{ delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground font-medium max-w-3xl mb-12 leading-relaxed"
             >
-              Tooleefy is your premium localized business tools generator. Instantly generate professional invoices with seamless PDF exports, customize dynamic high-fidelity business QR Codes, compile bulk Barcode Stickers, and compute real-time exchange rates & financial conversions with total privacy.
+              Tooleefy provides free online business tools to streamline your daily workflow. Our private local suite enables secure and professional invoice generation, dynamic single and bulk QR code generation, industry-standard single and bulk barcode generation, and professional unit conversion. Securely calculate, encode, and design directly in your browser with zero usage limits.
             </motion.p>
             
             <motion.div 
@@ -248,7 +252,7 @@ export function Home() {
                 </div>
               </div>
               <div className="max-w-md relative z-10 mt-8 md:mt-0">
-                <h3 className="text-3xl md:text-5xl font-black mb-4 text-white leading-tight">Professional Invoicing</h3>
+                <h3 className="text-3xl md:text-5xl font-black mb-4 text-white leading-tight">Free Invoice Generator</h3>
                 <p className="text-white/80 font-medium text-base md:text-lg leading-relaxed mb-8">
                   Create beautiful, business-ready invoices with multiple templates, automatic calculations, and local PDF exports.
                 </p>
@@ -274,7 +278,7 @@ export function Home() {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mb-6">
                   <QrCode className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 text-white">QR Generator</h3>
+                <h3 className="text-2xl font-black mb-2 text-white">Free QR Code Generator</h3>
                 <p className="text-white/80 text-sm font-medium mb-6 leading-relaxed">
                   Dynamic vector QR codes for Wi-Fi, URLs, and Business Cards.
                 </p>
@@ -297,7 +301,7 @@ export function Home() {
                 <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mb-6">
                   <Barcode className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 text-white">Barcode Suite</h3>
+                <h3 className="text-2xl font-black mb-2 text-white">Free Barcode Generator</h3>
                 <p className="text-white/80 text-sm font-medium mb-6 leading-relaxed">
                   EAN, UPC, and Code128 generation with bulk export support.
                 </p>
@@ -321,8 +325,8 @@ export function Home() {
                   <RefreshCcw className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-white">Business & Rate Converter</h3>
-                  <p className="text-white/80 text-sm font-medium">High-fidelity calculations for financial exchange rates, interest, and crypto valuations.</p>
+                  <h3 className="text-2xl font-black text-white">Free Unit Converter</h3>
+                  <p className="text-white/80 text-sm font-medium">High-fidelity calculations for metric parameters, financial exchange rates, and crypto valuations.</p>
                 </div>
               </div>
               <Link to="/tools/converter" className="w-full md:w-auto">

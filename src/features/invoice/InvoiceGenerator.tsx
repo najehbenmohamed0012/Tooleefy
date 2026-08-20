@@ -625,7 +625,10 @@ export function InvoiceGenerator() {
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full w-fit">
             <FileText className="w-3 h-3" /> Ultimate Invoicing v3.0
           </div>
-          <h1 className="text-4xl font-black text-foreground tracking-tighter">Enterprise Invoice Generator.</h1>
+          <h1 className="text-4xl font-black text-foreground tracking-tighter">Free Invoice Generator</h1>
+          <p className="text-muted-foreground font-medium max-w-3xl mt-1 leading-relaxed">
+            Create professional invoices online in seconds. Our free invoice generator lets you customize business details, upload your custom logo, configure taxes, and manage invoice creation without any cost or usage limits.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-4 xl:gap-6 items-start">

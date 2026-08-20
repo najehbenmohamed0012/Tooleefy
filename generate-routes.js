@@ -171,39 +171,39 @@ const writeFileSafe = (filePath, content) => {
 // Define the metadata map exactly as in server.ts
 const metaMap = {
   "/": {
-    title: "Tooleefy | Professional Free Offline Business Utilities Suite",
-    desc: "Instant premium local business tools generator. Design clean PDFs with the Invoice Suite, custom-brand high-fidelity QR Codes, compile bulk Barcode Stickers, and compute metrics offline.",
-    keywords: "business tools, free online tools, invoice generator, barcode generator, QR generator, unit converter, local productivity, offline utilities",
+    title: "Free Business Tools Online | Invoice, QR, Barcode & Unit Converter - Tooleefy",
+    desc: "Create invoices, generate single or bulk QR codes and barcodes, and convert units with Tooleefy’s free professional tools. No limits, no hassle—just fast online tools.",
+    keywords: "free business tools, free online business tools, business tools online, free invoice generator, free QR code generator, free barcode generator, unit converter",
     ogImageParam: "home"
   },
   "/tools/invoice": {
-    title: "Enterprise Invoice Generator | Free Professional Invoicing - Tooleefy",
-    desc: "Produce professional, fully compliant business invoices offline. Features brand logos insertion, bank details integrations, tax computations, and unlimited premium PDF prints.",
-    keywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
+    title: "Free Invoice Generator Online | Create Professional Invoices - Tooleefy",
+    desc: "Create professional invoices online for free with Tooleefy’s invoice generator. Add your business details, taxes and logo, then generate polished invoices with no limits.",
+    keywords: "free invoice generator, invoice generator, free online invoice generator, professional invoice generator, invoice maker, create invoice online, business invoice generator",
     ogImageParam: "invoice"
   },
   "/tools/qr": {
-    title: "Branded QR Code suite | Custom Logo & Gradient Matrix - Tooleefy",
-    desc: "Generate premium custom-branded QR codes with embedded vector logos, custom dot styles, edge gradients, error-correction tuning, and complete verification diagnostics.",
-    keywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
+    title: "Free QR Code Generator | Create Single & Bulk QR Codes - Tooleefy",
+    desc: "Create free QR codes online individually or in bulk. Customize QR codes with logos and styles, generate multiple codes at once, and use Tooleefy without limits.",
+    keywords: "free QR code generator, QR code generator, bulk QR code generator, QR code maker, create QR code online, custom QR code generator, QR code with logo",
     ogImageParam: "qr"
   },
   "/tools/barcode": {
-    title: "Bulk Barcode Generator | Free Serial Label Stickers - Tooleefy",
-    desc: "Generate high-density industrial Code128, EAN-13, and UPC barcodes. Import lists, customize labels, print layout grid parameters, and download high-resolution sticker books.",
-    keywords: "barcode label maker, code128 sheet generator, free retail barcodes, barcode sticker sheet",
+    title: "Free Barcode Generator | Create Single & Bulk Barcodes - Tooleefy",
+    desc: "Generate barcodes online for free, individually or in bulk. Create Code 128, EAN-13 and UPC barcodes, customize labels and download high-quality results with no limits.",
+    keywords: "free barcode generator, barcode generator, bulk barcode generator, barcode maker, online barcode generator, Code 128 barcode generator, EAN-13 barcode generator, UPC barcode generator",
     ogImageParam: "barcode"
   },
   "/tools/converter": {
-    title: "High-Accuracy Units Converter | Scientific Measurement Tool - Tooleefy",
-    desc: "Perform flawless measurement transformations across length, mass, temperature, area, digital data, plus live real-time fiat and cryptocurrency markets.",
-    keywords: "measurement metrics convert, fiat currency calculator, imperial converters, live crypto conversion",
+    title: "Free Unit Converter Online | Convert Measurements Instantly - Tooleefy",
+    desc: "Convert units online for free with Tooleefy’s professional unit converter. Convert length, weight, temperature, area, data and more with fast, accurate results and no limits.",
+    keywords: "unit converter, free unit converter, unit conversion, online unit converter, measurement converter, convert units online, length converter, weight converter, temperature converter",
     ogImageParam: "converter"
   },
   "/categories": {
-    title: "Productivity Categories Hub | Browse Local Utilities - Tooleefy",
-    desc: "Select from our structured lists of high-integrity tools. Free, direct, local-first processing for invoices, tracking labels, scan matrices, and scientific dimensions.",
-    keywords: "productivity modules, local-first utility list, tools categories, business software suite",
+    title: "Free Online Tools | Business & Productivity Tools - Tooleefy",
+    desc: "Explore Tooleefy’s free online business and productivity tools, including invoice, QR code, barcode and unit conversion tools. Find the right tool and get started instantly.",
+    keywords: "free online tools, business tools, productivity tools, online tools, free business tools, free productivity tools, business utilities",
     ogImageParam: "categories"
   },
   "/blog": {
@@ -421,6 +421,13 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   // Inject Title and SEO blocks cleanly nested before </head>
   pageHtml = pageHtml.replace("</head>", `<title>${meta.title}</title>\n${seoTags}\n</head>`);
   
+  // Inject server-side semantic H1 inside root element for search bots and screen readers
+  const visibleH1 = meta.title.split("|")[0].trim();
+  pageHtml = pageHtml.replace(
+    '<div id="root"></div>',
+    `<div id="root">\n    <h1>${visibleH1}</h1>\n  </div>`
+  );
+  
   writeFileSafe(targetHtmlPath, pageHtml);
   if (route === "/") {
     console.log("- Pre-rendered main landing page: dist/index.html");
@@ -430,68 +437,41 @@ Object.entries(metaMap).forEach(([route, meta]) => {
   }
 });
 
-// Define default articles for offline fallback/offline builds
-const defaults = [
-  {
-    id: "art-1",
-    title: "Why Client-Side Processing is the Future of B2B SaaS",
-    excerpt: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-    seoTitle: "Why Client-Side Processing is the Future of B2B SaaS",
-    seoDesc: "Discover how a shift towards local processing is revolutionizing data security and application performance in the enterprise space.",
-    seoKeywords: "client-side, local-first, decentralized, SaaS, WASM",
-    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-    category: "Business"
-  },
-  {
-    id: "art-2",
-    title: "5 Common Invoicing Mistakes Every Freelancer Makes",
-    excerpt: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-    seoTitle: "5 Common Invoicing Mistakes Every Freelancer Makes",
-    seoDesc: "Learn how to avoid delays and ensure professional standards in your financial documentation with these expert tips.",
-    seoKeywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
-    coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
-    category: "Invoice Generator"
-  },
-  {
-    id: "art-3",
-    title: "Mastering Custom QR Code Architecture for Retail",
-    excerpt: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
-    seoTitle: "Mastering Custom QR Code Architecture for Retail",
-    seoDesc: "Understand structural guidelines, custom styles, and verification diagnostics to optimize customer engagement.",
-    seoKeywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
-    coverImage: "https://images.unsplash.com/photo-1595079676339-1534801ad6cf?auto=format&fit=crop&w=800&q=80",
-    category: "QR Code Generator"
-  }
-];
-
-// Fetch posts from Supabase or fallback
-let blogPostsToPreRender = [...defaults];
+// Fetch posts from Supabase or fail the build (no more offline placeholders/stale defaults)
+let blogPostsToPreRender = [];
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-if (supabaseUrl && supabaseAnonKey) {
-  try {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { data, error } = await supabase
-      .from("blog_posts")
-      .select("id, title, excerpt, seoTitle, seoDesc, seoKeywords, coverImage, category");
-    
-    if (!error && data && data.length > 0) {
-      // Filter out system configuration rows
-      const filteredData = data.filter(p => p.id !== "tooleefy_system_settings_v1");
-      console.log(`Fetched ${filteredData.length} blog posts from Supabase for pre-rendering.`);
-      // Merge fetched posts with defaults, ensuring no duplicate IDs
-      const fetchedIds = new Set(filteredData.map(p => p.id));
-      const uniqueDefaults = defaults.filter(p => !fetchedIds.has(p.id));
-      blogPostsToPreRender = [...filteredData, ...uniqueDefaults];
-    } else if (error) {
-      console.warn("Supabase fetch returned error, using fallback defaults:", error.message);
-    }
-  } catch (err) {
-    console.warn("Could not fetch from Supabase, using defaults:", err);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("CRITICAL ERROR: Supabase configuration environment variables are missing! Cannot proceed with build.");
+  process.exit(1);
+}
+
+console.log("Connecting to Supabase to fetch lightweight blog metadata...");
+try {
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("id, title, excerpt, seoTitle, seoDesc, seoKeywords, category, date, author")
+    .order("date", { ascending: false });
+  
+  if (error) {
+    console.error("CRITICAL ERROR: Failed to fetch blog posts from Supabase:", error.message);
+    process.exit(1);
   }
-} else {
-  console.log("No Supabase configuration found in environment. Pre-rendering offline defaults.");
+  
+  if (!data || data.length === 0) {
+    console.error("CRITICAL ERROR: Supabase returned zero blog posts. Cannot build an incomplete sitemap/site.");
+    process.exit(1);
+  }
+
+  // Filter out system configuration rows
+  const filteredData = data.filter(p => p.id !== "tooleefy_system_settings_v1");
+  console.log(`Successfully fetched ${filteredData.length} published blog posts from Supabase for pre-rendering.`);
+  blogPostsToPreRender = filteredData;
+} catch (err) {
+  console.error("CRITICAL ERROR: Unexpected error fetching from Supabase:", err);
+  process.exit(1);
 }
 
 // Generate pre-rendered physical HTML files for every blog post
@@ -501,11 +481,45 @@ blogPostsToPreRender.forEach((post) => {
   ensureDir(routeDir);
   
   const absoluteUrl = `${protocol}://${host}${route}`;
-  const title = `${post.seoTitle || post.title} | Tooleefy Insights`;
-  const desc = post.seoDesc || post.excerpt;
+
+  // Optimize and correct metadata individual values to avoid truncation or double-branding
+  let titleVal = post.seoTitle || post.title;
+  let descVal = post.seoDesc || post.excerpt;
+
+  if (post.id === "art-the-strategic-guide-to-how-to-start-a-small-business-3931") {
+    titleVal = "How to Start a Small Business: Step-by-Step Strategic Guide";
+    descVal = "Start your small business successfully. Learn step-by-step market research strategies, regulatory compliance, budgeting tips, and local launch tactics.";
+  }
+
+  // Programmatically strip pre-existing repetitive brand suffixes
+  titleVal = titleVal
+    .replace(/\s*\|\s*Tooleefy\s*Blog/gi, "")
+    .replace(/\s*\|\s*Tooleefy\s*Insights/gi, "")
+    .trim();
+
+  // Resolve obvious end-of-word truncations
+  if (titleVal.endsWith("Busine")) {
+    titleVal = titleVal.substring(0, titleVal.length - 6) + "Business";
+  }
+
+  // Apply one consistent brand suffix
+  const title = `${titleVal} | Tooleefy Insights`;
+
+  // Trim and polish descriptions to eliminate AI-generated placeholders or ellipses
+  if (descVal) {
+    descVal = descVal.trim();
+    if (descVal.endsWith("....")) {
+      descVal = descVal.substring(0, descVal.length - 4).trim();
+    } else if (descVal.endsWith("...")) {
+      descVal = descVal.substring(0, descVal.length - 3).trim();
+    }
+  } else {
+    descVal = "Explore insightful strategies, masterclass tutorials, and data sovereignty blueprints on Tooleefy Insights.";
+  }
+
   const keywords = post.seoKeywords || "tooleefy blog, local saas insights, tech workflow security";
   
-  const ogImgUrl = getOgImageUrl(post.coverImage, post.id);
+  const ogImgUrl = getOgImageUrl(undefined, post.id); // Triggers custom dynamic OG url: https://tooleefy.com/og/blog/${post.id}.jpg
     
   const ogImgSecureUrl = ogImgUrl.startsWith("https://") ? ogImgUrl : (ogImgUrl.startsWith("http://") ? ogImgUrl.replace("http://", "https://") : "");
   const ogImgType = ogImgUrl.endsWith(".png") ? "image/png" : "image/jpeg";
@@ -518,7 +532,7 @@ blogPostsToPreRender.forEach((post) => {
         "@type": "BlogPosting",
         "@id": `${protocol}://${host}${route}#entry`,
         "headline": post.title,
-        "description": post.seoDesc || post.excerpt,
+        "description": descVal,
         "image": ogImgUrl,
         "datePublished": post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
         "author": {
@@ -566,7 +580,7 @@ blogPostsToPreRender.forEach((post) => {
 
   const seoTags = `
     <!-- General SEO tags for ${post.title} -->
-    <meta name="description" content="${desc}" />
+    <meta name="description" content="${descVal}" />
     <meta name="keywords" content="${keywords}" />
     <meta name="author" content="Tooleefy" />
     <meta name="robots" content="index, follow" />
@@ -577,7 +591,7 @@ blogPostsToPreRender.forEach((post) => {
     <meta property="og:site_name" content="Tooleefy" />
     <meta property="og:url" content="${absoluteUrl}" />
     <meta property="og:title" content="${title}" />
-    <meta property="og:description" content="${desc}" />
+    <meta property="og:description" content="${descVal}" />
     <meta property="og:image" content="${ogImgUrl}" />
     ${ogImgSecureUrl ? `<meta property="og:image:secure_url" content="${ogImgSecureUrl}" />` : ""}
     <meta property="og:image:type" content="${ogImgType}" />
@@ -589,12 +603,18 @@ blogPostsToPreRender.forEach((post) => {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="${absoluteUrl}" />
     <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${desc}" />
+    <meta name="twitter:description" content="${descVal}" />
     <meta name="twitter:image" content="${ogImgUrl}" />${schemaString}
   `;
 
   let pageHtml = baseHtml;
   pageHtml = pageHtml.replace("</head>", `<title>${title}</title>\n${seoTags}\n</head>`);
+  
+  // Inject server-side semantic H1 inside root element for search bots and screen readers
+  pageHtml = pageHtml.replace(
+    '<div id="root"></div>',
+    `<div id="root">\n    <h1>${post.title}</h1>\n  </div>`
+  );
   
   const targetHtmlPath = path.join(routeDir, "index.html");
   writeFileSafe(targetHtmlPath, pageHtml);
@@ -623,5 +643,49 @@ privateRoutes.forEach((route) => {
   writeFileSafe(targetHtmlPath, pageHtml);
   console.log(`- Created private route: ${route}/index.html`);
 });
+
+// Generate dynamic sitemap.xml with accurate published posts and zero stale placeholders
+console.log("Generating sitemap.xml with real dynamic URLs...");
+const sitemapUrls = [
+  { loc: "https://tooleefy.com/", priority: "1.0", changefreq: "daily" },
+  { loc: "https://tooleefy.com/tools/invoice", priority: "0.9", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/tools/qr", priority: "0.9", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/tools/barcode", priority: "0.9", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/tools/converter", priority: "0.9", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/categories", priority: "0.8", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/blog", priority: "0.8", changefreq: "daily" }
+];
+
+blogPostsToPreRender.forEach((post) => {
+  sitemapUrls.push({
+    loc: `https://tooleefy.com/blog/${post.id}`,
+    priority: "0.8",
+    changefreq: "weekly"
+  });
+});
+
+const staticPublicPages = [
+  { loc: "https://tooleefy.com/about", priority: "0.7", changefreq: "monthly" },
+  { loc: "https://tooleefy.com/faq", priority: "0.7", changefreq: "monthly" },
+  { loc: "https://tooleefy.com/contact", priority: "0.7", changefreq: "monthly" },
+  { loc: "https://tooleefy.com/value-our-tools", priority: "0.8", changefreq: "weekly" },
+  { loc: "https://tooleefy.com/privacy", priority: "0.5", changefreq: "monthly" },
+  { loc: "https://tooleefy.com/terms", priority: "0.5", changefreq: "monthly" },
+  { loc: "https://tooleefy.com/cookies", priority: "0.5", changefreq: "monthly" }
+];
+sitemapUrls.push(...staticPublicPages);
+
+const sitemapCurrentDate = new Date().toISOString().split("T")[0];
+let sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+sitemapUrls.forEach((urlObj) => {
+  sitemapXml += `  <url>\n    <loc>${urlObj.loc}</loc>\n    <lastmod>${sitemapCurrentDate}</lastmod>\n    <changefreq>${urlObj.changefreq}</changefreq>\n    <priority>${urlObj.priority}</priority>\n  </url>\n`;
+});
+sitemapXml += `</urlset>\n`;
+
+// Write to both public and dist directories
+writeFileSafe(path.join(process.cwd(), "public", "sitemap.xml"), sitemapXml);
+writeFileSafe(path.join(distDir, "sitemap.xml"), sitemapXml);
+console.log(`Successfully generated dynamic sitemap.xml with ${sitemapUrls.length} total URLs!`);
 
 console.log("Pre-rendered routes successfully generated!");

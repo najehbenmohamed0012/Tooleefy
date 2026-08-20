@@ -20,9 +20,11 @@ export function QRCodeGenerator() {
   return (
     <div className="container mx-auto px-6 py-12 max-w-7xl">
       <div className="flex flex-col gap-6 mb-12">
-        <div className="space-y-2 text-center">
-          <h1 className="text-5xl font-black text-foreground tracking-tighter italic uppercase">QR code generator.</h1>
-          <p className="text-muted-foreground text-sm font-medium">Dynamic high-fidelity vector QR generation core.</p>
+        <div className="space-y-4 text-center">
+          <h1 className="text-5xl font-black text-foreground tracking-tighter italic uppercase">Free QR Code Generator</h1>
+          <p className="text-muted-foreground text-sm font-medium max-w-2xl mx-auto leading-relaxed">
+            Our tool supports seamless single QR code generation, dynamic bulk QR code generation, and custom QR codes complete with brand logos and personalized styles. Design high-fidelity vector matrices for URLs, Wi-Fi, and contacts with 100% free unlimited use.
+          </p>
         </div>
         
         <div className="flex justify-center">

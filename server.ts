@@ -668,7 +668,7 @@ async function startServer() {
         { loc: "/cookies", changefreq: "monthly", priority: "0.5" }
       ];
 
-      // 2. Fetch blog posts from Supabase or use fallback defaults
+      // 2. Fetch blog posts from Supabase
       let blogPosts: { id: string; date?: string }[] = [];
       const client = getSupabaseClient();
       if (client) {
@@ -678,20 +678,12 @@ async function startServer() {
             .select("id, date")
             .order("date", { ascending: false });
           if (!error && data && data.length > 0) {
-            blogPosts = data;
+            // Filter out system settings row and empty/falsy IDs
+            blogPosts = data.filter((p: any) => p.id && p.id !== "tooleefy_system_settings_v1");
           }
         } catch (err) {
-          console.warn("Error fetching blog posts for sitemap, using defaults:", err);
+          console.warn("Error fetching blog posts for sitemap:", err);
         }
-      }
-
-      // If no blog posts fetched from Supabase, use the fallback defaults
-      if (blogPosts.length === 0) {
-        blogPosts = [
-          { id: "art-1", date: "May 15, 2024" },
-          { id: "art-2", date: "May 10, 2024" },
-          { id: "art-3", date: "May 05, 2024" }
-        ];
       }
 
       // Generate XML
@@ -1629,39 +1621,39 @@ ${article.content}`;
     // Metadata map mapping public URLs to SEO benchmarks
     const metaMap: Record<string, { title: string; desc: string; keywords: string; ogImageParam: string }> = {
       "/": {
-        title: "Tooleefy | Professional Free Offline Business Utilities Suite",
-        desc: "Instant premium local business tools generator. Design clean PDFs with the Invoice Suite, custom-brand high-fidelity QR Codes, compile bulk Barcode Stickers, and compute metrics offline.",
-        keywords: "business tools, free online tools, invoice generator, barcode generator, QR generator, unit converter, local productivity, offline utilities",
+        title: "Free Business Tools Online | Invoice, QR, Barcode & Unit Converter - Tooleefy",
+        desc: "Create invoices, generate single or bulk QR codes and barcodes, and convert units with Tooleefy’s free professional tools. No limits, no hassle—just fast online tools.",
+        keywords: "free business tools, free online business tools, business tools online, free invoice generator, free QR code generator, free barcode generator, unit converter",
         ogImageParam: "home"
       },
       "/tools/invoice": {
-        title: "Enterprise Invoice Generator | Free Professional Invoicing - Tooleefy",
-        desc: "Produce professional, fully compliant business invoices offline. Features brand logos insertion, bank details integrations, tax computations, and unlimited premium PDF prints.",
-        keywords: "online invoice maker, invoice creator, pdf billing creator, local invoice builder, professional invoicing",
+        title: "Free Invoice Generator Online | Create Professional Invoices - Tooleefy",
+        desc: "Create professional invoices online for free with Tooleefy’s invoice generator. Add your business details, taxes and logo, then generate polished invoices with no limits.",
+        keywords: "free invoice generator, invoice generator, free online invoice generator, professional invoice generator, invoice maker, create invoice online, business invoice generator",
         ogImageParam: "invoice"
       },
       "/tools/qr": {
-        title: "Branded QR Code suite | Custom Logo & Gradient Matrix - Tooleefy",
-        desc: "Generate premium custom-branded QR codes with embedded vector logos, custom dot styles, edge gradients, error-correction tuning, and complete verification diagnostics.",
-        keywords: "branded qr code generator, custom qr creator, free qr logo maker, high-fidelity qr suite",
+        title: "Free QR Code Generator | Create Single & Bulk QR Codes - Tooleefy",
+        desc: "Create free QR codes online individually or in bulk. Customize QR codes with logos and styles, generate multiple codes at once, and use Tooleefy without limits.",
+        keywords: "free QR code generator, QR code generator, bulk QR code generator, QR code maker, create QR code online, custom QR code generator, QR code with logo",
         ogImageParam: "qr"
       },
       "/tools/barcode": {
-        title: "Bulk Barcode Generator | Free Serial Label Stickers - Tooleefy",
-        desc: "Generate high-density industrial Code128, EAN-13, and UPC barcodes. Import lists, customize labels, print layout grid parameters, and download high-resolution sticker books.",
-        keywords: "barcode label maker, code128 sheet generator, free retail barcodes, barcode sticker sheet",
+        title: "Free Barcode Generator | Create Single & Bulk Barcodes - Tooleefy",
+        desc: "Generate barcodes online for free, individually or in bulk. Create Code 128, EAN-13 and UPC barcodes, customize labels and download high-quality results with no limits.",
+        keywords: "free barcode generator, barcode generator, bulk barcode generator, barcode maker, online barcode generator, Code 128 barcode generator, EAN-13 barcode generator, UPC barcode generator",
         ogImageParam: "barcode"
       },
       "/tools/converter": {
-        title: "High-Accuracy Units Converter | Scientific Measurement Tool - Tooleefy",
-        desc: "Perform flawless measurement transformations across length, mass, temperature, area, digital data, plus live real-time fiat and cryptocurrency markets.",
-        keywords: "measurement metrics convert, fiat currency calculator, imperial converters, live crypto conversion",
+        title: "Free Unit Converter Online | Convert Measurements Instantly - Tooleefy",
+        desc: "Convert units online for free with Tooleefy’s professional unit converter. Convert length, weight, temperature, area, data and more with fast, accurate results and no limits.",
+        keywords: "unit converter, free unit converter, unit conversion, online unit converter, measurement converter, convert units online, length converter, weight converter, temperature converter",
         ogImageParam: "converter"
       },
       "/categories": {
-        title: "Productivity Categories Hub | Browse Local Utilities - Tooleefy",
-        desc: "Select from our structured lists of high-integrity tools. Free, direct, local-first processing for invoices, tracking labels, scan matrices, and scientific dimensions.",
-        keywords: "productivity modules, local-first utility list, tools categories, business software suite",
+        title: "Free Online Tools | Business & Productivity Tools - Tooleefy",
+        desc: "Explore Tooleefy’s free online business and productivity tools, including invoice, QR code, barcode and unit conversion tools. Find the right tool and get started instantly.",
+        keywords: "free online tools, business tools, productivity tools, online tools, free business tools, free productivity tools, business utilities",
         ogImageParam: "categories"
       },
       "/blog": {
@@ -1996,6 +1988,37 @@ ${article.content}`;
         let cleanPath = reqPath;
         if (cleanPath.endsWith("/") && cleanPath.length > 1) {
           cleanPath = cleanPath.slice(0, -1);
+        }
+
+        // Validate blog post requests and return 410 for stale routes or 404 for non-existent ones
+        if (cleanPath.startsWith("/blog/") && cleanPath !== "/blog") {
+          const postId = cleanPath.split("/blog/")[1]?.split("?")[0];
+          if (postId === "art-1" || postId === "art-2" || postId === "art-3") {
+            res.status(410).send("This article is permanently gone.");
+            return;
+          }
+          
+          const client = getSupabaseClient();
+          let postExists = false;
+          if (client && postId) {
+            try {
+              const { data, error } = await client
+                .from("blog_posts")
+                .select("id")
+                .eq("id", postId)
+                .maybeSingle();
+              if (!error && data) {
+                postExists = true;
+              }
+            } catch (err) {
+              console.warn("Failed to verify if dynamic post exists:", err);
+            }
+          }
+          
+          if (!postExists) {
+            res.status(404).send("Article not found.");
+            return;
+          }
         }
 
         // If the path looks like a static asset/image, try to resolve and serve it, or return 404 (NEVER return HTML)
