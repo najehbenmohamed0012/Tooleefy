@@ -5,13 +5,13 @@
     "qr": 0,
     "barcode": 0,
     "blog": 0,
-    "home": 20,
+    "home": 22,
     "about": 0
   },
-  "totalVisits": 20,
-  "registeredVisits": 20,
+  "totalVisits": 22,
+  "registeredVisits": 22,
   "guestVisits": 0,
-  "rawServerVisits": 271,
+  "rawServerVisits": 298,
   "botVisits": 10,
   "actionsCount": {
     "converter": 0,
@@ -24,7 +24,7 @@
     "US": 0,
     "FR": 0,
     "DE": 0,
-    "TN": 20,
+    "TN": 22,
     "UK": 0,
     "CA": 0,
     "JP": 0,
@@ -32,22 +32,22 @@
   },
   "devices": {
     "desktop": 0,
-    "mobile": 20,
+    "mobile": 22,
     "tablet": 0
   },
   "browsers": {
-    "chrome": 20,
+    "chrome": 22,
     "safari": 0,
     "firefox": 0,
     "other": 0
   },
   "demographics": {
     "age_18_24": 5,
-    "age_25_34": 8,
+    "age_25_34": 9,
     "age_35_44": 5,
-    "age_45_plus": 2,
-    "male": 6,
-    "female": 14,
+    "age_45_plus": 3,
+    "male": 7,
+    "female": 15,
     "non_binary": 0
   }
 }

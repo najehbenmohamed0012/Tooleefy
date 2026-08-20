@@ -78,7 +78,7 @@ const HomeBlogSkeleton = () => (
 );
 
 export function Home() {
-  const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business\nExchange"];
+  const animatedWords = ["Invoicing", "Financing", "Banking Rates", "Business Exchange"];
   const [index, setIndex] = useState(0);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
     if (typeof window !== "undefined" && (window as any).__INITIAL_BLOG_POSTS__) {
@@ -178,17 +178,17 @@ export function Home() {
               <span>Free Online Business Tools</span>
             </motion.h1>
             
-            <div className="text-xl sm:text-3xl md:text-4xl font-bold text-muted-foreground mb-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <div className="text-xl sm:text-3xl md:text-4xl font-bold text-muted-foreground mb-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
               <span>Ultimate Suite For</span>
-              <span className={`relative inline-block w-[180px] sm:w-[280px] h-[1.3em] overflow-hidden`}>
+              <span className="relative inline-block w-[220px] sm:w-[350px] h-[1.6em] overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={index}
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
+                    exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex items-center justify-center text-primary italic font-black text-xl sm:text-3xl md:text-4xl"
+                    className="absolute inset-0 flex items-center justify-center text-primary italic font-black text-xl sm:text-3xl md:text-4xl whitespace-nowrap py-1"
                   >
                     {animatedWords[index]}
                   </motion.span>
