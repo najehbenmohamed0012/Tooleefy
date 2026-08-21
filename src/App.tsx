@@ -54,6 +54,57 @@ function PageSkeleton() {
   );
 }
 
+// Conditionally renders footer ads ONLY on rich content pages (Google AdSense policy compliance)
+function SafeFooterAdSense() {
+  const location = useLocation();
+  const path = location.pathname.toLowerCase();
+
+  // Low-content or protected pages blacklist where ads are strictly forbidden by AdSense policies
+  const blacklist = [
+    "/dashboard",
+    "/admin",
+    "/settings/account",
+    "/settings/preferences",
+    "/login",
+    "/register",
+    "/privacy",
+    "/terms",
+    "/cookies"
+  ];
+
+  const isBlacklisted = blacklist.some(item => path === item || path.startsWith(item + "/"));
+
+  // Strictly whitelist public high-value informational/tools pages to prevent ads on 404 pages or unindexed views
+  const validPrefixes = [
+    "/",
+    "/tools/invoice",
+    "/tools/qr",
+    "/tools/barcode",
+    "/tools/converter",
+    "/categories",
+    "/blog",
+    "/about",
+    "/faq",
+    "/contact",
+    "/value-our-tools"
+  ];
+
+  const isValidRoute = validPrefixes.some(prefix => {
+    if (prefix === "/") return path === "/";
+    return path === prefix || path.startsWith(prefix + "/");
+  });
+
+  if (isBlacklisted || !isValidRoute) {
+    return null;
+  }
+
+  return (
+    <div className="container mx-auto px-6 max-w-7xl">
+      <AdSenseUnit slot="7940156299" type="leaderboard" className="mt-8 mb-4" />
+    </div>
+  );
+}
+
 export default function App() {
   const [hideValuePage, setHideValuePage] = useState(() => {
     return safeStorage.getItem("tooleefy_hide_value_page") === "true";
@@ -159,9 +210,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </main>
-        <div className="container mx-auto px-6 max-w-7xl">
-          <AdSenseUnit slot="7940156299" type="leaderboard" className="mt-8 mb-4" />
-        </div>
+        <SafeFooterAdSense />
         <Footer />
         <Toaster />
       </div>

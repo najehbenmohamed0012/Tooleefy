@@ -154,6 +154,109 @@ function runOgImageUrlValidationTests(): void {
 // Execute validation tests immediately upon module load to prevent any startup of a misconfigured build
 runOgImageUrlValidationTests();
 
+function buildSeoEditorialHtml(route: string): string {
+  try {
+    let lookupRoute = route;
+    if (lookupRoute.endsWith("/") && lookupRoute.length > 1) {
+      lookupRoute = lookupRoute.slice(0, -1);
+    }
+    const jsonPath = path.join(process.cwd(), "src/utils/seo-editorial-content.json");
+    if (!fs.existsSync(jsonPath)) {
+      return "";
+    }
+    const rawContent = fs.readFileSync(jsonPath, "utf-8");
+    const seoData = JSON.parse(rawContent);
+    const pageData = seoData[lookupRoute];
+    if (!pageData) {
+      return "";
+    }
+    
+    let html = `
+    <div class="seo-editorial-section py-16 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/10 mt-16">
+      <div class="max-w-4xl mx-auto px-6">
+        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mb-6">${pageData.h1}</h1>
+        <p class="text-lg leading-relaxed text-slate-600 dark:text-slate-400 mb-10 font-medium">${pageData.intro}</p>
+        
+        <div class="space-y-10">
+    `;
+    
+    pageData.sections.forEach((sec: any) => {
+      const paragraphs = sec.text.split("\n").map((p: string) => {
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        let processedText = p.replace(linkRegex, '<a href="$2" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">$1</a>');
+        if (p.trim().startsWith("- ")) {
+          return `<li class="ml-4 list-disc pl-1 text-slate-600 dark:text-slate-400 leading-relaxed">${processedText.replace(/^-\s+/, "")}</li>`;
+        }
+        return `<p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">${processedText}</p>`;
+      });
+      
+      let secContent = "";
+      let inList = false;
+      paragraphs.forEach((pStr: string) => {
+        if (pStr.startsWith("<li")) {
+          if (!inList) {
+            secContent += `<ul class="space-y-2 mb-4">`;
+            inList = true;
+          }
+          secContent += pStr;
+        } else {
+          if (inList) {
+            secContent += `</ul>`;
+            inList = false;
+          }
+          secContent += pStr;
+        }
+      });
+      if (inList) {
+        secContent += `</ul>`;
+      }
+
+      html += `
+          <div class="border-l-4 border-slate-200 dark:border-slate-700 pl-5">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">${sec.heading}</h2>
+            ${secContent}
+          </div>
+      `;
+    });
+    
+    html += `
+        </div>
+    `;
+    
+    if (pageData.faqs && pageData.faqs.length > 0) {
+      html += `
+        <div class="border-t border-slate-200 dark:border-slate-800 pt-10 mt-12">
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-8">Frequently Asked Questions (FAQ)</h2>
+          <div class="grid gap-6 md:grid-cols-1">
+      `;
+      
+      pageData.faqs.forEach((faq: any) => {
+        html += `
+            <div class="bg-white dark:bg-slate-800/40 p-6 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm">
+              <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-3 text-lg">${faq.q}</h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">${faq.a}</p>
+            </div>
+        `;
+      });
+      
+      html += `
+          </div>
+        </div>
+      `;
+    }
+    
+    html += `
+      </div>
+    </div>
+    `;
+    
+    return html;
+  } catch (error) {
+    console.error("Error building SEO Editorial HTML:", error);
+    return "";
+  }
+}
+
 async function startServer() {
   const rawPort = process.env.PORT;
   const isSocket = rawPort ? isNaN(Number(rawPort)) : false;
@@ -1968,6 +2071,12 @@ ${article.content}`;
     // Inject Title and custom compiled meta blocks cleanly nested before </head>
     html = html.replace("</head>", `<title>${routeMeta.title}</title>\n${seoTags}\n</head>`);
     
+    // Replace <div id="root"></div> with server-side rendered editorial content for crawler/AdSense indexing
+    const seoHtml = buildSeoEditorialHtml(reqPath);
+    if (seoHtml) {
+      html = html.replace('<div id="root"></div>', `<div id="root">${seoHtml}</div>`);
+    }
+
     return html;
   }
 

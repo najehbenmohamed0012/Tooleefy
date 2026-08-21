@@ -26,6 +26,7 @@ import { fetchBlogPosts } from "@/supabase/db";
 import { BlogImage } from "@/components/BlogImage";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { safeStorage } from "@/utils/safeStorage";
+import { SeoEditorial } from "@/components/SeoEditorial";
 
 const tools = [
   {
@@ -517,6 +518,7 @@ export function Home() {
           </div>
         </div>
       </section>
+      <SeoEditorial route="/" />
     </div>
   );
 }

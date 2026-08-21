@@ -4,7 +4,7 @@ import { BulkBarcodeGenerator } from "./BulkBarcodeGenerator";
 import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
-import { BarcodeFAQ } from "./BarcodeFAQ";
+import { SeoEditorial } from "@/components/SeoEditorial";
 
 export function BarcodeGenerator() {
   const [activeTab, setActiveTab] = useState("single");
@@ -82,37 +82,7 @@ export function BarcodeGenerator() {
       <ValueBanner />
       <AdSenseUnit slot="2940251718" type="banner" className="my-8" />
       
-      {/* Supporting headings & content to capture search intent */}
-      <div className="w-full max-w-4xl mx-auto mt-16 p-8 border border-border/40 rounded-3xl bg-card shadow-premium space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">Create Single or Bulk Barcodes</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Tooleefy provides complete flexibility for stock management. Use our single generator to output individual tracking labels, or switch to the bulk engine to batch compile thousands of unique sequential barcode stickers in a single operation.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">Supported Barcode Formats</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Our professional serialization core supports key global industry standards: <strong>Code 128</strong> (for enterprise logistics and asset inventory tracking), <strong>EAN-13</strong> (for international retail point-of-sale), and <strong>UPC-A / UPC-E</strong> (for standard retail distribution).
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">How to Generate a Barcode Online</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Generating your codes is simple: select your preferred barcode format, enter your alphanumeric data values, adjust styling parameters like stripe height and label margins, and immediately download high-resolution visual outputs.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">Free Barcode Generator for Business</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Designed specifically for small business logistics, retail operators, and warehouse managers, our online utility operates completely locally in your browser. Save high-definition graphics without cost, sign-ups, or limits.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <BarcodeFAQ />
+      <SeoEditorial route="/tools/barcode" />
     </div>
   );
 }

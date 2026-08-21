@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
+import { SeoEditorial } from "@/components/SeoEditorial";
 import { 
   FileText, 
   QrCode, 
@@ -138,6 +139,7 @@ export function Categories() {
           <AdSenseUnit slot="8109356127" type="leaderboard" className="mt-16" />
         </div>
       </section>
+      <SeoEditorial route="/categories" />
     </div>
   );
 }

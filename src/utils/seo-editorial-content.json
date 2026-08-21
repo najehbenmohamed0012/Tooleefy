@@ -1,0 +1,226 @@
+{
+  "/": {
+    "h1": "Free Business Tools Online",
+    "intro": "Welcome to Tooleefy, the high-integrity, completely free business utilities platform designed specifically for freelancers, developers, contractors, small business owners, and creators. We offer professional-grade tools that process your data entirely in your browser, guaranteeing total data security and privacy sovereignty without any subscriptions, sign-ups, or usage caps.",
+    "sections": [
+      {
+        "heading": "What is Tooleefy?",
+        "text": "Tooleefy is a decentralized, offline-first collection of essential productivity tools. Unlike traditional web utilities that sync, store, or analyze your business files on third-party servers, Tooleefy operates completely client-side in your local browser sandbox. Whether you're a freelance consultant billing clients, a warehouse supervisor managing inventory dispatch, or a digital marketer deploying targeted campaigns, our tools provide high-speed, secure operations right on your device."
+      },
+      {
+        "heading": "Our Core Professional Tools",
+        "text": "We have engineered Tooleefy to cover the most critical administrative and design bottlenecks of your daily operations. Our free professional tools include a PDF Invoice Generator with customizable tax and discount configurations, an EAN, UPC, and Code 128 Barcode Generator, a highly stylized Single and Bulk QR Code Builder with error correction customization, and an incredibly precise multi-category Unit Converter."
+      },
+      {
+        "heading": "Practical Business Use Cases",
+        "text": "Tooleefy tools are built to adapt seamlessly to your professional workflows:\n- Freelance & Contractor Billing: Draft polished, corporate-compliant invoices instantly and securely without risking sensitive customer details crossing the network.\n- E-Commerce & Retail Logistics: Bulk generate logistics-grade barcodes for inventory, warehouse shelving, and product labeling.\n- Marketing & Client Campaigns: Build custom styled, high-scanability QR codes with your business logo for direct flyers, physical packaging, and print media.\n- Scientific & Engineering Calculations: Perform mathematically exact dimensional conversions across different weight, volume, length, and digital formats on-site."
+      },
+      {
+        "heading": "Why Professionals Choose Tooleefy",
+        "text": "Standard web tools often lock key features behind subscription plans, limit bulk operations, or quietly harvest your business databases for marketing metrics. Tooleefy is different. Our application is engineered on the principle of local privacy sovereignty. Your sensitive invoice rates, email addresses, and SKU codes never leave your machine. Combined with zero login friction, unlimited generation speeds, and high-contrast accessible layouts, Tooleefy delivers the ultimate professional workspace."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Are Tooleefy tools really free to use?",
+        "a": "Yes! Every single feature, including bulk QR and barcode generation, is 100% free with absolutely no hidden subscription fees, credits, account limits, or trial walls."
+      },
+      {
+        "q": "Does Tooleefy store or upload my files or inputs?",
+        "a": "No. Tooleefy utilizes zero-knowledge client-side rendering. PDF invoice building, barcode vector calculations, and QR code mapping occur fully in your browser memory. We have no backend databases capturing your customer or product profiles."
+      },
+      {
+        "q": "Can I use Tooleefy offline?",
+        "a": "Yes. Once the page loads in your browser, the primary tools remain completely functional even without active internet connectivity, as all mathematical engines run locally."
+      }
+    ]
+  },
+  "/tools/invoice": {
+    "h1": "Free Invoice Generator Online",
+    "intro": "Create professional, polished, and fully customized business invoices instantly with Tooleefy's free online invoice generator. Designed to simplify billing workflows for freelancers, consultants, contractors, and small business owners, our tool runs entirely locally in your browser sandbox, keeping your financial statements completely secure.",
+    "sections": [
+      {
+        "heading": "What is an Invoice?",
+        "text": "An invoice is a legally recognized commercial document issued by a seller to a buyer. It establishes a formal record of transaction, itemizing the products or services provided, detailing exact quantities, listing agreed rates, applying standard taxes, and defining precise payment terms. A professional invoice serves as both a billing request and an essential component for tax compliance and bookkeeping."
+      },
+      {
+        "heading": "How to Create a Professional Invoice",
+        "text": "Generating a client-ready invoice with Tooleefy takes just a few steps:\n1. Input Sender & Client Details: Fill in your company logo, legal business name, contact information, and your customer's billing address.\n2. Add Invoice Metadata: Assign a unique invoice number sequence, document date, and clear payment due date.\n3. Itemize Services or Products: Add line items detailing description, quantity, and unit rate. Our calculator automatically handles the rest.\n4. Apply Taxes & Discounts: Input a custom percentage for local sales taxes (VAT, GST) and any negotiated discounts.\n5. Export as PDF: Click to render and download a clean, print-ready PDF invoice file directly on your device."
+      },
+      {
+        "heading": "Local Financial Sovereignty",
+        "text": "Traditional billing software forces you to upload client databases, invoice values, and private company details to external cloud servers. Tooleefy respects your business sovereignty. Our invoice generator renders PDFs on your browser canvas locally. Your financial data is never intercepted, tracked, or stored by us, ensuring full compliance with international privacy protocols."
+      },
+      {
+        "heading": "Essential Elements of a Compliant Invoice",
+        "text": "To ensure prompt payment and compliance, always verify that your invoice clearly states:\n- The word 'INVOICE' prominently displayed at the top.\n- Sequentially organized unique invoice numbers for easy tracking.\n- Your official tax registration or registration numbers if required locally.\n- Detailed payment options (e.g., bank wire details, payment links) and clear payment deadlines."
+      },
+      {
+        "heading": "Invoicing Best Practices for Freelancers",
+        "text": "To maintain professional relationships and ensure healthy cash flow, follow these proven invoicing strategies:\n- Deliver invoices promptly upon project milestone completion or delivery.\n- Standardize payment terms to Net 15 or Net 30, and clearly state them on the invoice.\n- Provide highly detailed itemizations to prevent client questions or payment delays.\n- Maintain an orderly digital system of exported PDFs for flawless tax audits."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can I add a custom company logo to my invoice?",
+        "a": "Yes! Our tool supports uploading custom JPEG or PNG logos, which are dynamically embedded directly into your PDF document locally in your browser."
+      },
+      {
+        "q": "Is there a limit to the number of invoices I can create?",
+        "a": "No, you can generate an infinite number of invoices with unlimited line items. There are zero usage restrictions or transaction charges."
+      },
+      {
+        "q": "Where is my client data saved?",
+        "a": "All client profiles and billing lines are stored locally in your browser's secure cache so you can return to edit them, but they are never uploaded to any external servers."
+      }
+    ]
+  },
+  "/tools/qr": {
+    "h1": "Free QR Code Generator",
+    "intro": "Create high-definition, fully customized QR codes instantly with Tooleefy's free online QR code generator. Whether you need a single stylish QR code for your website or a high-volume batch of thousands of codes for retail inventory, our high-speed client-side builder handles your design specifications cleanly without any limits.",
+    "sections": [
+      {
+        "heading": "What are QR Codes?",
+        "text": "Quick Response (QR) codes are two-dimensional matrix barcodes capable of encoding diverse types of alphanumeric data, including website URLs, contact details (vCards), Wi-Fi credentials, and plain text. Readily scanned by standard smartphone cameras, they serve as instant links connecting physical print media directly to digital web resources."
+      },
+      {
+        "heading": "Single QR Code Generation with Branding",
+        "text": "Make your QR codes represent your brand identity. With Tooleefy, you can customize the foreground and background colors, adjust the dot pattern styles, customize the corner eye frames, and upload a central logo. We automatically apply high-grade Error Correction Coding (ECC) to ensure your QR codes remain perfectly scan-ready even when logos or visual elements cover up to 30% of the matrix area."
+      },
+      {
+        "heading": "High-Volume Bulk QR Code Generator",
+        "text": "For industrial marketing and physical logistics campaigns, manual individual code generation is extremely tedious. Tooleefy offers a robust bulk QR code generator. Upload a simple CSV spreadsheet listing your URLs or texts, and our local batch engine generates thousands of corresponding codes simultaneously, packaging them into a single organized ZIP folder for rapid download."
+      },
+      {
+        "heading": "Common Professional Use Cases",
+        "text": "- Contactless Menus: Link restaurant tables directly to online digital menus.\n- Packaging & Retail labels: Direct customers to assembly instructions, warranty forms, or discount sheets.\n- Business Cards: Share your phone number, social handles, and emails instantly using a vCard code.\n- Event Check-In: Print unique ticketing QR codes for rapid attendee validation at entry points."
+      },
+      {
+        "heading": "Best Practices for QR Scanability",
+        "text": "To guarantee your QR codes scan perfectly on every mobile device:\n- Ensure strong color contrast—always use dark foreground patterns on clean light backgrounds.\n- Keep an adequate 'quiet zone' (unprinted margin) around the QR code boundaries.\n- Test print samples at various physical distances on different mobile OS models before committing to mass production.\n- Use vector formats (SVG) when scaling for large banner and billboard printing."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Do the QR codes generated on Tooleefy expire?",
+        "a": "No. The generated codes are completely static, meaning they encode your target URL or text directly. They will work forever and never expire."
+      },
+      {
+        "q": "Can I edit the target link of a QR code after printing it?",
+        "a": "Because Tooleefy generates secure, direct static QR codes to preserve your privacy, the content is baked into the image. You cannot change the URL after printing, as no tracking redirects are used."
+      },
+      {
+        "q": "What image formats can I export?",
+        "a": "You can export your custom codes as high-density PNG files or scalable SVG vector formats, perfect for both digital layouts and professional print projects."
+      }
+    ]
+  },
+  "/tools/barcode": {
+    "h1": "Free Barcode Generator",
+    "intro": "Generate industry-grade warehouse, shipping, and retail product barcodes online for free with Tooleefy. Built to optimize logistics, retail inventory, and asset-tracking workflows, our professional barcode generator supports standard barcode symbologies with both instant single printing and high-efficiency bulk CSV batch processing.",
+    "sections": [
+      {
+        "heading": "What are Barcodes?",
+        "text": "Barcodes are machine-readable visual symbols composed of parallel bars and spaces of varying widths. They encode numbers, alphanumeric characters, or symbols to allow optical scanners to instantly identify items. Barcoding is the international standard for automating inventory management, tracking packages, and speeding up retail point-of-sale checkout processes."
+      },
+      {
+        "heading": "Supported Industry Barcode Standards",
+        "text": "Tooleefy's generator supports the most common industrial and retail symbologies:\n- Code 128: A high-density, versatile alphanumeric barcode standard used globally in shipping, supply chain tracking, and container labeling.\n- EAN-13: The international 13-digit retail barcode standard required on consumer goods outside of North America.\n- UPC: The universal 12-digit product symbology widely used for retail products across the United States and Canada."
+      },
+      {
+        "heading": "Bulk Barcode Generation for E-Commerce",
+        "text": "Managing vast retail catalog SKUs manually can stall logistics operations. With Tooleefy's bulk barcode tool, you can input lists of product numbers or upload a spreadsheet. Our engine renders all corresponding barcode graphics instantly in your local browser cache, packaging them into a clean, structured ZIP archive ready for thermal label printing."
+      },
+      {
+        "heading": "Guidelines for Printing and Scanning Barcodes",
+        "text": "To prevent warehouse scanner read failures, adhere to these industrial standards:\n- Always output barcodes in solid high-contrast black ink on a non-reflective white background.\n- Ensure you respect the minimum required bar height and spacing specifications for your target symbology.\n- Maintain safe 'quiet zones' on the left and right sides of the bars so laser scanners can detect the boundaries.\n- Print using high-quality thermal label printers to avoid ink bleeding or gaps."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Which barcode format should I use for shipping boxes?",
+        "a": "Code 128 is the absolute standard for shipping containers and logistics labeling due to its compact width and support for letters, numbers, and symbols."
+      },
+      {
+        "q": "Do I need a paid license to generate these barcodes?",
+        "a": "No, our generator is completely free. However, if you plan to sell products in retail stores, you must register unique barcode numbers officially through GS1."
+      },
+      {
+        "q": "How can I download my barcodes in bulk?",
+        "a": "Use the bulk generator tab, paste your list or upload a CSV file, and click generate. Our local engine will download them all as a single organized ZIP folder."
+      }
+    ]
+  },
+  "/tools/converter": {
+    "h1": "Free Unit Converter Online",
+    "intro": "Perform rapid, mathematically precise measurement conversions with Tooleefy's free online unit converter. Designed for engineers, students, global supply chains, and everyday professionals, this conversion utility supports length, weight, temperature, area, volume, and digital units with zero lag and total offline capability.",
+    "sections": [
+      {
+        "heading": "What is Unit Conversion?",
+        "text": "Unit conversion is the mathematical transformation of a measured physical property from one scale of measurement to another. It uses precise, standardized conversion factors to translate values—such as converting inches to millimeters or kilograms to pounds—ensuring consistent dimensional tracking across international scientific, educational, and trade systems."
+      },
+      {
+        "heading": "Supported Measurement Categories",
+        "text": "Our multi-category conversion engine handles the most vital professional conversions:\n- Length: Instantly convert meters, kilometers, centimeters, millimeters, inches, feet, yards, and miles.\n- Mass & Weight: Translate between grams, kilograms, milligrams, pounds, ounces, and stones.\n- Temperature: Precise scales mapping Celsius, Fahrenheit, and Kelvin.\n- Area: Seamless translation of square meters, square kilometers, square feet, square yards, acres, and hectares.\n- Volume: Quick conversion of liters, milliliters, gallons, quarts, pints, and cups.\n- Digital Data Units: Accurate data measurements including bits, bytes, kilobytes, megabytes, gigabytes, and terabytes."
+      },
+      {
+        "heading": "Practical Business & Academic Applications",
+        "text": "Dimensional conversions are essential across various sectors:\n- Global Logistics: Instantly translate cargo freight weight specs from kilograms to pounds for custom clearance.\n- Construction & Engineering: Accurately translate blueprint dimensions between Metric and Imperial standards.\n- Culinary Operations: Convert gourmet recipes instantly between metric grams and imperial ounces or cups.\n- Information Technology: Convert data limits, file storage dimensions, or hosting bandwidth metrics during cloud architecture provisioning."
+      },
+      {
+        "heading": "Flawless Mathematical Precision",
+        "text": "In professional environments, rounded or inaccurate conversions can lead to costly errors in physical production. Tooleefy operates using strict scientific constants and handles floating-point structures cleanly, preventing rounding anomalies on final calculations."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Are the conversion calculations accurate?",
+        "a": "Yes. Our conversion multipliers adhere strictly to NIST (National Institute of Standards and Technology) official standards, delivering high-integrity scientific results."
+      },
+      {
+        "q": "Do you support conversion of digital data limits?",
+        "a": "Absolutely. You can convert bits and bytes to modern storage scales (KB, MB, GB, TB) with both binary (1024-based) and decimal (1000-based) standard definitions."
+      },
+      {
+        "q": "Can I use the unit converter offline?",
+        "a": "Yes! Once loaded, all conversion algorithms run fully client-side on your device, ensuring lightning-fast conversions even in areas with poor network coverage."
+      }
+    ]
+  },
+  "/categories": {
+    "h1": "Free Online Business Tools",
+    "intro": "Explore Tooleefy's curated directory of high-integrity, completely free online business and productivity tools. Built on client-side, local-first browser models, our suite provides freelancers, developers, contractors, and business teams with essential administrative tools while maintaining absolute privacy.",
+    "sections": [
+      {
+        "heading": "Invoice Tools",
+        "text": "Our **[Free Invoice Generator](/tools/invoice)** is designed to simplify professional billing. Customize sender and client parameters, upload your business logo, configure local taxes or discounts, and export beautiful client-ready PDFs. Every financial calculation is handled locally inside your browser window."
+      },
+      {
+        "heading": "QR Code Tools",
+        "text": "Leverage our **[Free QR Code Generator](/tools/qr)** to create custom branded, highly scanable QR codes. Customize dots, markers, and colors, embed custom company logos in the center, or execute high-speed bulk QR code generation using plain text or URL CSV spreadsheet lists."
+      },
+      {
+        "heading": "Barcode Tools",
+        "text": "Speed up retail, tracking, and warehousing workflows with our **[Free Barcode Generator](/tools/barcode)**. Easily render logistics-grade barcodes (Code 128, EAN-13, UPC) individually, or upload CSV rosters to pack hundreds of SKU code labels into a neat, downloadable ZIP archive."
+      },
+      {
+        "heading": "Unit Conversion Tools",
+        "text": "Access our **[Free Unit Converter Online](/tools/converter)** to perform fast, scientific conversions across major physical measurement categories—including length, weight, mass, temperature, area, volume, and digital units with certified precision."
+      },
+      {
+        "heading": "Our Commitment to Local Sovereignty",
+        "text": "At Tooleefy, we believe you shouldn't have to surrender your business privacy for modern web convenience. Every utility listed in our business directory operates on secure, local-first browser architectures. No invoices, customer email lists, product inventory data sheets, or tracking URLs are ever transmitted to our servers."
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Do I need to sign up for an account to use these tools?",
+        "a": "No, all tools are immediately available for use. We have eliminated all login blocks, email requests, and paywalls so you can work friction-free."
+      },
+      {
+        "q": "Is there any limit on bulk generation tasks?",
+        "a": "None. Our bulk engines run locally in your browser memory, meaning we place zero artificial limits or daily quotas on your spreadsheet processing tasks."
+      }
+    ]
+  }
+}

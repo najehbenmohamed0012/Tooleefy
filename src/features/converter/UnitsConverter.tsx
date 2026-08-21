@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ValueBanner } from "@/components/ValueBanner";
 import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { ConverterFAQ } from "./ConverterFAQ";
+import { SeoEditorial } from "@/components/SeoEditorial";
 import { toast } from "sonner";
 import { logActivity } from "@/supabase/db";
 import { Button } from "@/components/ui/button";
@@ -475,31 +476,7 @@ export function UnitsConverter() {
         </div>
       </div>
       <AdSenseUnit slot="3940156291" type="banner" className="my-8" />
-      {/* Supporting headings & content to capture search intent */}
-      <div className="w-full max-w-4xl mx-auto mt-16 p-8 border border-border/40 rounded-3xl bg-card shadow-premium space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">Convert Units Online for Free</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Tooleefy provides a fully featured, high-accuracy measurement conversion workspace that operates 100% inside your web browser. Seamlessly transform scientific metrics and global currencies without charges, forced registration, or limits.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-3">Length, Weight, Temperature, Area & More</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Our conversion suite supports comprehensive categories: <strong>Length</strong> (meters, miles, feet), <strong>Weight/Mass</strong> (kilograms, pounds, ounces), <strong>Temperature</strong> (Celsius, Fahrenheit, Kelvin), <strong>Area</strong> (sq meters, acres), <strong>Data</strong> (GB, MB, TB), and live <strong>Currencies & Cryptocurrencies</strong>.
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <h2 className="text-xl font-bold text-foreground mb-3">Fast and Accurate Unit Conversion</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Engineered for absolute mathematical precision, all metric translations use stabilized floating-point definitions. Real-time rates for world currencies and cryptocurrency assets are securely updated, processing inputs instantly on your device with complete network privacy.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <ConverterFAQ />
+      <SeoEditorial route="/tools/converter" />
     </div>
   );
 }

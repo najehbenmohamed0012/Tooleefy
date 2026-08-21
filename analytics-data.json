@@ -1,18 +1,18 @@
 {
   "pageVisits": {
-    "invoice": 2,
+    "invoice": 4,
     "converter": 2,
-    "qr": 2,
+    "qr": 3,
     "barcode": 2,
-    "blog": 0,
-    "home": 31,
+    "blog": 1,
+    "home": 44,
     "about": 0
   },
-  "totalVisits": 39,
-  "registeredVisits": 39,
+  "totalVisits": 56,
+  "registeredVisits": 56,
   "guestVisits": 0,
-  "rawServerVisits": 350,
-  "botVisits": 10,
+  "rawServerVisits": 467,
+  "botVisits": 12,
   "actionsCount": {
     "converter": 0,
     "invoice": 0,
@@ -24,7 +24,7 @@
     "US": 0,
     "FR": 0,
     "DE": 0,
-    "TN": 39,
+    "TN": 56,
     "UK": 0,
     "CA": 0,
     "JP": 0,
@@ -32,22 +32,22 @@
   },
   "devices": {
     "desktop": 0,
-    "mobile": 39,
+    "mobile": 56,
     "tablet": 0
   },
   "browsers": {
-    "chrome": 39,
+    "chrome": 56,
     "safari": 0,
     "firefox": 0,
     "other": 0
   },
   "demographics": {
-    "age_18_24": 6,
-    "age_25_34": 14,
-    "age_35_44": 11,
+    "age_18_24": 7,
+    "age_25_34": 22,
+    "age_35_44": 19,
     "age_45_plus": 8,
-    "male": 15,
-    "female": 23,
-    "non_binary": 1
+    "male": 23,
+    "female": 31,
+    "non_binary": 2
   }
 }

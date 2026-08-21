@@ -30,6 +30,7 @@ import { Logo } from "@/components/Logo";
 import { Star, Trophy } from "lucide-react";
 import { logActivity } from "@/supabase/db";
 import { safeStorage } from "@/utils/safeStorage";
+import { SeoEditorial } from "@/components/SeoEditorial";
 
 interface InvoiceItem {
   id: string;
@@ -992,37 +993,7 @@ export function InvoiceGenerator() {
         <ValueBanner />
         <AdSenseUnit slot="4920153842" type="banner" className="my-8" />
         
-        {/* Supporting headings & content to capture search intent */}
-        <div className="w-full max-w-4xl mx-auto mt-16 p-8 border border-border/40 rounded-3xl bg-card shadow-premium space-y-8 text-left">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-3">Free Invoice Generator Online</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Create and customize client bills without costs or mandatory logins. Tooleefy's free invoice generator online serves businesses, freelancers, and startups looking to craft premium client invoice documents instantly.
-              </p>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-3">Create Professional Invoices with Brand Logo</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Upload your company brand logo, choose from modern designer themes (Futuristic, Serif, Neo, and Industrial), customize business and bank account details, and style client-facing layouts that perfectly represent your corporate identity.
-              </p>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-3">Advanced Automatic Tax & Discount Calculations</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Simplify your billing and financial math. Our dynamic client-side engine automatically computes subtotals, custom sales tax rates, bulk volume discounts, and flat shipping fees in real-time, preventing billing errors and manual calculations.
-              </p>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-3">Instant Client-Side PDF Exports with Complete Privacy</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Your financial metrics, client databases, and pricing schemas are completely secure. All invoices are generated and compiled entirely inside your browser's workspace. Download standard high-resolution PDF invoices instantly.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <FAQSection />
+        <SeoEditorial route="/tools/invoice" />
       </div>
 
       {/* Congratulations Celebration Popup */}
