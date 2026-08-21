@@ -1,1 +1,0 @@
-import{at as t,K as o}from"./index-D35Cd3YQ.js";function n({className:e,...a}){return t.jsx("label",{"data-slot":"label",className:o("flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",e),...a})}export{n as L};

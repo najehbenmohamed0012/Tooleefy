@@ -69,7 +69,7 @@ const categories = [
 
 export function Categories() {
   return (
-    <div className="bg-muted/30 min-h-screen pb-24">
+    <div className="bg-slate-50/50 dark:bg-[#0B1612] min-h-screen pb-24 transition-colors duration-300">
       <PageHeader 
         title="Free Online Business & Productivity Tools" 
         description="Our refined collection of high-performance business utilities. No data leaves your browser."
@@ -77,11 +77,11 @@ export function Categories() {
       />
       
       <section className="py-12">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-6 max-w-7xl">
           {/* Header Billboard / Leaderboard Ad Unit */}
           <AdSenseUnit slot="7208149163" type="banner" className="mb-12" />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+ 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
             {categories.map((cat, idx) => (
               <motion.div
                 key={cat.title}
@@ -90,11 +90,11 @@ export function Categories() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1, duration: 0.5 }}
               >
-                <Card className="h-full p-1 border-none shadow-premium rounded-[3rem] bg-card overflow-hidden">
-                  <div className="p-10">
-                    <div className="mb-10">
-                      <h3 className="text-3xl font-black text-foreground mb-3 tracking-tighter uppercase italic">{cat.title}</h3>
-                      <p className="text-muted-foreground font-medium text-sm leading-relaxed max-w-sm">{cat.description}</p>
+                <div className="h-full p-6 sm:p-10 border border-slate-100 dark:border-white/5 shadow-premium rounded-[2.5rem] bg-white dark:bg-[#1E3932] overflow-hidden relative group/card hover:border-slate-200 dark:hover:border-white/10 transition-all duration-500">
+                  <div className="relative z-10">
+                    <div className="mb-8">
+                      <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-2 sm:mb-3 tracking-tight uppercase">{cat.title}</h3>
+                      <p className="text-slate-500 dark:text-slate-300 font-medium text-xs sm:text-sm leading-relaxed max-w-md">{cat.description}</p>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-4">
@@ -102,39 +102,40 @@ export function Categories() {
                         <Link 
                           key={tool.name} 
                           to={tool.path}
-                          className="flex items-center gap-6 p-6 bg-muted/50 dark:bg-white/[0.03] rounded-[2rem] group transition-all duration-500 hover:bg-primary border border-transparent hover:border-primary/20 shadow-sm hover:shadow-xl hover:shadow-primary/20"
+                          className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-5 sm:p-6 bg-slate-50 dark:bg-[#0B1612]/40 hover:bg-primary dark:hover:bg-[#006241] rounded-[2rem] group/btn transition-all duration-500 border border-slate-100/50 dark:border-white/5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/25 dark:hover:shadow-primary/10 w-full"
                         >
                           <div className={cn(
-                            "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:bg-white",
+                            "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 group-hover/btn:scale-110",
                             tool.bg,
-                            tool.color
+                            tool.color,
+                            "group-hover/btn:bg-white group-hover/btn:text-[#006241]"
                           )}>
-                            <tool.icon className="w-6 h-6" />
+                            <tool.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
                           
-                          <div className="flex-1 min-w-0">
-                            <div className="font-black text-foreground group-hover:text-white transition-colors text-lg tracking-tight">{tool.name}</div>
-                            <div className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground group-hover:text-white/70 transition-colors mt-0.5 font-bold truncate">{tool.desc}</div>
+                          <div className="flex-1 min-w-0 w-full text-left">
+                            <div className="font-extrabold text-slate-900 dark:text-slate-100 group-hover/btn:text-white transition-colors text-base sm:text-lg tracking-tight">{tool.name}</div>
+                            <div className="text-[11.5px] sm:text-xs text-slate-500 dark:text-slate-400 group-hover/btn:text-white/90 transition-colors mt-1 font-medium whitespace-normal break-words leading-relaxed">{tool.desc}</div>
                           </div>
                           
-                          <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0">
-                            <ArrowRight className="w-5 h-5 text-primary group-hover:text-white" />
+                          <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-white/10 flex items-center justify-center opacity-0 group-hover/btn:opacity-100 transition-all duration-500 -translate-x-4 group-hover/btn:translate-x-0 shrink-0 self-end sm:self-auto">
+                            <ArrowRight className="w-5 h-5 text-primary group-hover/btn:text-[#006241]" />
                           </div>
                         </Link>
                       ))}
                     </div>
                   </div>
                   
-                  {/* Decorative corner element */}
+                  {/* Decorative subtle corner gradient */}
                   <div className={cn(
-                    "absolute -bottom-16 -right-16 w-48 h-48 bg-gradient-to-br rounded-full blur-3xl opacity-20 pointer-events-none",
+                    "absolute -bottom-16 -right-16 w-48 h-48 bg-gradient-to-br rounded-full blur-3xl opacity-10 pointer-events-none transition-transform duration-700 group-hover/card:scale-110",
                     cat.color
                   )} />
-                </Card>
+                </div>
               </motion.div>
             ))}
           </div>
-
+ 
           {/* Bottom Leaderboard / Content-Match Ad Unit */}
           <AdSenseUnit slot="8109356127" type="leaderboard" className="mt-16" />
         </div>
