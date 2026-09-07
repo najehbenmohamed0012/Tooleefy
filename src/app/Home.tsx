@@ -24,7 +24,6 @@ import {
 import { defaultArticles, BlogPost } from "@/app/Articles";
 import { fetchBlogPosts } from "@/supabase/db";
 import { BlogImage } from "@/components/BlogImage";
-import { AdSenseUnit } from "@/components/AdSenseUnit";
 import { safeStorage } from "@/utils/safeStorage";
 import { SeoEditorial } from "@/components/SeoEditorial";
 
@@ -370,14 +369,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Google AdSense Ads Section */}
-      <section className="py-8 bg-muted/5 border-t border-border">
-        <div className="container mx-auto px-6">
-          <div className="max-w-5xl mx-auto">
-            <AdSenseUnit slot="9182374650" type="leaderboard" className="my-0" />
-          </div>
-        </div>
-      </section>
 
       {/* Blog Hot Articles Slider Section */}
       <section className="py-24 bg-muted/20 border-t border-border overflow-hidden">

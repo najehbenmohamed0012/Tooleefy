@@ -61,6 +61,11 @@ function SafeFooterAdSense() {
 
   // Low-content or protected pages blacklist where ads are strictly forbidden by AdSense policies
   const blacklist = [
+    "/",
+    "/about",
+    "/faq",
+    "/contact",
+    "/value-our-tools",
     "/dashboard",
     "/admin",
     "/settings/account",
@@ -72,25 +77,22 @@ function SafeFooterAdSense() {
     "/cookies"
   ];
 
-  const isBlacklisted = blacklist.some(item => path === item || path.startsWith(item + "/"));
+  const isBlacklisted = blacklist.some(item => {
+    if (item === "/") return path === "/";
+    return path === item || path.startsWith(item + "/");
+  });
 
   // Strictly whitelist public high-value informational/tools pages to prevent ads on 404 pages or unindexed views
   const validPrefixes = [
-    "/",
     "/tools/invoice",
     "/tools/qr",
     "/tools/barcode",
     "/tools/converter",
     "/categories",
-    "/blog",
-    "/about",
-    "/faq",
-    "/contact",
-    "/value-our-tools"
+    "/blog"
   ];
 
   const isValidRoute = validPrefixes.some(prefix => {
-    if (prefix === "/") return path === "/";
     return path === prefix || path.startsWith(prefix + "/");
   });
 
