@@ -58,6 +58,14 @@
       {
         "heading": "Invoicing Best Practices for Freelancers",
         "text": "To maintain professional relationships and ensure healthy cash flow, follow these proven invoicing strategies:\n- Deliver invoices promptly upon project milestone completion or delivery.\n- Standardize payment terms to Net 15 or Net 30, and clearly state them on the invoice.\n- Provide highly detailed itemizations to prevent client questions or payment delays.\n- Maintain an orderly digital system of exported PDFs for flawless tax audits."
+      },
+      {
+        "heading": "Tax Compliance and Legal Requirements",
+        "text": "In many countries, a standard billing invoice is considered a tax document that must meet strict statutory criteria. For example, VAT or GST invoices generally must clearly specify the words 'Tax Invoice', display your business's official Tax Identification Number (TIN), itemize the net rates, declare the exact tax rate percentages applied, and list the final tax value separately from the subtotal. Tooleefy allows you to easily input and label these values to keep your operations compliant."
+      },
+      {
+        "heading": "The Difference Between an Invoice and a Receipt",
+        "text": "While both documents are crucial parts of the transaction lifecycle, they serve different purposes. An invoice is a billing request issued *before* payment occurs, detailing payment terms and outstanding balances. A receipt, on the other hand, is a proof of payment issued *after* the funds are successfully settled. Tooleefy provides a customizable invoice editor that lets you easily transition, log, and download your transaction files locally."
       }
     ],
     "faqs": [
@@ -72,6 +80,14 @@
       {
         "q": "Where is my client data saved?",
         "a": "All client profiles and billing lines are stored locally in your browser's secure cache so you can return to edit them, but they are never uploaded to any external servers."
+      },
+      {
+        "q": "How do I configure custom currency symbols?",
+        "a": "Simply click on the currency dropdown selector to choose standard global currencies (USD, EUR, GBP, JPY), or enter any custom currency symbol or code manually to support local billing."
+      },
+      {
+        "q": "Can I save my tax and business settings for future invoices?",
+        "a": "Yes, all company contact records, tax percentages, payment instructions, and logo files are saved automatically in your browser's LocalStorage, meaning they reload instantly the next time you visit."
       }
     ]
   },
@@ -98,6 +114,14 @@
       {
         "heading": "Best Practices for QR Scanability",
         "text": "To guarantee your QR codes scan perfectly on every mobile device:\n- Ensure strong color contrast—always use dark foreground patterns on clean light backgrounds.\n- Keep an adequate 'quiet zone' (unprinted margin) around the QR code boundaries.\n- Test print samples at various physical distances on different mobile OS models before committing to mass production.\n- Use vector formats (SVG) when scaling for large banner and billboard printing."
+      },
+      {
+        "heading": "The Difference Between Static and Dynamic QR Codes",
+        "text": "Static QR codes encode the raw target text or destination link directly into the matrix blocks. This means they are immutable and will work forever as long as the destination URL remains active. Dynamic QR codes, by contrast, contain shortened redirect links controlled by a centralized server. While dynamic codes allow you to modify the destination link later, they introduce server dependencies and tracking cookies. Tooleefy strictly generates direct, static QR codes to preserve your digital privacy and ensure lifelong durability."
+      },
+      {
+        "heading": "Industrial Printing of High-Density QR Vectors",
+        "text": "When scaling custom QR codes for physical logistics, product packaging, or high-definition signs, print resolution is critical. Normal raster graphics (like JPEG or PNG) will become pixelated or blurry when enlarged, leading to lens focus failures on smartphone cameras. Tooleefy provides scalable vector graphics (SVG) outputs. This ensures your QR codes are rendered as geometric paths that can be scaled infinitely to billboard sizes with mathematically sharp borders."
       }
     ],
     "faqs": [
@@ -112,6 +136,14 @@
       {
         "q": "What image formats can I export?",
         "a": "You can export your custom codes as high-density PNG files or scalable SVG vector formats, perfect for both digital layouts and professional print projects."
+      },
+      {
+        "q": "How much data can be stored in a single QR Code?",
+        "a": "A standard Model 2 QR code can store up to 7,089 numeric characters or 4,296 alphanumeric characters. However, for faster scanning, it is best to keep URLs under 100 characters to maintain a less complex grid pattern."
+      },
+      {
+        "q": "What is Error Correction and why does it matter?",
+        "a": "Error Correction Coding (ECC) uses Reed-Solomon algorithms to restore damaged or covered parts of a QR code. Tooleefy defaults to High-grade error correction (up to 30% restoration capacity), allowing you to overlay a corporate logo in the center without breaking scanability."
       }
     ]
   },
@@ -134,6 +166,14 @@
       {
         "heading": "Guidelines for Printing and Scanning Barcodes",
         "text": "To prevent warehouse scanner read failures, adhere to these industrial standards:\n- Always output barcodes in solid high-contrast black ink on a non-reflective white background.\n- Ensure you respect the minimum required bar height and spacing specifications for your target symbology.\n- Maintain safe 'quiet zones' on the left and right sides of the bars so laser scanners can detect the boundaries.\n- Print using high-quality thermal label printers to avoid ink bleeding or gaps."
+      },
+      {
+        "heading": "Standard Barcode Standards: GS1 & Thermal Printing Specs",
+        "text": "For items distributed through standard commercial retail channels, barcodes must adhere to global GS1 identification guidelines. GS1 standardizes EAN-13 and UPC numbering arrays to guarantee that no two commercial products carry the same identifier globally. When printing these codes, thermal transfer printers are highly recommended over standard inkjet printers because thermal ribbons produce clean, razor-sharp bars that optical laser sensors can parse instantly without edge distortion."
+      },
+      {
+        "heading": "Optimizing Warehouse Scanning with Code 128 High Density",
+        "text": "Code 128 is a highly flexible, continuous alphanumeric symbology widely favored in industrial shipping, box labeling, and military logistics. It supports three distinct character subsets (A, B, and C), allowing it to pack double-density numeric digits efficiently. If you are managing inventory tracking under low-light conditions, utilizing a Code 128 configuration with a slightly wider bar width factor ensures rapid, flawless barcode reads for handheld terminal scanners."
       }
     ],
     "faqs": [
@@ -148,6 +188,14 @@
       {
         "q": "How can I download my barcodes in bulk?",
         "a": "Use the bulk generator tab, paste your list or upload a CSV file, and click generate. Our local engine will download them all as a single organized ZIP folder."
+      },
+      {
+        "q": "What is the difference between UPC and EAN-13?",
+        "a": "UPC (Universal Product Code) is a 12-digit standard primarily used in the United States and Canada, whereas EAN-13 (European Article Number) is a 13-digit standard utilized globally. EAN-13 includes a country identification prefix as its leading digit."
+      },
+      {
+        "q": "How does the checksum verification digit work?",
+        "a": "The final digit of a UPC or EAN-13 barcode is a mathematically calculated checksum. It is derived using a modulo-10 algorithm based on the preceding numbers to ensure that manual entries or scanner misreads are instantly detected."
       }
     ]
   },
@@ -170,6 +218,14 @@
       {
         "heading": "Flawless Mathematical Precision",
         "text": "In professional environments, rounded or inaccurate conversions can lead to costly errors in physical production. Tooleefy operates using strict scientific constants and handles floating-point structures cleanly, preventing rounding anomalies on final calculations."
+      },
+      {
+        "heading": "The Importance of Precise Conversions in Construction and Trade",
+        "text": "In the structural construction and international trade industries, small unit conversion errors can cascade into material structural failures or customs legal disputes. For instance, converting structural timber lengths between standard meters and imperial yards must account for millimeter-level tolerances. Tooleefy leverages exact, standardized IEEE 754 float conversion multipliers to guarantee consistent, safe calculations across every trade dimension."
+      },
+      {
+        "heading": "Why Binary Data Units Differ: Base-2 vs Base-10 Definitions",
+        "text": "In modern information technology, data capacities are measured using two separate counting bases: Decimal (Base-10) and Binary (Base-2). Storage drive manufacturers typically market their drives using decimal calculations (where 1 Megabyte equals 1,000,000 bytes). However, operating systems analyze storage capacities using binary standards (where 1 Megabyte is equal to 1,048,576 bytes). This creates discrepancies between marketed storage and actual usable capacity. Tooleefy's digital converter supports clear conversions across both frameworks to provide absolute clarity."
       }
     ],
     "faqs": [
@@ -184,6 +240,14 @@
       {
         "q": "Can I use the unit converter offline?",
         "a": "Yes! Once loaded, all conversion algorithms run fully client-side on your device, ensuring lightning-fast conversions even in areas with poor network coverage."
+      },
+      {
+        "q": "How many ounces are in a gallon (US vs Imperial)?",
+        "a": "A standard US liquid gallon contains exactly 128 US fluid ounces. By contrast, an Imperial (UK) gallon is larger, containing exactly 160 Imperial fluid ounces. Tooleefy provides dedicated converters for both systems to avoid mixing standards."
+      },
+      {
+        "q": "Why does 1 Gigabyte equal 1024 Megabytes instead of 1000?",
+        "a": "Computer memory works in binary (base-2), which fits the physics of electrical switches. Since 2 raised to the 10th power is 1024, computer systems use 1024 as the multiplier for memory divisions (KB, MB, GB, TB) to maintain clean alignment with physical binary hardware registers."
       }
     ]
   },

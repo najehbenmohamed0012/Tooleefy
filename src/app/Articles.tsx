@@ -1252,6 +1252,19 @@ export function Legal({ type }: { type: 'terms' | 'privacy' | 'cookies' }) {
                     As Tooleefy evolves, our commitment to this **Local-First** philosophy remains immutable. Should we ever introduce cloud-syncing features, they will be strictly "Opt-In" with end-to-end encryption, ensuring that even in the cloud, were we to host your data, we could not read it.
                   </p>
                 </div>
+
+                <div className="space-y-4">
+                  <h2 className="text-3xl font-black text-foreground tracking-tight uppercase italic underline decoration-primary/30">07. Third-Party Advertising & Google AdSense</h2>
+                  <p>
+                    We partner with Google AdSense to serve contextually relevant advertisements on authorized pages of this platform to fund our infrastructure and free-to-use utility ecosystem. Google, as a third-party vendor, uses cookies to display these advertisements.
+                  </p>
+                  <p>
+                    Google's use of advertising cookies enables it and its partners to serve advertisements to our users based on their browsing behavior on Tooleefy and other locations across the World Wide Web.
+                  </p>
+                  <p>
+                    You have full authority to decline or opt out of personalized advertising. You may disable ad profiling by managing your preferences directly inside the <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Google Ad Settings Portal</a>. Additionally, you can choose to opt out of third-party cookie telemetry for personalized marketing by visiting the industry standard opt-out hub at <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">aboutads.info</a>.
+                  </p>
+                </div>
               </div>
             )}
 

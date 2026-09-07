@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/ThemeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { safeStorage } from "@/utils/safeStorage";
 import { fetchSiteSettings } from "@/supabase/db";
+import { CookieConsent } from "@/components/CookieConsent";
 
 // Dynamic high-performance code splitting (React.lazy)
 const UnitsConverter = lazy(() => import("@/features/converter/UnitsConverter").then(m => ({ default: m.UnitsConverter })));
@@ -215,6 +216,7 @@ export default function App() {
         <SafeFooterAdSense />
         <Footer />
         <Toaster />
+        <CookieConsent />
       </div>
     </BrowserRouter>
     </ThemeProvider>
